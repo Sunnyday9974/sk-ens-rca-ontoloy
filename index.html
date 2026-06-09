@@ -77,7 +77,7 @@
         © 2026 나래 O&M AI/DT TF. All rights reserved.
     </footer>
 
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
 
     <script>
@@ -86,7 +86,7 @@
         const CLIENT_ID = '226564701904-hr1l78rknenlm0fn3gul1cvmkve0ntuc.apps.googleusercontent.com';
         // ===================================================
 
-        // 구글 드라이브 파일 조회를 위한 표준 권한 스코프
+        // 표준 readonly 스코프 유지
         const SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
 
         let accessToken = null;
@@ -100,53 +100,53 @@
         const processSection = document.getElementById('process-section');
         const resultSection = document.getElementById('result-section');
 
-        // 1. 페이지 로드 시 구글 API 인프라 빌드 및 토큰 클라이언트 초기화
+        // 1. 보안 충돌(COOP)을 피하기 위해 인프라를 '순차적'으로 강제 로드합니다.
         function initGapi() {
-            // 구글 인프라 라이브러리(client와 picker)를 로드
-            gapi.load('client:picker', () => { 
-                console.log('GAPI client and picker loaded'); 
+            gapi.load('client', () => {
+                gapi.client.init({
+                    'apiKey': API_KEY,
+                    'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+                }).then(() => {
+                    gapi.load('picker', () => {
+                        console.log('✔ 구글 Picker 및 클라이언트 인프라 로드 완료');
+                    });
+                }).catch(err => console.error('GAPI init error:', err));
             });
-            
-            // COOP 보안 충돌을 방지하기 위한 최신 Identity 서비스 토큰 클라이언트 초기화
+
             if (typeof google !== 'undefined') {
                 tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: CLIENT_ID,
                     scope: SCOPE,
-                    callback: (response) => {
+                    callback: async (response) => {
                         if (response.error !== undefined) {
                             console.error('인증 오류:', response.error);
-                            alert('인증 오류가 발생했습니다.');
                             return;
                         }
                         accessToken = response.access_token;
-                        console.log('토큰 획득 성공!');
-                        // 토큰 획득 후 즉시 안전하게 Picker 호출
-                        createPicker();
+                        console.log('✔ 토큰 획득 성공:', accessToken);
+                        
+                        // [핵심] 로그인 팝업 창이 완전히 닫히고 브라우저가 안정화될 시간을 0.5초 준 뒤 Picker를 실행합니다.
+                        setTimeout(createPicker, 500);
                     },
                 });
-                console.log('Google Token Client 초기화 완료');
+                console.log('✔ Google Token Client 초기화 완료');
             }
         }
 
         window.onload = () => {
-            // 라이브러리가 완전히 로드될 시간을 주며 안전하게 초기화 실행
             setTimeout(initGapi, 1000);
         };
 
-        // 2. 파일 선택 버튼 클릭 이벤트
+        // 2. 파일 선택 버튼 클릭
         btnSelectFile.addEventListener('click', () => {
             if (!tokenClient) {
-                alert('구글 라이브러리를 초기화 중입니다. 잠시 후 다시 시도해 주세요.');
+                alert('구글 라이브러리를 초기화 중입니다. 2~3초 후 다시 시도해 주세요.');
                 initGapi();
                 return;
             }
-
-            // 만약 기존에 얻은 토큰이 있다면 바로 Picker를 열고, 없다면 로그인 요청
-            if (accessToken === null) {
-                tokenClient.requestAccessToken({prompt: 'consent'});
-            } else {
-                createPicker();
-            }
+            
+            // 토큰 요청 시 prompt를 select_account로 지정하여 계정 선택 유연성을 확보합니다.
+            tokenClient.requestAccessToken({prompt: 'select_account'});
         });
 
         // 3. 실제 구글 드라이브 Picker 팝업 창 생성
@@ -154,11 +154,13 @@
             if (!accessToken) return;
             
             try {
-                // 사용자의 구글 드라이브 파일들을 보여주는 기본 뷰 생성
-                const view = new gapi.picker.View(gapi.picker.ViewId.DOCS);
-                
+                // 일반 문서 및 구글 독스, 워드, PDF 등이 모두 보일 수 있도록 뷰 구성
+                const docsView = new gapi.picker.DocsView(gapi.picker.ViewId.DOCS)
+                    .setParent('root') // 내 드라이브 루트부터 보여줌
+                    .setIncludeFolders(true); // 폴더 탐색 허용
+
                 const picker = new gapi.picker.PickerBuilder()
-                    .addView(view)
+                    .addView(docsView)
                     .setOAuthToken(accessToken)
                     .setDeveloperKey(API_KEY)
                     .setCallback(pickerCallback)
@@ -166,13 +168,13 @@
                     .build();
                 
                 picker.setVisible(true);
-                console.log('Picker 팝업 창이 정상적으로 표시되었습니다.');
+                console.log('✔ Picker 팝업 창 활성화 성공');
             } catch (error) {
                 console.error('Picker 생성 실패:', error);
             }
         }
 
-        // 4. 파일이 정상적으로 선택되었을 때의 콜백
+        // 4. 파일 선택 완료 콜백
         function pickerCallback(data) {
             if (data[gapi.picker.Response.ACTION] == gapi.picker.Action.PICKED) {
                 const doc = data[gapi.picker.Response.DOCUMENTS][0];
@@ -195,7 +197,7 @@
             simulateProcessing();
         });
 
-        // (기존 시뮬레이션 제어 로직 유지)
+        // (시뮬레이션 제어 로직 유지)
         function simulateProcessing() {
             const step1 = document.getElementById('step-1');
             const step2 = document.getElementById('step-2');
@@ -229,5 +231,3 @@
             }
         }
     </script>
-</body>
-</html>
