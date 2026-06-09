@@ -1,4 +1,83 @@
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나래 O&M RCA 온톨로지화</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col justify-between">
+
+    <header class="bg-blue-900 text-white py-6 px-8 shadow-md">
+        <h1 class="text-2xl font-bold tracking-wide"><i class="fa-solid fa-network-wired mr-3"></i>나래 O&M RCA 리포트 온톨로지화</h1>
+        <p class="text-sm text-blue-200 mt-1">구글 드라이브의 RCA 리포트를 분석하여 Neo4j 지식 그래프로 변환합니다.</p>
+    </header>
+
+    <main class="flex-1 max-w-4xl w-full mx-auto p-6 my-6 bg-white shadow-sm rounded-lg border border-gray-200">
+        
+        <section class="mb-8 p-6 bg-slate-50 rounded-lg border border-slate-200">
+            <h2 class="text-lg font-semibold mb-4 text-slate-700"><i class="fa-solid fa-file-circle-plus mr-2 text-blue-600"></i>1. RCA 파일 선택</h2>
+            <div class="flex flex-col sm:flex-row gap-4 items-center">
+                <button id="btn-select-file" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-5 rounded transition duration-200 shadow-sm flex items-center justify-center gap-2">
+                    <i class="fa-brands fa-google-drive"></i> 구글 드라이브에서 파일 선택
+                </button>
+                <div id="file-info" class="flex-1 text-gray-500 italic text-sm border-b border-dashed border-gray-300 py-2 w-full">
+                    선택된 파일이 없습니다.
+                </div>
+                <button id="btn-start-transform" disabled class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2.5 px-6 rounded transition duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-play"></i> 변환 시작
+                </button>
+            </div>
+        </section>
+
+        <section id="process-section" class="mb-8 p-6 border border-gray-200 rounded-lg hidden">
+            <h2 class="text-lg font-semibold mb-4 text-gray-700"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-500"></i>2. 온톨로지 생성 진행 상황</h2>
+            
+            <div class="space-y-4">
+                <div id="step-1" class="flex items-center gap-4 p-3 bg-gray-50 rounded">
+                    <div class="step-icon text-gray-400 text-lg"><i class="fa-regular fa-circle"></i></div>
+                    <div class="flex-1">
+                        <p class="font-medium text-sm">구글 드라이브에서 RCA 파일 다운로드</p>
+                    </div>
+                </div>
+                <div id="step-2" class="flex items-center gap-4 p-3 bg-gray-50 rounded">
+                    <div class="step-icon text-gray-400 text-lg"><i class="fa-regular fa-circle"></i></div>
+                    <div class="flex-1">
+                        <p class="font-medium text-sm">LLM 기반 RCA 텍스트 분석 및 Entity/Relationship 추출</p>
+                    </div>
+                </div>
+                <div id="step-3" class="flex items-center gap-4 p-3 bg-gray-50 rounded">
+                    <div class="step-icon text-gray-400 text-lg"><i class="fa-regular fa-circle"></i></div>
+                    <div class="flex-1">
+                        <p class="font-medium text-sm">Neo4j Graph DB 지식 그래프 반영 및 스키마 정렬</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="result-section" class="p-6 bg-emerald-50 border border-emerald-200 rounded-lg hidden">
+            <h2 class="text-lg font-semibold text-emerald-800 mb-2"><i class="fa-solid fa-circle-check mr-2"></i>변환 완료!</h2>
+            <p class="text-sm text-emerald-700 mb-4">RCA 리포트가 성공적으로 온톨로지화되어 Neo4j에 반영되었습니다.</p>
+            <div class="grid grid-cols-2 gap-4 max-w-sm text-center">
+                <div class="bg-white p-3 rounded shadow-sm border border-emerald-100">
+                    <span class="block text-xs text-gray-500">생성된 노드(Nodes)</span>
+                    <span id="node-count" class="text-xl font-bold text-slate-800">0</span>
+                </div>
+                <div class="bg-white p-3 rounded shadow-sm border border-emerald-100">
+                    <span class="block text-xs text-gray-500">생성된 관계(Edges)</span>
+                    <span id="edge-count" class="text-xl font-bold text-slate-800">0</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-100 text-center py-4 text-xs text-gray-400 border-t border-gray-200">
+        © 2026 나래 O&M AI/DT TF. All rights reserved.
+    </footer>
+
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
 
     <script>
@@ -23,8 +102,10 @@
 
         // 1. 페이지 로드 시 구글 API 인프라 빌드 및 토큰 클라이언트 초기화
         function initGapi() {
-            // 구글 Picker API 로드
-            gapi.load('picker', () => { console.log('GAPI picker loaded'); });
+            // 구글 인프라 라이브러리(client와 picker)를 로드
+            gapi.load('client:picker', () => { 
+                console.log('GAPI client and picker loaded'); 
+            });
             
             // COOP 보안 충돌을 방지하기 위한 최신 Identity 서비스 토큰 클라이언트 초기화
             if (typeof google !== 'undefined') {
@@ -62,7 +143,6 @@
 
             // 만약 기존에 얻은 토큰이 있다면 바로 Picker를 열고, 없다면 로그인 요청
             if (accessToken === null) {
-                // 이 함수가 실행되면서 구글 로그인 창이 팝업됩니다.
                 tokenClient.requestAccessToken({prompt: 'consent'});
             } else {
                 createPicker();
@@ -149,3 +229,5 @@
             }
         }
     </script>
+</body>
+</html>
