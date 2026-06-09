@@ -77,42 +77,111 @@
         © 2026 나래 O&M AI/DT TF. All rights reserved.
     </footer>
 
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+
     <script>
-        // 가상의 파일 선택 이벤트 시뮬레이션 (3단계에서 실제 구글 픽커 연결)
+        // ================= [필수 설정 항목] =================
+        const API_KEY = 'AIzaSyDUb9w8DUJ1z6rA3f1cWLvtK_dHML2B0Ys';
+        const CLIENT_ID = '226564701904-hr1l78rknenlm0fn3gul1cvmkve0ntuc.apps.googleusercontent.com.apps.googleusercontent.com';
+        // ===================================================
+
+        // 꿀팁: 특정 확장자(docx, pdf)만 보이게 제한하기 위한 스코프
+        const SCOPE = 'https://www.googleapis.com/auth/drive.file';
+
+        let accessToken = null;
+        let selectedFileId = null;
+        let selectedFileName = null;
+
         const btnSelectFile = document.getElementById('btn-select-file');
         const btnStartTransform = document.getElementById('btn-start-transform');
         const fileInfo = document.getElementById('file-info');
         const processSection = document.getElementById('process-section');
         const resultSection = document.getElementById('result-section');
 
-        let selectedFileId = null;
+        // 1. 구글 API 클라이언트 초기화
+        function initPicker() {
+            gapi.load('auth', {'callback': () => { console.log('GAPI auth loaded'); }});
+            gapi.load('picker', {'callback': () => { console.log('GAPI picker loaded'); }});
+        }
+        window.onload = initPicker;
 
+        // 2. 구글 로그인 및 토큰 획득 (파일 선택 버튼 클릭 시 발생)
         btnSelectFile.addEventListener('click', () => {
-            // 임시 시뮬레이션
-            selectedFileId = "mock-drive-file-id-12345";
-            fileInfo.innerText = "📄 [선택됨] 202606_나래OM_설비고장_RCA_리포트.docx";
-            fileInfo.classList.remove('text-gray-500', 'italic');
-            fileInfo.classList.add('text-blue-600', 'font-medium');
-            btnStartTransform.removeAttribute('disabled');
+            const tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPE,
+                callback: (response) => {
+                    if (response.error !== undefined) {
+                        alert('인증 중 오류가 발생했습니다: ' + response.error);
+                        return;
+                    }
+                    accessToken = response.access_token;
+                    // 인증 성공 후 실제 구글 파일 선택 창 열기
+                    createPicker();
+                },
+            });
+            
+            // 기존에 받아둔 토큰이 없다면 새로 요청 (로그인 팝업 뜸)
+            if (accessToken === null) {
+                tokenClient.requestAccessToken({prompt: 'select_account'});
+            } else {
+                createPicker();
+            }
         });
 
+        // 3. 구글 파일 선택기 팝업 창 생성
+        function createPicker() {
+            if (accessToken && gapi.picker) {
+                const view = new gapi.picker.View(gapi.picker.ViewId.DOCS);
+                // 필요시 특정 파일만 필터링 가능 (예: 워드 파일 및 PDF)
+                // view.setMimeTypes("application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf");
+
+                const picker = new gapi.picker.PickerBuilder()
+                    .addView(view)
+                    .setOAuthToken(accessToken)
+                    .setDeveloperKey(API_KEY)
+                    .setCallback(pickerCallback)
+                    .setTitle("나래 O&M RCA 리포트 선택")
+                    .build();
+                picker.setVisible(true);
+            }
+        }
+
+        // 4. 사용자가 파일을 선택했을 때의 콜백 함수
+        function pickerCallback(data) {
+            if (data[gapi.picker.Response.ACTION] == gapi.picker.Action.PICKED) {
+                const doc = data[gapi.picker.Response.DOCUMENTS][0];
+                selectedFileId = doc[gapi.picker.Document.ID];
+                selectedFileName = doc[gapi.picker.Document.NAME];
+
+                // 화면에 선택된 파일 정보 표시 업데이트
+                fileInfo.innerText = `📄 [선택됨] ${selectedFileName}`;
+                fileInfo.classList.remove('text-gray-500', 'italic');
+                fileInfo.classList.add('text-blue-600', 'font-medium');
+                
+                // 변환 시작 버튼 활성화
+                btnStartTransform.removeAttribute('disabled');
+            }
+        }
+
+        // 5. 변환 시작 버튼 클릭 이벤트
         btnStartTransform.addEventListener('click', () => {
             if(!selectedFileId) return;
             
-            // 진행 상황 섹션 노출
             processSection.classList.remove('hidden');
             resultSection.classList.add('hidden');
             
-            // 임시로 UI가 작동하는지 보기 위한 시뮬레이션 함수 호출
+            // 임시 시뮬레이션 가동 (다음 4단계에서 n8n 웹훅 호출로 교체 예정)
             simulateProcessing();
         });
 
+        // (기존 시뮬레이션 함수 유지)
         function simulateProcessing() {
             const step1 = document.getElementById('step-1');
             const step2 = document.getElementById('step-2');
             const step3 = document.getElementById('step-3');
 
-            // 1단계 시작
             setStepStatus(step1, 'loading');
 
             setTimeout(() => {
