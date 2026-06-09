@@ -85,6 +85,11 @@
         const CLIENT_ID = '226564701904-hr1l78rknenlm0fn3gul1cvmkve0ntuc.apps.googleusercontent.com';
         const SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
 
+        // ===================================================
+        // [필수 설정] n8n Webhook 노드의 'Test URL' 주소를 여기에 넣어주세요!
+        // ===================================================
+        const N8N_WEBHOOK_URL = 'https://seoneenam.app.n8n.cloud/webhook-test/rca-ontology-trigger';
+
         let accessToken = null;
         let selectedFileId = null;
         let selectedFileName = null;
@@ -128,7 +133,6 @@
         }
 
         window.onload = () => {
-            // 주입 타이밍 충돌을 완벽하게 통제하기 위해 웹 전역 로드 시점 배분
             if (typeof gapi !== 'undefined') gapiLoadCallback();
             setTimeout(gsiLoadCallback, 800);
         };
@@ -141,8 +145,6 @@
                 if(!tokenClient) gsiLoadCallback();
                 return;
             }
-
-            // 토큰을 매번 새로 고침하여 COOP 세션 가로채기 방지
             tokenClient.requestAccessToken({prompt: 'select_account'});
         });
 
@@ -151,7 +153,6 @@
             if (!accessToken) return;
             
             try {
-                // 특정 파일 포맷에 국한되지 않고 전체 문서를 정상 탐색하도록 표준 View 구조 적용
                 const view = new google.picker.View(google.picker.ViewId.DOCS);
                 
                 const picker = new google.picker.PickerBuilder()
@@ -185,36 +186,68 @@
             }
         }
 
-        // 변환 시뮬레이션 제어 로직
-        btnStartTransform.addEventListener('click', () => {
+        // 6. 변환 시작 버튼 클릭 이벤트 (실제 n8n 호출 연동부)
+        btnStartTransform.addEventListener('click', async () => {
             if(!selectedFileId) return;
+            
+            // 화면 UI 초기화 및 로딩 활성화
             processSection.classList.remove('hidden');
             resultSection.classList.add('hidden');
-            simulateProcessing();
+            
+            const step1 = document.getElementById('step-1');
+            setStepStatus(step1, 'loading');
+
+            try {
+                // n8n 웹훅으로 실제 데이터 전송
+                const response = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        fileId: selectedFileId,
+                        fileName: selectedFileName
+                    })
+                });
+
+                if (response.ok) {
+                    console.log('✔ n8n 웹훅으로 데이터 전송 성공!');
+                    // n8n 호출 성공 이후 다음 시뮬레이션 단계 트리거
+                    continueSimulationAfterWebhook();
+                } else {
+                    alert('n8n 서버 연동 실패 (상태 코드 에러)');
+                    setStepStatus(step1, 'default');
+                }
+            } catch (error) {
+                console.error('n8n 웹훅 연동 에러:', error);
+                alert('n8n 웹훅 URL 호출에 실패했습니다. 코드를 확인해 주세요.');
+                setStepStatus(step1, 'default');
+            }
         });
 
-        function simulateProcessing() {
+        // n8n 전송 성공 확인 후 가짜 시뮬레이션을 이어 나가는 함수
+        function continueSimulationAfterWebhook() {
             const step1 = document.getElementById('step-1');
             const step2 = document.getElementById('step-2');
             const step3 = document.getElementById('step-3');
 
-            setStepStatus(step1, 'loading');
-            setTimeout(() => {
-                setStepStatus(step1, 'success');
-                setStepStatus(step2, 'loading');
-            }, 2000);
+            setStepStatus(step1, 'success');
+            setStepStatus(step2, 'loading');
+
             setTimeout(() => {
                 setStepStatus(step2, 'success');
                 setStepStatus(step3, 'loading');
-            }, 4000);
+            }, 2500);
+
             setTimeout(() => {
                 setStepStatus(step3, 'success');
                 resultSection.classList.remove('hidden');
-                document.getElementById('node-count').innerText = "14";
-                document.getElementById('edge-count').innerText = "22";
-            }, 6000);
+                document.getElementById('node-count').innerText = "18";
+                document.getElementById('edge-count').innerText = "26";
+            }, 5500);
         }
 
+        // 공통 UI 아이콘 상태 제어 함수
         function setStepStatus(stepElement, status) {
             const iconDiv = stepElement.querySelector('.step-icon');
             if(status === 'loading') {
@@ -222,9 +255,4 @@
                 iconDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-blue-500"></i>';
             } else if(status === 'success') {
                 stepElement.className = "flex items-center gap-4 p-3 bg-emerald-50 rounded border border-emerald-100";
-                iconDiv.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
-            }
-        }
-    </script>
-</body>
-</html>
+                iconDiv.innerHTML = '<i class="fa-solid fa-circle-check text-
