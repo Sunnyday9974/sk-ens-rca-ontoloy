@@ -77,22 +77,19 @@
         © 2026 나래 O&M AI/DT TF. All rights reserved.
     </footer>
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <script>
-        // ================= [필수 설정 항목] =================
         const API_KEY = 'AIzaSyDUb9w8DUJ1z6rA3f1cWLvtK_dHML2B0Ys';
         const CLIENT_ID = '226564701904-hr1l78rknenlm0fn3gul1cvmkve0ntuc.apps.googleusercontent.com';
-        // ===================================================
-
-        // 표준 readonly 스코프 유지
         const SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
 
         let accessToken = null;
         let selectedFileId = null;
         let selectedFileName = null;
         let tokenClient = null;
+        let pickerApiLoaded = false;
 
         const btnSelectFile = document.getElementById('btn-select-file');
         const btnStartTransform = document.getElementById('btn-start-transform');
@@ -100,67 +97,65 @@
         const processSection = document.getElementById('process-section');
         const resultSection = document.getElementById('result-section');
 
-        // 1. 보안 충돌(COOP)을 피하기 위해 인프라를 '순차적'으로 강제 로드합니다.
-        function initGapi() {
-            gapi.load('client', () => {
-                gapi.client.init({
-                    'apiKey': API_KEY,
-                    'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-                }).then(() => {
-                    gapi.load('picker', () => {
-                        console.log('✔ 구글 Picker 및 클라이언트 인프라 로드 완료');
-                    });
-                }).catch(err => console.error('GAPI init error:', err));
+        // 1. 순수 gapi 인프라 빌드 (안정적인 콜백 체인 구성)
+        function gapiLoadCallback() {
+            gapi.load('picker', () => {
+                pickerApiLoaded = true;
+                console.log('✔ 구글 Picker API 라이브러리 준비 완료');
             });
+        }
 
+        // 2. Identity 서비스 토큰 클라이언트 초기화
+        function gsiLoadCallback() {
             if (typeof google !== 'undefined') {
                 tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: CLIENT_ID,
                     scope: SCOPE,
-                    callback: async (response) => {
+                    callback: (response) => {
                         if (response.error !== undefined) {
-                            console.error('인증 오류:', response.error);
+                            console.error('인증 실패:', response.error);
                             return;
                         }
                         accessToken = response.access_token;
-                        console.log('✔ 토큰 획득 성공:', accessToken);
+                        console.log('✔ 보안 토큰 발급 성공');
                         
-                        // [핵심] 로그인 팝업 창이 완전히 닫히고 브라우저가 안정화될 시간을 0.5초 준 뒤 Picker를 실행합니다.
-                        setTimeout(createPicker, 500);
+                        // 구글인증 세션이 완전히 안정될 수 있도록 타임아웃 부여 후 실행
+                        setTimeout(createPicker, 400);
                     },
                 });
-                console.log('✔ Google Token Client 초기화 완료');
+                console.log('✔ Google Identity Client 초기화 완료');
             }
         }
 
         window.onload = () => {
-            setTimeout(initGapi, 1000);
+            // 주입 타이밍 충돌을 완벽하게 통제하기 위해 웹 전역 로드 시점 배분
+            if (typeof gapi !== 'undefined') gapiLoadCallback();
+            setTimeout(gsiLoadCallback, 800);
         };
 
-        // 2. 파일 선택 버튼 클릭
+        // 3. 파일 선택 버튼 핸들러
         btnSelectFile.addEventListener('click', () => {
-            if (!tokenClient) {
-                alert('구글 라이브러리를 초기화 중입니다. 2~3초 후 다시 시도해 주세요.');
-                initGapi();
+            if (!tokenClient || !pickerApiLoaded) {
+                alert('구글 서비스 인프라를 연결 중입니다. 1~2초 후 다시 클릭해 주세요.');
+                if(typeof gapi !== 'undefined' && !pickerApiLoaded) gapiLoadCallback();
+                if(!tokenClient) gsiLoadCallback();
                 return;
             }
-            
-            // 토큰 요청 시 prompt를 select_account로 지정하여 계정 선택 유연성을 확보합니다.
+
+            // 토큰을 매번 새로 고침하여 COOP 세션 가로채기 방지
             tokenClient.requestAccessToken({prompt: 'select_account'});
         });
 
-        // 3. 실제 구글 드라이브 Picker 팝업 창 생성
+        // 4. 드라이브 파일 선택 창 생성 및 화면 표출
         function createPicker() {
             if (!accessToken) return;
             
             try {
-                // 일반 문서 및 구글 독스, 워드, PDF 등이 모두 보일 수 있도록 뷰 구성
-                const docsView = new gapi.picker.DocsView(gapi.picker.ViewId.DOCS)
-                    .setParent('root') // 내 드라이브 루트부터 보여줌
-                    .setIncludeFolders(true); // 폴더 탐색 허용
-
-                const picker = new gapi.picker.PickerBuilder()
-                    .addView(docsView)
+                // 특정 파일 포맷에 국한되지 않고 전체 문서를 정상 탐색하도록 표준 View 구조 적용
+                const view = new google.picker.View(google.picker.ViewId.DOCS);
+                
+                const picker = new google.picker.PickerBuilder()
+                    .addView(view)
                     .setOAuthToken(accessToken)
                     .setDeveloperKey(API_KEY)
                     .setCallback(pickerCallback)
@@ -168,18 +163,19 @@
                     .build();
                 
                 picker.setVisible(true);
-                console.log('✔ Picker 팝업 창 활성화 성공');
+                console.log('✔ Picker 팝업 창이 브라우저 레이어에 렌더링되었습니다.');
             } catch (error) {
-                console.error('Picker 생성 실패:', error);
+                console.error('Picker 빌드 에러 발생:', error);
+                alert('드라이브 선택기를 여는 과정에서 오류가 발생했습니다. F12 콘솔 창을 확인해 주세요.');
             }
         }
 
-        // 4. 파일 선택 완료 콜백
+        // 5. 파일 선택 콜백
         function pickerCallback(data) {
-            if (data[gapi.picker.Response.ACTION] == gapi.picker.Action.PICKED) {
-                const doc = data[gapi.picker.Response.DOCUMENTS][0];
-                selectedFileId = doc[gapi.picker.Document.ID];
-                selectedFileName = doc[gapi.picker.Document.NAME];
+            if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
+                const doc = data[google.picker.Response.DOCUMENTS][0];
+                selectedFileId = doc[google.picker.Document.ID];
+                selectedFileName = doc[google.picker.Document.NAME];
 
                 fileInfo.innerText = `📄 [선택됨] ${selectedFileName}`;
                 fileInfo.classList.remove('text-gray-500', 'italic');
@@ -189,7 +185,7 @@
             }
         }
 
-        // 5. 변환 시작 버튼 클릭 이벤트
+        // 변환 시뮬레이션 제어 로직
         btnStartTransform.addEventListener('click', () => {
             if(!selectedFileId) return;
             processSection.classList.remove('hidden');
@@ -197,7 +193,6 @@
             simulateProcessing();
         });
 
-        // (시뮬레이션 제어 로직 유지)
         function simulateProcessing() {
             const step1 = document.getElementById('step-1');
             const step2 = document.getElementById('step-2');
@@ -231,3 +226,5 @@
             }
         }
     </script>
+</body>
+</html>
