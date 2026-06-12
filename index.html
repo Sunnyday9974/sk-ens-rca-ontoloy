@@ -23,12 +23,12 @@
                 <i class="fa-solid fa-microchip mr-1.5 text-emerald-400 animate-pulse"></i>AI/DT TF 실시간 동기화 모드
             </div>
             <div class="text-[10px] text-blue-300 font-mono bg-blue-950/40 px-2 py-0.5 rounded border border-blue-800/30">
-                <i class="fa-solid fa-code-branch mr-1 text-amber-400"></i>소스 반영 시각: <span class="text-amber-300 font-bold">06/12 15:50</span>
+                <i class="fa-solid fa-code-branch mr-1 text-amber-400"></i>소스 반영 시각: <span class="text-amber-300 font-bold">06/12 19:15</span>
             </div>
         </div>
     </header>
 
-    <main class="flex-1 w-full max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 my-2">
+    <main class="w-full max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 my-2 flex-1">
         
         <div class="lg:col-span-4 flex flex-col gap-5">
             <section class="p-5 bg-white shadow-sm rounded-xl border border-gray-200">
@@ -213,7 +213,11 @@
                 });
 
                 if (response.ok) {
-                    const n8nRawData = await response.json();
+                    let n8nRawData = await response.json();
+                    // 💡 n8n 응답이 배열 포맷 안에 담겨서 넘어오는 경우를 대비한 유연한 언래핑 기술 적용
+                    if (Array.isArray(n8nRawData) && n8nRawData.length > 0) {
+                        n8nRawData = n8nRawData[0];
+                    }
                     runSynchronizedSteps(n8nRawData);
                 } else {
                     showEmptyError();
@@ -243,44 +247,67 @@
 
         function resetAllStepsToDefault() { setStepStatus(document.getElementById('step-1'), 'default'); setStepStatus(document.getElementById('step-2'), 'default'); setStepStatus(document.getElementById('step-3'), 'default'); }
 
-        // 💡 [최종 수정]: 가짜 대피용 하드코딩 배열을 완전히 녹여 없앤 청정 렌더링 시스템
+        // 💡 [초정밀 조율 완료]: n8n의 정형화된 머지 아웃풋 포맷을 100% 실시간 추적하여 드로잉하는 표준 엔진
         function render100PercentLiveGraph(resultData) {
             loadingGraph.classList.add('hidden'); resultSection.classList.remove('hidden');
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> 실시간 데이터베이스 동기화 완료';
             monitorStatus.className = "flex items-center gap-1.5 text-[11px] text-emerald-400 font-bold";
 
-            let visNodes = []; let visEdges = []; let nodesMap = new Map(); let edgesMap = new Map();
+            let visNodes = []; let visEdges = []; let nodesMap = new Map();
             const colorPalette = { 'Document': '#10b981', 'Asset': '#3b82f6', 'Alarm': '#f43f5e', 'FailureMode': '#eab308', 'CauseStep': '#8b5cf6', 'Action': '#ec4899', 'Lesson': '#64748b' };
 
-            if (resultData && resultData.length > 0) {
-                resultData.forEach(row => {
-                    if (row.data && row.data.values) {
-                        row.data.values.forEach(val => {
-                            const sNode = val[0]; const rRel = val[1]; const tNode = val[2];
-                            [sNode, tNode].forEach(node => {
-                                if(node && node.elementId && !nodesMap.has(node.elementId)) {
-                                    const typeLabel = node.labels ? node.labels[0] : 'Nodes';
-                                    const textBody = node.properties ? (node.properties.title || node.properties.name || node.properties.id) : '개체';
-                                    nodesMap.set(node.elementId, { id: node.elementId, label: textBody, type: typeLabel, shape: 'dot', size: typeLabel === 'Document' ? 24 : 15, color: colorPalette[typeLabel] || '#94a3b8' });
-                                }
-                            });
-                            if(rRel && rRel.elementId && !edgesMap.has(rRel.elementId)) { edgesMap.set(rRel.elementId, true); visEdges.push({ from: rRel.startElementId, to: rRel.endElementId, label: rRel.type }); }
+            // n8n 데이터 소스로부터 nodes 정보와 relationships 정보를 즉시 분리 수급
+            const rawNodes = resultData.nodes || (resultData.json ? resultData.json.nodes : []);
+            const rawEdges = resultData.relationships || (resultData.json ? resultData.json.relationships : []);
+
+            // 1. 노드(Nodes) 추출 및 데이터 매핑
+            if (rawNodes && rawNodes.length > 0) {
+                rawNodes.forEach(node => {
+                    if (node && node.id) {
+                        const typeLabel = node.label || 'Nodes';
+                        const textBody = node.title || node.name || node.id_attr || '개체';
+                        
+                        nodesMap.set(node.id, {
+                            id: node.id,
+                            label: textBody,
+                            type: typeLabel,
+                            shape: 'dot',
+                            size: typeLabel === 'Document' ? 24 : 15,
+                            color: colorPalette[typeLabel] || '#94a3b8'
                         });
                     }
                 });
                 visNodes = Array.from(nodesMap.values());
             }
 
-            // 상단 텍스트 명세 및 배지 업데이트 구동
+            // 2. 관계(Edges) 추출 및 n8n 가공 필드(from, to) 매핑
+            if (rawEdges && rawEdges.length > 0) {
+                rawEdges.forEach(edge => {
+                    if (edge && edge.from && edge.to) {
+                        visEdges.push({
+                            from: edge.from,
+                            to: edge.to,
+                            label: edge.label
+                        });
+                    }
+                });
+            }
+
+            // 상단 텍스트 명세 목록 빌드 구동
             const nodesListUl = document.getElementById('live-nodes-list'); const edgesListUl = document.getElementById('live-edges-list');
             nodesListUl.innerHTML = ''; edgesListUl.innerHTML = '';
 
             visNodes.forEach(n => {
                 const li = document.createElement('li'); li.innerHTML = `• <span style="color:${n.color}; font-weight:600;">[${n.type}]</span> ${n.label}`; nodesListUl.appendChild(li);
             });
+            
             visEdges.forEach(e => {
                 const fromNode = nodesMap.get(e.from); const toNode = nodesMap.get(e.to);
-                if(fromNode && toNode) { const li = document.createElement('li'); li.innerHTML = `• <span class="text-sky-400 font-semibold">[:${e.label}]</span> ${fromNode.label.substring(0,12)}.. ➔ ${toNode.label.substring(0,12)}..`; edgesListUl.appendChild(li); }
+                if(fromNode && toNode) { 
+                    const li = document.createElement('li'); 
+                    li.innerHTML = `• <span class="text-sky-400 font-semibold">[:${e.label}]</span> ${fromNode.label.substring(0,14)}.. ➔ ${toNode.label.substring(0,14)}..`; 
+                    edgesListUl.appendChild(li); 
+                }
             });
 
             document.getElementById('node-count').innerText = visNodes.length; document.getElementById('edge-count').innerText = visEdges.length;
@@ -291,11 +318,12 @@
                 return;
             }
 
+            // 3. vis.js 네트워크 캔버스 최종 드로잉 연출
             const container = document.getElementById('network-canvas'); const data = { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) };
             const options = {
-                edges: { arrows: { to: { Bavarian: true, scaleFactor: 0.45 } }, width: 1.2, color: { color: '#475569', highlight: '#38bdf8', hover: '#64748b' }, font: { color: '#94a3b8', size: 9, face: 'monospace', strokeWidth: 0, align: 'top' } },
+                edges: { arrows: { to: { enabled: true, scaleFactor: 0.55 } }, width: 1.4, color: { color: '#475569', highlight: '#38bdf8', hover: '#64748b' }, font: { color: '#94a3b8', size: 9, face: 'monospace', strokeWidth: 0, align: 'top' } },
                 nodes: { font: { color: '#ffffff', size: 10, face: 'sans-serif' } },
-                physics: { barnesHut: { gravitationalConstant: -2600, centralGravity: 0.26, springLength: 90 }, stabilization: { iterations: 120 } },
+                physics: { barnesHut: { gravitationalConstant: -2800, centralGravity: 0.25, springLength: 95 }, stabilization: { iterations: 150 } },
                 interaction: { hover: true, tooltipDelay: 100 }
             };
             new vis.Network(container, data, options);
@@ -310,4 +338,3 @@
     </script>
 </body>
 </html>
-
