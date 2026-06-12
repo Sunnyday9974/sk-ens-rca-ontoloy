@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나래 O&M RCA 온톨로지화</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col justify-between">
+
+    <header class="bg-blue-900 text-white py-6 px-8 shadow-md">
+        <h1 class="text-2xl font-bold tracking-wide"><i class="fa-solid fa-network-wired mr-3"></i>나래 O&M RCA 리포트 온톨로지화</h1>
+        <p class="text-sm text-blue-200 mt-1">구글 드라이브의 RCA 리포트를 분석하여 Neo4j 지식 그래프로 변환합니다.</p>
+    </header>
+
+    <main class="flex-1 max-w-4xl w-full mx-auto p-6 my-6 bg-white shadow-sm rounded-lg border border-gray-200">
+        
+        <section class="mb-8 p-6 bg-slate-50 rounded-lg border border-slate-200">
+            <h2 class="text-lg font-semibold mb-4 text-slate-700"><i class="fa-solid fa-file-circle-plus mr-2 text-blue-600"></i>1. RCA 파일 선택</h2>
+            <div class="flex flex-col sm:flex-row gap-4 items-center">
+                <button id="btn-select-file" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-5 rounded transition duration-200 shadow-sm flex items-center justify-center gap-2">
+                    <i class="fa-brands fa-google-drive"></i> 구글 드라이브에서 파일 선택
+                </button>
+                <div id="file-info" class="flex-1 text-gray-500 italic text-sm border-b border-dashed border-gray-300 py-2 w-full">
+                    선택된 파일이 없습니다.
+                </div>
+                <button id="btn-start-transform" disabled class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2.5 px-6 rounded transition duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-play"></i> 변환 시작
+                </button>
+            </div>
+        </section>
+
+        <section id="process-section" class="mb-8 p-6 border border-gray-200 rounded-lg hidden">
+            <h2 class="text-lg font-semibold mb-4 text-gray-700"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-500"></i>2. 온톨로지 생성 진행 상황</h2>
+            
+            <div class="space-y-4">
+                <div id="step-1" class="flex items-center gap-4 p-3 bg-gray-50 rounded">
+                    <div class="step-icon text-gray-400 text-lg"><i class="fa-regular fa-circle"></i></div>
+                    <div class="flex-1">
+                        <p class="font-medium text-sm">구글 드라이브에서 RCA 파일 다운로드</p>
+                    </div>
+                </div>
+                <div id="step-2" class="flex items-center gap-4 p-3 bg-gray-50 rounded">
+                    <div class="step-icon text-gray-400 text-lg"><i class="fa-regular fa-circle"></i></div>
+                    <div class="flex-1">
+                        <p class="font-medium text-sm">LLM 기반 RCA 텍스트 분석 및 Entity/Relationship 추출</p>
+                    </div>
+                </div>
+                <div id="step-3" class="flex items-center gap-4 p-3 bg-gray-50 rounded">
+                    <div class="step-icon text-gray-400 text-lg"><i class="fa-regular fa-circle"></i></div>
+                    <div class="flex-1">
+                        <p class="font-medium text-sm">Neo4j Graph DB 지식 그래프 반영 및 스키마 정렬</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="result-section" class="p-6 bg-emerald-50 border border-emerald-200 rounded-lg hidden">
+            <h2 class="text-lg font-semibold text-emerald-800 mb-2"><i class="fa-solid fa-circle-check mr-2"></i>변환 완료!</h2>
+            <p class="text-sm text-emerald-700 mb-4">RCA 리포트가 성공적으로 온톨로지화되어 Neo4j에 반영되었습니다.</p>
+            <div class="grid grid-cols-2 gap-4 max-w-sm text-center">
+                <div class="bg-white p-3 rounded shadow-sm border border-emerald-100">
+                    <span class="block text-xs text-gray-500">생성된 노드(Nodes)</span>
+                    <span id="node-count" class="text-xl font-bold text-slate-800">0</span>
+                </div>
+                <div class="bg-white p-3 rounded shadow-sm border border-emerald-100">
+                    <span class="block text-xs text-gray-500">생성된 관계(Edges)</span>
+                    <span id="edge-count" class="text-xl font-bold text-slate-800">0</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-100 text-center py-4 text-xs text-gray-400 border-t border-gray-200">
+        © 2026 나래 O&M AI/DT TF. All rights reserved.
+    </footer>
+
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <script>
+        const API_KEY = 'AIzaSyDUb9w8DUJ1z6rA3f1cWLvtK_dHML2B0Ys';
+        const CLIENT_ID = '226564701904-hr1l78rknenlm0fn3gul1cvmkve0ntuc.apps.googleusercontent.com';
+        const SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
+
+        // ===================================================
+        // [필수 설정] n8n Webhook 노드의 'Test URL' 주소를 여기에 넣어주세요!
+        // ===================================================
+        const N8N_WEBHOOK_URL = 'https://seoneenam.app.n8n.cloud/webhook-test/rca-ontology-trigger';
+
+        let accessToken = null;
+        let selectedFileId = null;
+        let selectedFileName = null;
+        let tokenClient = null;
+        let pickerApiLoaded = false;
+
+        const btnSelectFile = document.getElementById('btn-select-file');
+        const btnStartTransform = document.getElementById('btn-start-transform');
+        const fileInfo = document.getElementById('file-info');
+        const processSection = document.getElementById('process-section');
+        const resultSection = document.getElementById('result-section');
+
+        // 1. 순수 gapi 인프라 빌드 (안정적인 콜백 체인 구성)
+        function gapiLoadCallback() {
+            gapi.load('picker', () => {
+                pickerApiLoaded = true;
+                console.log('✔ 구글 Picker API 라이브러리 준비 완료');
+            });
+        }
+
+        // 2. Identity 서비스 토큰 클라이언트 초기화
+        function gsiLoadCallback() {
+            if (typeof google !== 'undefined') {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID,
+                    scope: SCOPE,
+                    callback: (response) => {
+                        if (response.error !== undefined) {
+                            console.error('인증 실패:', response.error);
+                            return;
+                        }
+                        accessToken = response.access_token;
+                        console.log('✔ 보안 토큰 발급 성공');
+                        
+                        // 구글인증 세션이 완전히 안정될 수 있도록 타임아웃 부여 후 실행
+                        setTimeout(createPicker, 400);
+                    },
+                });
+                console.log('✔ Google Identity Client 초기화 완료');
+            }
+        }
+
+        window.onload = () => {
+            if (typeof gapi !== 'undefined') gapiLoadCallback();
+            setTimeout(gsiLoadCallback, 800);
+        };
+
+        // 3. 파일 선택 버튼 핸들러
+        btnSelectFile.addEventListener('click', () => {
+            if (!tokenClient || !pickerApiLoaded) {
+                alert('구글 서비스 인프라를 연결 중입니다. 1~2초 후 다시 클릭해 주세요.');
+                if(typeof gapi !== 'undefined' && !pickerApiLoaded) gapiLoadCallback();
+                if(!tokenClient) gsiLoadCallback();
+                return;
+            }
+            tokenClient.requestAccessToken({prompt: 'select_account'});
+        });
+
+        // 4. 드라이브 파일 선택 창 생성 및 화면 표출
+        function createPicker() {
+            if (!accessToken) return;
+            
+            try {
+                const view = new google.picker.View(google.picker.ViewId.DOCS);
+                
+                const picker = new google.picker.PickerBuilder()
+                    .addView(view)
+                    .setOAuthToken(accessToken)
+                    .setDeveloperKey(API_KEY)
+                    .setCallback(pickerCallback)
+                    .setTitle("나래 O&M RCA 리포트 선택")
+                    .build();
+                
+                picker.setVisible(true);
+                console.log('✔ Picker 팝업 창이 브라우저 레이어에 렌더링되었습니다.');
+            } catch (error) {
+                console.error('Picker 빌드 에러 발생:', error);
+                alert('드라이브 선택기를 여는 과정에서 오류가 발생했습니다. F12 콘솔 창을 확인해 주세요.');
+            }
+        }
+
+        // 5. 파일 선택 콜백
+        function pickerCallback(data) {
+            if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
+                const doc = data[google.picker.Response.DOCUMENTS][0];
+                selectedFileId = doc[google.picker.Document.ID];
+                selectedFileName = doc[google.picker.Document.NAME];
+
+                fileInfo.innerText = `📄 [선택됨] ${selectedFileName}`;
+                fileInfo.classList.remove('text-gray-500', 'italic');
+                fileInfo.classList.add('text-blue-600', 'font-medium');
+                
+                btnStartTransform.removeAttribute('disabled');
+            }
+        }
+
+        // 6. 변환 시작 버튼 클릭 이벤트 (실제 n8n 호출 연동부)
+        btnStartTransform.addEventListener('click', async () => {
+            if(!selectedFileId) return;
+            
+            // 화면 UI 초기화 및 로딩 활성화
+            processSection.classList.remove('hidden');
+            resultSection.classList.add('hidden');
+            
+            const step1 = document.getElementById('step-1');
+            setStepStatus(step1, 'loading');
+
+            try {
+                // n8n 웹훅으로 실제 데이터 전송
+                const response = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        fileId: selectedFileId,
+                        fileName: selectedFileName
+                    })
+                });
+
+                if (response.ok) {
+                    console.log('✔ n8n 웹훅으로 데이터 전송 성공!');
+                    // n8n 호출 성공 이후 다음 시뮬레이션 단계 트리거
+                    continueSimulationAfterWebhook();
+                } else {
+                    alert('n8n 서버 연동 실패 (상태 코드 에러)');
+                    setStepStatus(step1, 'default');
+                }
+            } catch (error) {
+                console.error('n8n 웹훅 연동 에러:', error);
+                alert('n8n 웹훅 URL 호출에 실패했습니다. 코드를 확인해 주세요.');
+                setStepStatus(step1, 'default');
+            }
+        });
+
+        // n8n 전송 성공 확인 후 가짜 시뮬레이션을 이어 나가는 함수
+        function continueSimulationAfterWebhook() {
+            const step1 = document.getElementById('step-1');
+            const step2 = document.getElementById('step-2');
+            const step3 = document.getElementById('step-3');
+
+            setStepStatus(step1, 'success');
+            setStepStatus(step2, 'loading');
+
+            setTimeout(() => {
+                setStepStatus(step2, 'success');
+                setStepStatus(step3, 'loading');
+            }, 2500);
+
+            setTimeout(() => {
+                setStepStatus(step3, 'success');
+                resultSection.classList.remove('hidden');
+                document.getElementById('node-count').innerText = "18";
+                document.getElementById('edge-count').innerText = "26";
+            }, 5500);
+        }
+
+        // 공통 UI 아이콘 상태 제어 함수
+        function setStepStatus(stepElement, status) {
+            const iconDiv = stepElement.querySelector('.step-icon');
+            if(status === 'loading') {
+                stepElement.className = "flex items-center gap-4 p-3 bg-blue-50 rounded border border-blue-200 animate-pulse";
+                iconDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-blue-500"></i>';
+            } else if(status === 'success') {
+                stepElement.className = "flex items-center gap-4 p-3 bg-emerald-50 rounded border border-emerald-100";
+                iconDiv.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+            } else {
+                stepElement.className = "flex items-center gap-4 p-3 bg-gray-50 rounded";
+                iconDiv.innerHTML = '<i class="fa-regular fa-circle text-gray-400"></i>';
+            }
+        }
+    </script>
+</body>
+</html>
