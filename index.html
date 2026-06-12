@@ -8,11 +8,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
-        /* 그래프 캔버스 스타일 커스텀 */
         #network-canvas {
             width: 100%;
             height: 100%;
-            background-color: #0f172a; /* Slate 900 */
+            background-color: #0f172a;
         }
     </style>
 </head>
@@ -38,7 +37,7 @@
                 </h2>
                 <div class="flex flex-col gap-3">
                     <button id="btn-select-file" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-200 shadow-sm flex items-center justify-center gap-2 cursor-pointer">
-                        <i class="fa-brands fa-google-drive"></i> 구글 드라이브에서 파일 선택
+                        <i id="drive-icon" class="fa-brands fa-google-drive"></i> <span id="btn-text">구글 드라이브에서 파일 선택</span>
                     </button>
                     <div id="file-info" class="text-gray-400 italic text-xs text-center border border-dashed border-gray-200 rounded-lg py-2.5 bg-gray-50 px-2 truncate">
                         선택된 파일이 없습니다.
@@ -136,16 +135,14 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <script>
-        // 무사히 검증을 마친 유저님의 실시간 인프라 핵심 환경 변수 고정
         const API_KEY = 'AIzaSyDUb9w8DUJ1z6rA3f1cWLvtK_dHML2B0Ys';
         const CLIENT_ID = '226564701904-hr1l78rknenlm0fn3gul1cvmkve0ntuc.apps.googleusercontent.com';
         const SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
         const N8N_WEBHOOK_URL = 'https://seoneenam.app.n8n.cloud/webhook-test/rca-ontology-trigger';
         
-        // 💡 실시간 쿼리 조회를 위한 Neo4j 인프라 주소 및 인증 자격 조합
         const NEO4J_QUERY_URL = 'https://fc3147f1.databases.neo4j.io/db/fc3147f1/query/v2';
         const NEO4J_USER = 'fc3147f1';
-        const NEO4J_PW = 'G6ZtO97w3V9YFfF1hO_r8bI-T2_R3fP0p9p7O_mAL4s'; // 유저 고유 암호 연동 유지
+        const NEO4J_PW = 'G6ZtO97w3V9YFfF1hO_r8bI-T2_R3fP0p9p7O_mAL4s';
 
         let accessToken = null;
         let selectedFileId = null;
@@ -164,8 +161,12 @@
         const graphContainer = document.getElementById('graph-container');
         const loadingGraph = document.getElementById('loading-graph');
 
+        // 💡 안정성 패치: API 로드 순서 일원화 및 버튼 로딩 인디케이터 연동
         function gapiLoadCallback() {
-            gapi.load('picker', () => { pickerApiLoaded = true; });
+            gapi.load('picker', () => { 
+                pickerApiLoaded = true; 
+                checkInfrastructureReady();
+            });
         }
 
         function gsiLoadCallback() {
@@ -174,33 +175,62 @@
                     client_id: CLIENT_ID,
                     scope: SCOPE,
                     callback: (response) => {
+                        if (response.error !== undefined) {
+                            console.error(response);
+                            return;
+                        }
                         accessToken = response.access_token;
-                        setTimeout(createPicker, 400);
+                        // 토큰 획득 즉시 안정적으로 드라이브 팝업을 띄웁니다.
+                        createPicker();
                     },
                 });
+                checkInfrastructureReady();
+            }
+        }
+
+        // 인프라 준비 상태를 유저에게 실시간 브리핑
+        function checkInfrastructureReady() {
+            if (pickerApiLoaded && tokenClient) {
+                console.log("✔ 구글 API 시스템 인프라 연동 성공");
+                document.getElementById('drive-icon').className = "fa-brands fa-google-drive text-emerald-400";
             }
         }
 
         window.onload = () => {
             if (typeof gapi !== 'undefined') gapiLoadCallback();
-            setTimeout(gsiLoadCallback, 800);
+            setTimeout(gsiLoadCallback, 500);
         };
 
+        // 💡 클릭 핸들러 오류 전면 수정: 검증문 우회 후 실시간 토큰 요청 트리거 고정
         btnSelectFile.addEventListener('click', () => {
-            if (!tokenClient || !pickerApiLoaded) {
-                alert('인프라 초기화 중입니다. 잠시 후 다시 클릭해 주세요.');
+            if (!tokenClient) {
+                // 혹시 모를 로딩 지연 시 즉시 재초기화 후 실행
+                gsiLoadCallback();
+                setTimeout(() => { tokenClient.requestAccessToken(); }, 300);
                 return;
             }
-            tokenClient.requestAccessToken({prompt: 'select_account'});
+            tokenClient.requestAccessToken();
         });
 
         function createPicker() {
             if (!accessToken) return;
-            const view = new google.picker.View(google.picker.ViewId.DOCS);
-            const picker = new google.picker.PickerBuilder()
-                .addView(view).setOAuthToken(accessToken).setDeveloperKey(API_KEY)
-                .setCallback(pickerCallback).setTitle("나래 O&M RCA 리포트 선택").build();
-            picker.setVisible(true);
+            try {
+                const view = new google.picker.View(google.picker.ViewId.DOCS);
+                // PDF 파일만 깔끔하게 필터링하여 시연 가독성 상향
+                view.setMimeTypes("application/pdf");
+
+                const picker = new google.picker.PickerBuilder()
+                    .addView(view)
+                    .setOAuthToken(accessToken)
+                    .setDeveloperKey(API_KEY)
+                    .setCallback(pickerCallback)
+                    .setTitle("나래 O&M RCA 리포트 선택 (PDF 전용)")
+                    .build();
+                picker.setVisible(true);
+            } catch (err) {
+                console.error("Picker 오픈 실패:", err);
+                alert("구글 드라이브 선택기를 여는 중 오류가 발생했습니다. 브라우저의 팝업 차단 설정을 확인해 주세요.");
+            }
         }
 
         function pickerCallback(data) {
@@ -214,7 +244,7 @@
             }
         }
 
-        // 변환 시작 실행부
+        // 변환 시작 제어부
         btnStartTransform.addEventListener('click', async () => {
             if(!selectedFileId) return;
             
@@ -240,11 +270,11 @@
                 if (response.ok) {
                     continueSimulationAfterWebhook();
                 } else {
-                    alert('n8n 파이프라인 연동 실패');
+                    alert('n8n 파이프라인 연동에 실패했습니다.');
                     resetMonitorToDefault();
                 }
             } catch (error) {
-                alert('네트워크 프로토콜 에러가 발생했습니다.');
+                alert('네트워크 연결 프로토콜 에러가 발생했습니다.');
                 resetMonitorToDefault();
             }
         });
@@ -264,16 +294,12 @@
 
             setTimeout(() => {
                 setStepStatus(step3, 'success');
-                // 💡 n8n 적재 파이프라인 완료 직후, 실제 Neo4j Cloud에 다이렉트 쿼리를 날려 실시간 드로잉!
                 fetchAndRenderRealNeo4jGraph();
             }, 5500);
         }
 
-        // =========================================================================
-        // 🔮 [핵심 기능] Neo4j Query API 연동 및 실시간 거미줄 그래프 시각화 엔진
-        // =========================================================================
+        // Neo4j 실시간 조회 및 Vis.js 네트워크 렌더링 엔진
         async function fetchAndRenderRealNeo4jGraph() {
-            // 전 등급 무료 배포된 Query API v2 표준 텍스트 바인딩 조회 구조 사용
             const queryBody = {
                 "statement": "MATCH (n)-[r]->(m) RETURN n, r, m LIMIT 100"
             };
@@ -284,36 +310,32 @@
                     headers: {
                         'Content-Type': 'application/json',
                         'X-Neo4j-Aura-Version': 'v2',
-                        'Authorization': 'Basic ' + btoa(NEO4J_USER + ':' + NEO4J_PW) // 암호화 패스 통과
+                        'Authorization': 'Basic ' + btoa(NEO4J_USER + ':' + NEO4J_PW)
                     },
                     body: JSON.stringify(queryBody)
                 });
 
-                if (!res.ok) throw new Error('Neo4j 데이터 파싱 실패');
+                if (!res.ok) throw new Error('Neo4j 데이터 로드 실패');
 
                 const resultData = await res.json();
                 
-                // 테이블 로직 노드/관계선 배열 변환 바인딩
                 let nodesMap = new Map();
                 let edgesArray = [];
 
-                // 각 노드의 종류별 전용 색상 맵 (임원 시연용 최고급 컬러 스펙 선별)
                 const colorPalette = {
-                    'Document': '#10b981',    // 에메랄드 (문서)
-                    'Asset': '#3b82f6',       // 블루 (설비)
-                    'Alarm': '#f43f5e',       // 로즈 (현상/알람)
-                    'FailureMode': '#eab308', // 옐로우
-                    'CauseStep': '#8b5cf6',   // 바이올렛
-                    'Action': '#ec4899',      // 핑크
-                    'Lesson': '#64748b'       // 슬레이트
+                    'Document': '#10b981',
+                    'Asset': '#3b82f6',
+                    'Alarm': '#f43f5e',
+                    'FailureMode': '#eab308',
+                    'CauseStep': '#8b5cf6',
+                    'Action': '#ec4899',
+                    'Lesson': '#64748b'
                 };
 
-                // Neo4j API 고유 데이터 구조 순회 및 매핑 추출
                 if (resultData && resultData.length > 0) {
                     resultData.forEach(row => {
                         if(row.data && row.data.values) {
                             row.data.values.forEach(val => {
-                                // val[0]: 출발노드(s), val[1]: 관계선(r), val[2]: 도착노드(t)
                                 const sourceNode = val[0];
                                 const rel = val[1];
                                 const targetNode = val[2];
@@ -321,7 +343,6 @@
                                 [sourceNode, targetNode].forEach(node => {
                                     if(node && node.elementId) {
                                         const label = node.labels[0] || 'Nodes';
-                                        // 캡션 우선순위 부여: title이 있으면 title, 없으면 name 표기
                                         const captionText = node.properties.title || node.properties.name || node.properties.id;
                                         
                                         nodesMap.set(node.elementId, {
@@ -334,7 +355,7 @@
                                             },
                                             font: { color: '#ffffff', size: 11 },
                                             shape: 'dot',
-                                            size: label === 'Document' ? 22 : 16 // 문서 마스터 노드는 강조 처리
+                                            size: label === 'Document' ? 22 : 16
                                         });
                                     }
                                 });
@@ -356,15 +377,12 @@
                 }
 
                 const uniqueNodes = Array.from(nodesMap.values());
-
-                // 캔버스 엘리먼트에 거미줄 피팅 렌더링 시작
                 const container = document.getElementById('network-canvas');
                 const data = {
                     nodes: new vis.DataSet(uniqueNodes),
                     edges: new vis.DataSet(edgesArray)
                 };
                 
-                // 최적의 동적 물리 레이아웃 옵션 설정
                 const options = {
                     physics: {
                         barnesHut: { gravitationalConstant: -3000, centralGravity: 0.3, springLength: 95 },
@@ -373,10 +391,8 @@
                     interaction: { hover: true, tooltipDelay: 100 }
                 };
 
-                // 실시간 그래프 생성!
                 new vis.Network(container, data, options);
 
-                // 로딩 인디케이터 해제 및 상태판 동기화 업데이트
                 loadingGraph.classList.add('hidden');
                 resultSection.classList.remove('hidden');
                 
@@ -387,4 +403,34 @@
                 document.getElementById('edge-count').innerText = edgesArray.length;
 
             } catch (err) {
-                console.error('시각화
+                console.error(err);
+                alert('Neo4j 데이터를 시각화하는 과정에서 에러가 발생했습니다.');
+                resetMonitorToDefault();
+            }
+        }
+
+        function setStepStatus(stepElement, status) {
+            const iconDiv = stepElement.querySelector('.step-icon');
+            if(status === 'loading') {
+                stepElement.className = "flex items-center gap-3.5 p-3 bg-blue-50 rounded-lg border border-blue-200 text-blue-800 font-medium text-xs";
+                iconDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-blue-500"></i>';
+            } else if(status === 'success') {
+                stepElement.className = "flex items-center gap-3.5 p-3 bg-emerald-50/60 rounded-lg border border-emerald-100 text-gray-500 text-xs";
+                iconDiv.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+            } else {
+                stepElement.className = "flex items-center gap-3.5 p-3 bg-gray-50 rounded-lg text-gray-400 text-xs";
+                iconDiv.innerHTML = '<i class="fa-regular fa-circle text-gray-400"></i>';
+            }
+        }
+
+        function resetMonitorToDefault() {
+            const step1 = document.getElementById('step-1');
+            setStepStatus(step1, 'default');
+            viewPlaceholder.classList.remove('hidden');
+            graphContainer.classList.add('hidden');
+            monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-slate-500 inline-block"></span> 대기 중';
+            monitorStatus.className = "flex items-center gap-1.5 text-[11px] text-slate-400";
+        }
+    </script>
+</body>
+</html>
