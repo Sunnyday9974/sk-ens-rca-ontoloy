@@ -23,7 +23,7 @@
                 <i class="fa-solid fa-microchip mr-1.5 text-emerald-400 animate-pulse"></i>AI/DT TF 실시간 동기화 모드
             </div>
             <div class="text-[10px] text-blue-300 font-mono bg-blue-950/40 px-2 py-0.5 rounded border border-blue-800/30">
-                <i class="fa-solid fa-code-branch mr-1 text-amber-400"></i>소스 반영 시각: <span class="text-amber-300 font-bold">06/12 19:15</span>
+                <i class="fa-solid fa-code-branch mr-1 text-amber-400"></i>소스 반영 시각: <span class="text-amber-300 font-bold">06/12 19:20</span>
             </div>
         </div>
     </header>
@@ -214,7 +214,8 @@
 
                 if (response.ok) {
                     let n8nRawData = await response.json();
-                    // 💡 n8n 응답이 배열 포맷 안에 담겨서 넘어오는 경우를 대비한 유연한 언래핑 기술 적용
+                    
+                    // n8n 응답 아이템이 단일 원소 배열일 경우 유연하게 첫 번째 개체 수급
                     if (Array.isArray(n8nRawData) && n8nRawData.length > 0) {
                         n8nRawData = n8nRawData[0];
                     }
@@ -242,12 +243,12 @@
             loadingGraph.classList.add('hidden');
             document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-500"></i>';
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span> 통신 데이터 공백';
-            alert("n8n으로부터 리턴된 변환 데이터 배열이 비어있습니다. n8n마지막 노드 전송 설정을 확인해주세요.");
+            alert("n8n으로부터 리턴된 변환 데이터 배열이 비어있습니다. n8n 마지막 노드(Respond to Webhook)의 전송 설정을 확인해주세요.");
         }
 
         function resetAllStepsToDefault() { setStepStatus(document.getElementById('step-1'), 'default'); setStepStatus(document.getElementById('step-2'), 'default'); setStepStatus(document.getElementById('step-3'), 'default'); }
 
-        // 💡 [초정밀 조율 완료]: n8n의 정형화된 머지 아웃풋 포맷을 100% 실시간 추적하여 드로잉하는 표준 엔진
+        // 💡 [초정밀 보정 엔진]: n8n 직렬 파이프라인의 통합 머지 JSON 아웃풋을 유연하게 가공하여 드로잉하는 마스터 매퍼
         function render100PercentLiveGraph(resultData) {
             loadingGraph.classList.add('hidden'); resultSection.classList.remove('hidden');
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> 실시간 데이터베이스 동기화 완료';
@@ -256,11 +257,19 @@
             let visNodes = []; let visEdges = []; let nodesMap = new Map();
             const colorPalette = { 'Document': '#10b981', 'Asset': '#3b82f6', 'Alarm': '#f43f5e', 'FailureMode': '#eab308', 'CauseStep': '#8b5cf6', 'Action': '#ec4899', 'Lesson': '#64748b' };
 
-            // n8n 데이터 소스로부터 nodes 정보와 relationships 정보를 즉시 분리 수급
-            const rawNodes = resultData.nodes || (resultData.json ? resultData.json.nodes : []);
-            const rawEdges = resultData.relationships || (resultData.json ? resultData.json.relationships : []);
+            // 어떠한 래핑 구조(배열, json 캡슐)로 데이터가 오든 알맹이만 쏙 발라내는 필터 작동
+            let targetData = resultData;
+            if (Array.isArray(resultData) && resultData.length > 0) {
+                targetData = resultData[0];
+            }
+            if (targetData.json) {
+                targetData = targetData.json;
+            }
 
-            // 1. 노드(Nodes) 추출 및 데이터 매핑
+            const rawNodes = targetData.nodes || [];
+            const rawEdges = targetData.relationships || [];
+
+            // 1. 노드(Nodes) 가공 및 매핑
             if (rawNodes && rawNodes.length > 0) {
                 rawNodes.forEach(node => {
                     if (node && node.id) {
@@ -280,7 +289,7 @@
                 visNodes = Array.from(nodesMap.values());
             }
 
-            // 2. 관계(Edges) 추출 및 n8n 가공 필드(from, to) 매핑
+            // 2. 관계선(Edges) 가공 및 vis.js 전용 규격(from, to) 매핑
             if (rawEdges && rawEdges.length > 0) {
                 rawEdges.forEach(edge => {
                     if (edge && edge.from && edge.to) {
@@ -293,7 +302,7 @@
                 });
             }
 
-            // 상단 텍스트 명세 목록 빌드 구동
+            // 상단 요약 명세 정보 텍스트 UI 업데이트 리스트 빌드
             const nodesListUl = document.getElementById('live-nodes-list'); const edgesListUl = document.getElementById('live-edges-list');
             nodesListUl.innerHTML = ''; edgesListUl.innerHTML = '';
 
@@ -318,7 +327,7 @@
                 return;
             }
 
-            // 3. vis.js 네트워크 캔버스 최종 드로잉 연출
+            // 3. vis.js 네트워크 드로잉 차트 최종 출력 
             const container = document.getElementById('network-canvas'); const data = { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) };
             const options = {
                 edges: { arrows: { to: { enabled: true, scaleFactor: 0.55 } }, width: 1.4, color: { color: '#475569', highlight: '#38bdf8', hover: '#64748b' }, font: { color: '#94a3b8', size: 9, face: 'monospace', strokeWidth: 0, align: 'top' } },
