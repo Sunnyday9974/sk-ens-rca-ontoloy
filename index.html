@@ -27,7 +27,7 @@
                 <i class="fa-solid fa-microchip mr-1.5 text-emerald-400 animate-pulse"></i>AI/DT TF 실시간 동기화 모드
             </div>
             <div class="text-[10px] text-blue-300 font-mono bg-blue-950/40 px-2 py-0.5 rounded border border-blue-800/30">
-                <i class="fa-solid fa-code-branch mr-1 text-amber-400"></i>소스 반영 시각: <span class="text-amber-300 font-bold">06/12 11:30</span>
+                <i class="fa-solid fa-code-branch mr-1 text-amber-400"></i>소스 반영 시각: <span class="text-amber-300 font-bold">06/12 11:40</span>
             </div>
         </div>
     </header>
@@ -81,17 +81,17 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-white p-3 rounded-lg border border-emerald-100 text-center shadow-sm">
                         <span class="block text-[11px] text-gray-400 font-medium">실시간 노드(Nodes)</span>
-                        <span id="node-count" class="text-2xl font-black text-slate-800">0</span>
+                        <span id="node-count" class="text-2xl font-black text-slate-800">14</span>
                     </div>
                     <div class="bg-white p-3 rounded-lg border border-emerald-100 text-center shadow-sm">
                         <span class="block text-[11px] text-gray-400 font-medium">실시간 관계(Edges)</span>
-                        <span id="edge-count" class="text-2xl font-black text-slate-800">0</span>
+                        <span id="edge-count" class="text-2xl font-black text-slate-800">18</span>
                     </div>
                 </div>
             </section>
         </div>
 
-        <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-[600px]">
+        <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-[650px]">
             <div class="bg-slate-800 text-slate-200 px-4 py-3 flex justify-between items-center border-b border-slate-700">
                 <div class="flex items-center gap-2 text-xs font-semibold tracking-wider">
                     <i class="fa-solid fa-desktop text-amber-400"></i> NEO4J GRAPH REAL-TIME MONITOR
@@ -114,32 +114,38 @@
                 <div id="graph-container" class="w-full h-full hidden flex flex-col gap-4 text-left transition-all duration-500 flex-1 relative">
                     
                     <div id="ontology-summary-box" class="grid grid-cols-1 md:grid-cols-2 gap-3 z-10">
-                        <div class="bg-slate-800/90 border border-slate-700 p-3 rounded-lg shadow-sm">
-                            <p class="text-xs font-bold text-emerald-400 mb-1.5 flex items-center justify-between">
-                                <span><i class="fa-solid fa-circle-dot mr-1"></i> 도출된 핵심 노드 (Nodes)</span>
-                                <span class="bg-emerald-500/20 px-1.5 py-0.5 rounded text-[10px]">총 14개</span>
+                        
+                        <div class="bg-slate-800/90 border border-slate-700 p-3 rounded-lg shadow-sm flex flex-col">
+                            <p class="text-xs font-bold text-emerald-400 mb-1.5 flex items-center justify-between border-b border-slate-700/50 pb-1">
+                                <span><i class="fa-solid fa-circle-dot mr-1"></i> 도출된 전체 노드 명세 (Nodes)</span>
+                                <span class="bg-emerald-500/20 px-1.5 py-0.5 rounded text-[10px] font-mono text-emerald-300 font-bold">14 Nodes</span>
                             </p>
-                            <ul class="text-[11px] text-slate-300 space-y-1 font-sans">
-                                <li>• <span class="text-emerald-400 font-semibold">[Document]</span> 나래_RCA_2026_06.pdf (1)</li>
-                                <li>• <span class="text-blue-400 font-semibold">[Asset]</span> 증기 터빈 및 내부 감속기 기어 (1)</li>
-                                <li>• <span class="text-rose-400 font-semibold">[Alarm]</span> 베어링 온도 이상 고온 경보 (1)</li>
-                                <li>• <span class="text-amber-400 font-semibold">[FailureMode]</span> 윤활유 공급 저하 및 기어 마모 (3)</li>
-                                <li>• <span class="text-purple-400 font-semibold">[CauseStep]</span> 오일 필터 막힘 ➔ 유량 공급 부족 (4)</li>
+                            <ul class="text-[10.5px] text-slate-300 space-y-1 font-sans max-h-[135px] overflow-y-auto pr-1">
+                                <li>• <span class="text-emerald-400 font-semibold">[Document]</span> 나래_RCA_2026_06.pdf <span class="text-slate-500">(ID:1)</span></li>
+                                <li>• <span class="text-blue-400 font-semibold">[Asset]</span> 증기 터빈 및 내부 감속기 기어 <span class="text-slate-500">(ID:1)</span></li>
+                                <li>• <span class="text-rose-400 font-semibold">[Alarm]</span> 베어링 온도 이상 고온 경보 <span class="text-slate-500">(ID:1)</span></li>
+                                <li>• <span class="text-amber-400 font-semibold">[FailureMode]</span> 윤활유 공급 저하 / 기어 이상 마모 / 진동 스파이크 <span class="text-slate-500">(ID:3)</span></li>
+                                <li>• <span class="text-purple-400 font-semibold">[CauseStep]</span> 오일 필터 막힘 ➔ 바이패스 밸브 고착 ➔ 유량 부족 ➔ 마찰열 발생 <span class="text-slate-500">(ID:4)</span></li>
+                                <li>• <span class="text-pink-400 font-semibold">[Action]</span> 필터 즉시 교체 / 신유 주입 플러싱 / 감속기 정밀 얼라인먼트 <span class="text-slate-500">(ID:3)</span></li>
+                                <li>• <span class="text-sky-400 font-semibold">[Lesson]</span> 정기 필터 교체 주기 단축 (6M ➔ 3M) <span class="text-slate-500">(ID:1)</span></li>
                             </ul>
                         </div>
-                        <div class="bg-slate-800/90 border border-slate-700 p-3 rounded-lg shadow-sm">
-                            <p class="text-xs font-bold text-sky-400 mb-1.5 flex items-center justify-between">
-                                <span><i class="fa-solid fa-arrows-spin mr-1"></i> 인과관계 연결 (Relationships)</span>
-                                <span class="bg-sky-500/20 px-1.5 py-0.5 rounded text-[10px]">총 18개</span>
+                        
+                        <div class="bg-slate-800/90 border border-slate-700 p-3 rounded-lg shadow-sm flex flex-col">
+                            <p class="text-xs font-bold text-sky-400 mb-1.5 flex items-center justify-between border-b border-slate-700/50 pb-1">
+                                <span><i class="fa-solid fa-arrows-spin mr-1"></i> 전수 인과관계 매핑 (Relationships)</span>
+                                <span class="bg-sky-500/20 px-1.5 py-0.5 rounded text-[10px] font-mono text-sky-300 font-bold">18 Edges</span>
                             </p>
-                            <ul class="text-[11px] text-slate-300 space-y-1 font-sans">
-                                <li>• <span class="text-sky-400 font-semibold">[:ANALYZED_IN]</span> 알람/설비 ➔ 분석 문서 매핑</li>
-                                <li>• <span class="text-sky-400 font-semibold">[:OCCURRED_IN]</span> 고온 경보 현상 ➔ 해당 설비 연동</li>
-                                <li>• <span class="text-sky-400 font-semibold">[:ROOT_CAUSE_OF]</span> 필터 폐쇄 ➔ 기어 손상 인과 유도</li>
-                                <li>• <span class="text-sky-400 font-semibold">[:TRIGGERED_BY]</span> 유량 부족 현상 ➔ 고온 알람 유발</li>
-                                <li>• <span class="text-sky-400 font-semibold">[:ACTION_TAKEN]</span> 필터 즉시 교체 및 오일 플러싱 조치</li>
+                            <ul class="text-[10.5px] text-slate-300 space-y-1 font-sans max-h-[135px] overflow-y-auto pr-1">
+                                <li>• <span class="text-sky-400 font-semibold">[:ANALYZED_IN]</span> 알람/설비 개체 ➔ 분석 문서 노드 연동 <span class="text-slate-500">(x3)</span></li>
+                                <li>• <span class="text-sky-400 font-semibold">[:OCCURRED_IN]</span> 베어링 고온 경보 현상 ➔ 해당 증기 터빈 설비 매핑 <span class="text-slate-500">(x2)</span></li>
+                                <li>• <span class="text-sky-400 font-semibold">[:ROOT_CAUSE_OF]</span> 필터 폐쇄 ➔ 유량 부족 ➔ 마찰 손상 유기 인과 사슬 구동 <span class="text-slate-500">(x4)</span></li>
+                                <li>• <span class="text-sky-400 font-semibold">[:TRIGGERED_BY]</span> 최종 물리 유량 결핍 현상 ➔ 베어링 고온 경보 유발 <span class="text-slate-500">(x3)</span></li>
+                                <li>• <span class="text-sky-400 font-semibold">[:ACTION_TAKEN]</span> 필터 교체 / 오일 플러싱 / 얼라인먼트 수행 이력 연동 <span class="text-slate-500">(x5)</span></li>
+                                <li>• <span class="text-sky-400 font-semibold">[:PREVENTED_BY]</span> 재발 방지 주기 단축 조치 ➔ 미래 고장 모드 예방 차단 매핑 <span class="text-slate-500">(x1)</span></li>
                             </ul>
                         </div>
+                        
                     </div>
                     
                     <div class="flex-1 w-full rounded-xl border border-slate-800 overflow-hidden relative min-h-[340px] flex flex-col bg-slate-950/40">
@@ -316,6 +322,7 @@
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> 실시간 데이터베이스 동기화 완료';
             monitorStatus.className = "flex items-center gap-1.5 text-[11px] text-emerald-400 font-bold";
 
+            // 전체 카운트 명시 동기화
             document.getElementById('node-count').innerText = "14";
             document.getElementById('edge-count').innerText = "18";
 
@@ -329,11 +336,10 @@
                 { id: 7, label: '오일 정밀 플러싱', shape: 'dot', size: 15, color: '#ec4899', font: {color: '#fff', size: 11} }
             ];
 
-            // 💡 엣지(Edges) 텍스트 스타일 및 가독성 커스텀 세팅 존
             const edges = [
                 { from: 2, to: 1, label: 'ANALYZED_IN' },
                 { from: 3, to: 2, label: 'OCCURRED_IN' },
-                { from: 4, to: 5, label: 'ROOT_CAUSE_OF', color: { color: '#38bdf8' } }, // 핵심 관계선 포인트 강조
+                { from: 4, to: 5, label: 'ROOT_CAUSE_OF', color: { color: '#38bdf8' } },
                 { from: 5, to: 3, label: 'TRIGGERED_BY' },
                 { from: 6, to: 4, label: 'ACTION_TAKEN' },
                 { from: 7, to: 2, label: 'ACTION_TAKEN' }
@@ -346,23 +352,22 @@
             };
             
             const options = {
-                // 💡 화살표와 텍스트 두께를 슬림하고 우아하게 조정하는 전역 에지 스타일링 옵션
                 edges: {
                     arrows: {
-                        to: { Bavarian: true, scaleFactor: 0.4 } // 화살표 크기를 정밀 축소하여 정돈된 느낌 부여
+                        to: { Bavarian: true, scaleFactor: 0.4 }
                     },
-                    width: 1.2, // 관계선 자체의 두께를 얇게 지정 (기본값보다 슬림하게)
+                    width: 1.2,
                     color: {
-                        color: '#475569', // 기본 에지 색상을 어두운 차콜/슬레이트 톤으로 한 단계 다운
+                        color: '#475569',
                         highlight: '#38bdf8',
                         hover: '#64748b'
                     },
                     font: {
-                        color: '#94a3b8', // 텍스트 색상을 흐릿하고 세련된 라이트 그레이로 조정
-                        size: 9, // 글자 크기를 작고 정밀하게 축소 (기본 14 ➔ 9)
-                        face: 'monospace', // 고정폭 글꼴로 변경하여 프로페셔널한 느낌 연독
-                        strokeWidth: 0, // 글자 테두리(외곽선) 두께를 0으로 제거하여 투박함 원천 차단 (★핵심 패치)
-                        align: 'top' // 선 위에 글자가 깔끔하게 안착하도록 정렬
+                        color: '#94a3b8',
+                        size: 9,
+                        face: 'monospace',
+                        strokeWidth: 0,
+                        align: 'top'
                     }
                 },
                 physics: {
