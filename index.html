@@ -7,73 +7,129 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col justify-between">
+<body class="bg-slate-100 text-gray-800 min-h-screen flex flex-col justify-between">
 
-    <header class="bg-blue-900 text-white py-6 px-8 shadow-md">
-        <h1 class="text-2xl font-bold tracking-wide"><i class="fa-solid fa-network-wired mr-3"></i>나래 O&M RCA 리포트 온톨로지화</h1>
-        <p class="text-sm text-blue-200 mt-1">구글 드라이브의 RCA 리포트를 분석하여 Neo4j 지식 그래프로 변환합니다.</p>
+    <header class="bg-blue-900 text-white py-5 px-8 shadow-md flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold tracking-wide"><i class="fa-solid fa-network-wired mr-3 text-blue-400"></i>나래 O&M RCA 리포트 온톨로지화</h1>
+            <p class="text-xs text-blue-200 mt-1">구글 드라이브의 RCA 리포트를 분석하여 Neo4j 지식 그래프로 실시간 변환 및 시연합니다.</p>
+        </div>
+        <div class="bg-blue-800 text-white px-3 py-1.5 rounded text-xs font-semibold border border-blue-700 shadow-inner">
+            <i class="fa-solid fa-microchip mr-1.5 text-emerald-400 animate-pulse"></i>AI/DT TF 데모 Ver
+        </div>
     </header>
 
-    <main class="flex-1 max-w-4xl w-full mx-auto p-6 my-6 bg-white shadow-sm rounded-lg border border-gray-200">
+    <main class="flex-1 w-full max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 my-2">
         
-        <section class="mb-8 p-6 bg-slate-50 rounded-lg border border-slate-200">
-            <h2 class="text-lg font-semibold mb-4 text-slate-700"><i class="fa-solid fa-file-circle-plus mr-2 text-blue-600"></i>1. RCA 파일 선택</h2>
-            <div class="flex flex-col sm:flex-row gap-4 items-center">
-                <button id="btn-select-file" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-5 rounded transition duration-200 shadow-sm flex items-center justify-center gap-2">
-                    <i class="fa-brands fa-google-drive"></i> 구글 드라이브에서 파일 선택
-                </button>
-                <div id="file-info" class="flex-1 text-gray-500 italic text-sm border-b border-dashed border-gray-300 py-2 w-full">
-                    선택된 파일이 없습니다.
-                </div>
-                <button id="btn-start-transform" disabled class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2.5 px-6 rounded transition duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-play"></i> 변환 시작
-                </button>
-            </div>
-        </section>
-
-        <section id="process-section" class="mb-8 p-6 border border-gray-200 rounded-lg hidden">
-            <h2 class="text-lg font-semibold mb-4 text-gray-700"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-500"></i>2. 온톨로지 생성 진행 상황</h2>
+        <div class="lg:col-span-5 flex flex-col gap-5">
             
-            <div class="space-y-4">
-                <div id="step-1" class="flex items-center gap-4 p-3 bg-gray-50 rounded">
-                    <div class="step-icon text-gray-400 text-lg"><i class="fa-regular fa-circle"></i></div>
-                    <div class="flex-1">
-                        <p class="font-medium text-sm">구글 드라이브에서 RCA 파일 다운로드</p>
+            <section class="p-5 bg-white shadow-sm rounded-xl border border-gray-200">
+                <h2 class="text-base font-semibold mb-3.5 text-gray-700 flex items-center gap-2">
+                    <i class="fa-solid fa-file-circle-plus text-blue-600"></i>1. RCA 파일 지정
+                </h2>
+                <div class="flex flex-col gap-3">
+                    <button id="btn-select-file" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-200 shadow-sm flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-brands fa-google-drive"></i> 구글 드라이브에서 파일 선택
+                    </button>
+                    <div id="file-info" class="text-gray-400 italic text-xs text-center border border-dashed border-gray-200 rounded-lg py-2.5 bg-gray-50 px-2 truncate">
+                        선택된 파일이 없습니다.
                     </div>
+                    <button id="btn-start-transform" disabled class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-md disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-play"></i> 온톨로지 변환 시작
+                    </button>
                 </div>
-                <div id="step-2" class="flex items-center gap-4 p-3 bg-gray-50 rounded">
-                    <div class="step-icon text-gray-400 text-lg"><i class="fa-regular fa-circle"></i></div>
-                    <div class="flex-1">
-                        <p class="font-medium text-sm">LLM 기반 RCA 텍스트 분석 및 Entity/Relationship 추출</p>
-                    </div>
-                </div>
-                <div id="step-3" class="flex items-center gap-4 p-3 bg-gray-50 rounded">
-                    <div class="step-icon text-gray-400 text-lg"><i class="fa-regular fa-circle"></i></div>
-                    <div class="flex-1">
-                        <p class="font-medium text-sm">Neo4j Graph DB 지식 그래프 반영 및 스키마 정렬</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+            </section>
 
-        <section id="result-section" class="p-6 bg-emerald-50 border border-emerald-200 rounded-lg hidden">
-            <h2 class="text-lg font-semibold text-emerald-800 mb-2"><i class="fa-solid fa-circle-check mr-2"></i>변환 완료!</h2>
-            <p class="text-sm text-emerald-700 mb-4">RCA 리포트가 성공적으로 온톨로지화되어 Neo4j에 반영되었습니다.</p>
-            <div class="grid grid-cols-2 gap-4 max-w-sm text-center">
-                <div class="bg-white p-3 rounded shadow-sm border border-emerald-100">
-                    <span class="block text-xs text-gray-500">생성된 노드(Nodes)</span>
-                    <span id="node-count" class="text-xl font-bold text-slate-800">0</span>
+            <section id="process-section" class="p-5 bg-white shadow-sm rounded-xl border border-gray-200 hidden flex-1">
+                <h2 class="text-base font-semibold mb-4 text-gray-700 flex items-center gap-2">
+                    <i class="fa-solid fa-spinner fa-spin text-blue-500"></i>2. 실시간 엔진 로그
+                </h2>
+                <div class="space-y-3.5">
+                    <div id="step-1" class="flex items-center gap-3.5 p-3 bg-gray-50 rounded-lg transition-all duration-300">
+                        <div class="step-icon text-gray-400 text-base"><i class="fa-regular fa-circle"></i></div>
+                        <p class="font-medium text-xs text-gray-600">구글 드라이브에서 RCA 파일 안전하게 다운로드</p>
+                    </div>
+                    <div id="step-2" class="flex items-center gap-3.5 p-3 bg-gray-50 rounded-lg transition-all duration-300">
+                        <div class="step-icon text-gray-400 text-base"><i class="fa-regular fa-circle"></i></div>
+                        <p class="font-medium text-xs text-gray-600">LLM 기반 RCA 텍스트 분석 및 엔티티(Entity) 추출</p>
+                    </div>
+                    <div id="step-3" class="flex items-center gap-3.5 p-3 bg-gray-50 rounded-lg transition-all duration-300">
+                        <div class="step-icon text-gray-400 text-base"><i class="fa-regular fa-circle"></i></div>
+                        <p class="font-medium text-xs text-gray-600">Neo4j Graph DB 지식 그래프 반영 및 인과관계 생성</p>
+                    </div>
                 </div>
-                <div class="bg-white p-3 rounded shadow-sm border border-emerald-100">
-                    <span class="block text-xs text-gray-500">생성된 관계(Edges)</span>
-                    <span id="edge-count" class="text-xl font-bold text-slate-800">0</span>
+            </section>
+
+            <section id="result-section" class="p-5 bg-emerald-50 border border-emerald-200 shadow-sm rounded-xl hidden animate-fade-in">
+                <h2 class="text-base font-bold text-emerald-800 mb-1.5 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-check text-emerald-600"></i>변환 프로세스 완료!
+                </h2>
+                <p class="text-xs text-emerald-700 mb-4">RCA 리포트 분석 데이터가 정형화되어 Neo4j 오라 클라우드 인프라에 안착했습니다.</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white p-3 rounded-lg shadow-inner border border-emerald-100 text-center">
+                        <span class="block text-[11px] text-gray-400 font-medium">생성된 노드(Nodes)</span>
+                        <span id="node-count" class="text-2xl font-black text-slate-800">0</span>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg shadow-inner border border-emerald-100 text-center">
+                        <span class="block text-[11px] text-gray-400 font-medium">생성된 관계(Edges)</span>
+                        <span id="edge-count" class="text-2xl font-black text-slate-800">0</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-[500px]">
+            <div class="bg-slate-800 text-slate-200 px-4 py-3 flex justify-between items-center border-b border-slate-700">
+                <div class="flex items-center gap-2 text-xs font-semibold tracking-wider">
+                    <i class="fa-solid fa-desktop text-amber-400"></i> NEO4J KNOWLEDGE GRAPH REAL-TIME MONITOR
+                </div>
+                <div id="monitor-status" class="flex items-center gap-1.5 text-[11px] text-slate-400">
+                    <span class="w-2 h-2 rounded-full bg-slate-500 inline-block"></span> 대기 중
                 </div>
             </div>
-        </section>
+            
+            <div class="flex-1 bg-slate-900 relative flex flex-col justify-center items-center text-center p-6 text-slate-400" id="monitor-body">
+                
+                <div id="view-placeholder" class="space-y-4">
+                    <div class="text-5xl text-slate-700 animate-bounce"><i class="fa-solid fa-diagram-project"></i></div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-300">실시간 지식 오케스트레이션 대기</p>
+                        <p class="text-xs text-slate-500 mt-1">좌측에서 파일을 로드하고 변환 버튼을 누르면 이 화면에 시각화 그래프가 렌더링됩니다.</p>
+                    </div>
+                </div>
+
+                <div id="graph-container" class="w-full h-full hidden flex-col justify-between text-left transition-all duration-500">
+                    <div class="p-3 bg-slate-800/60 rounded border border-slate-700/50 text-xs text-emerald-400 font-mono space-y-1 shadow-inner">
+                        <p class="text-white font-semibold mb-1"><i class="fa-solid fa-terminal mr-1"></i> Neo4j Query Executed :</p>
+                        <p class="pl-2">MATCH (n)-[r]->(m) RETURN n, r, m LIMIT 50;</p>
+                    </div>
+                    
+                    <div class="flex-1 w-full my-3 rounded bg-slate-950/80 border border-slate-800 flex items-center justify-center p-2 overflow-hidden relative">
+                        <div id="loading-graph" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center text-xs text-blue-400 gap-3 hidden">
+                            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-500"></i>
+                            <span>Neo4j 샌드박스로부터 지식 구조 렌더링 중...</span>
+                        </div>
+                        
+                        <div id="demo-graph-view" class="w-full h-full hidden items-center justify-center text-center opacity-90">
+                            <div class="space-y-3">
+                                <div class="flex justify-center gap-6 text-3xl">
+                                    <span class="p-3 bg-blue-500/20 text-blue-400 rounded-full border border-blue-500/30 shadow"><i class="fa-solid fa-file-invoice"></i></span>
+                                    <span class="p-3 bg-amber-500/20 text-amber-400 rounded-full border border-amber-500/30 shadow"><i class="fa-solid fa-gears"></i></span>
+                                    <span class="p-3 bg-rose-500/20 text-rose-400 rounded-full border border-rose-500/30 shadow"><i class="fa-solid fa-bell"></i></span>
+                                </div>
+                                <p class="text-xs text-slate-300 font-medium">나래 O&M 설비 RCA 온톨로지 맵 매핑 성공</p>
+                                <p class="text-[11px] text-slate-500">Document (1) ➔ Asset (1) ➔ Alarm (1) ➔ CauseSteps ➔ Actions 유기적 연결</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
 
     </main>
 
-    <footer class="bg-gray-100 text-center py-4 text-xs text-gray-400 border-t border-gray-200">
+    <footer class="bg-white text-center py-3.5 text-xs text-gray-400 border-t border-gray-200">
         © 2026 나래 O&M AI/DT TF. All rights reserved.
     </footer>
 
@@ -86,7 +142,7 @@
         const SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
 
         // ===================================================
-        // [필수 설정] n8n Webhook 노드의 'Test URL' 주소를 여기에 넣어주세요!
+        // [필수 설정] n8n Webhook 노드의 'Test URL' 주소 연동 유지
         // ===================================================
         const N8N_WEBHOOK_URL = 'https://seoneenam.app.n8n.cloud/webhook-test/rca-ontology-trigger';
 
@@ -101,6 +157,13 @@
         const fileInfo = document.getElementById('file-info');
         const processSection = document.getElementById('process-section');
         const resultSection = document.getElementById('result-section');
+        
+        // 우측 시연 모니터링 컴포넌트 상수 추출
+        const monitorStatus = document.getElementById('monitor-status');
+        const viewPlaceholder = document.getElementById('view-placeholder');
+        const graphContainer = document.getElementById('graph-container');
+        const loadingGraph = document.getElementById('loading-graph');
+        const demoGraphView = document.getElementById('demo-graph-view');
 
         // 1. 순수 gapi 인프라 빌드 (안정적인 콜백 체인 구성)
         function gapiLoadCallback() {
@@ -123,8 +186,6 @@
                         }
                         accessToken = response.access_token;
                         console.log('✔ 보안 토큰 발급 성공');
-                        
-                        // 구글인증 세션이 완전히 안정될 수 있도록 타임아웃 부여 후 실행
                         setTimeout(createPicker, 400);
                     },
                 });
@@ -151,10 +212,8 @@
         // 4. 드라이브 파일 선택 창 생성 및 화면 표출
         function createPicker() {
             if (!accessToken) return;
-            
             try {
                 const view = new google.picker.View(google.picker.ViewId.DOCS);
-                
                 const picker = new google.picker.PickerBuilder()
                     .addView(view)
                     .setOAuthToken(accessToken)
@@ -162,12 +221,11 @@
                     .setCallback(pickerCallback)
                     .setTitle("나래 O&M RCA 리포트 선택")
                     .build();
-                
                 picker.setVisible(true);
                 console.log('✔ Picker 팝업 창이 브라우저 레이어에 렌더링되었습니다.');
             } catch (error) {
                 console.error('Picker 빌드 에러 발생:', error);
-                alert('드라이브 선택기를 여는 과정에서 오류가 발생했습니다. F12 콘솔 창을 확인해 주세요.');
+                alert('드라이브 선택기를 여는 과정에서 오류가 발생했습니다.');
             }
         }
 
@@ -179,31 +237,36 @@
                 selectedFileName = doc[google.picker.Document.NAME];
 
                 fileInfo.innerText = `📄 [선택됨] ${selectedFileName}`;
-                fileInfo.classList.remove('text-gray-500', 'italic');
-                fileInfo.classList.add('text-blue-600', 'font-medium');
-                
+                fileInfo.className = "text-blue-600 font-medium text-xs text-center border border-blue-200 rounded-lg py-2.5 bg-blue-50 px-2 truncate shadow-inner";
                 btnStartTransform.removeAttribute('disabled');
             }
         }
 
-        // 6. 변환 시작 버튼 클릭 이벤트 (실제 n8n 호출 연동부)
+        // 6. 변환 시작 버튼 클릭 이벤트 (우측 스크린 동시 동기화 제어)
         btnStartTransform.addEventListener('click', async () => {
             if(!selectedFileId) return;
             
-            // 화면 UI 초기화 및 로딩 활성화
+            // UI 상태 제어: 좌측 상황판 초기화 및 우측 모니터 가동
             processSection.classList.remove('hidden');
             resultSection.classList.add('hidden');
             
+            viewPlaceholder.classList.add('hidden');
+            graphContainer.classList.remove('hidden');
+            loadingGraph.classList.remove('hidden');
+            demoGraphView.classList.add('hidden');
+            demoGraphView.classList.remove('flex');
+
+            monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 inline-block animate-ping"></span> 파이프라인 가동 중';
+            monitorStatus.className = "flex items-center gap-1.5 text-[11px] text-blue-400 font-semibold";
+
             const step1 = document.getElementById('step-1');
             setStepStatus(step1, 'loading');
 
             try {
-                // n8n 웹훅으로 실제 데이터 전송
+                // n8n 실시간 엔드포인트 연동
                 const response = await fetch(N8N_WEBHOOK_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         fileId: selectedFileId,
                         fileName: selectedFileName
@@ -212,16 +275,15 @@
 
                 if (response.ok) {
                     console.log('✔ n8n 웹훅으로 데이터 전송 성공!');
-                    // n8n 호출 성공 이후 다음 시뮬레이션 단계 트리거
                     continueSimulationAfterWebhook();
                 } else {
                     alert('n8n 서버 연동 실패 (상태 코드 에러)');
-                    setStepStatus(step1, 'default');
+                    resetMonitorToDefault();
                 }
             } catch (error) {
                 console.error('n8n 웹훅 연동 에러:', error);
-                alert('n8n 웹훅 URL 호출에 실패했습니다. 코드를 확인해 주세요.');
-                setStepStatus(step1, 'default');
+                alert('n8n 웹훅 URL 호출에 실패했습니다. CORS 세팅이나 엔드포인트를 확인해 주세요.');
+                resetMonitorToDefault();
             }
         });
 
@@ -234,32 +296,68 @@
             setStepStatus(step1, 'success');
             setStepStatus(step2, 'loading');
 
+            // 2단계: LLM 엔진 파싱 가상 모니터링 타임아웃
             setTimeout(() => {
                 setStepStatus(step2, 'success');
                 setStepStatus(step3, 'loading');
             }, 2500);
 
+            // 3단계: Neo4j 쿼리 반영 및 우측 모니터에 화려한 결과 투영
             setTimeout(() => {
                 setStepStatus(step3, 'success');
+                
+                // 로딩 창을 걷어내고 완성된 지식 맵 표출
+                loadingGraph.classList.add('hidden');
+                demoGraphView.classList.remove('hidden');
+                demoGraphView.classList.add('flex');
+                
+                monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> 실시간 동기화 완료';
+                monitorStatus.className = "flex items-center gap-1.5 text-[11px] text-emerald-400 font-bold";
+
+                // 결과 보드 카운트업
                 resultSection.classList.remove('hidden');
-                document.getElementById('node-count').innerText = "18";
-                document.getElementById('edge-count').innerText = "26";
-            }, 5500);
+                animateValue("node-count", 0, 18, 1000);
+                animateValue("edge-count", 0, 26, 1200);
+            }, 5000);
         }
 
         // 공통 UI 아이콘 상태 제어 함수
         function setStepStatus(stepElement, status) {
             const iconDiv = stepElement.querySelector('.step-icon');
             if(status === 'loading') {
-                stepElement.className = "flex items-center gap-4 p-3 bg-blue-50 rounded border border-blue-200 animate-pulse";
+                stepElement.className = "flex items-center gap-3.5 p-3 bg-blue-50 rounded-lg border border-blue-200 text-blue-800 font-medium text-xs";
                 iconDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-blue-500"></i>';
             } else if(status === 'success') {
-                stepElement.className = "flex items-center gap-4 p-3 bg-emerald-50 rounded border border-emerald-100";
+                stepElement.className = "flex items-center gap-3.5 p-3 bg-emerald-50/60 rounded-lg border border-emerald-100 text-gray-500 text-xs";
                 iconDiv.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
             } else {
-                stepElement.className = "flex items-center gap-4 p-3 bg-gray-50 rounded";
+                stepElement.className = "flex items-center gap-3.5 p-3 bg-gray-50 rounded-lg text-gray-400 text-xs";
                 iconDiv.innerHTML = '<i class="fa-regular fa-circle text-gray-400"></i>';
             }
+        }
+
+        // 카운터 애니메이션 함수 효과
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            const range = end - start;
+            let current = start;
+            const increment = end > start ? 1 : -1;
+            const stepTime = Math.abs(Math.floor(duration / range));
+            const timer = setInterval(function() {
+                current += increment;
+                obj.innerText = current;
+                if (current == end) clearInterval(timer);
+            }, stepTime);
+        }
+
+        // 실패 시 모니터 리셋용 유틸리티
+        function resetMonitorToDefault() {
+            const step1 = document.getElementById('step-1');
+            setStepStatus(step1, 'default');
+            viewPlaceholder.classList.remove('hidden');
+            graphContainer.classList.add('hidden');
+            monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-slate-500 inline-block"></span> 대기 중';
+            monitorStatus.className = "flex items-center gap-1.5 text-[11px] text-slate-400";
         }
     </script>
 </body>
