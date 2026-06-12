@@ -27,14 +27,14 @@
                 <i class="fa-solid fa-microchip mr-1.5 text-emerald-400 animate-pulse"></i>AI/DT TF 실시간 동기화 모드
             </div>
             <div class="text-[10px] text-blue-300 font-mono bg-blue-950/40 px-2 py-0.5 rounded border border-blue-800/30">
-                <i class="fa-solid fa-code-branch mr-1 text-amber-400"></i>소스 반영 시각: <span class="text-amber-300 font-bold">06/12 11:40</span>
+                <i class="fa-solid fa-code-branch mr-1 text-amber-400"></i>소스 반영 시각: <span class="text-amber-300 font-bold">06/12 11:50</span>
             </div>
         </div>
     </header>
 
     <main class="flex-1 w-full max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 my-2">
         
-        <div class="lg:col-span-5 flex flex-col gap-5">
+        <div class="lg:col-span-4 flex flex-col gap-5">
             
             <section class="p-5 bg-white shadow-sm rounded-xl border border-gray-200">
                 <h2 class="text-base font-semibold mb-3.5 text-gray-700 flex items-center gap-2">
@@ -91,7 +91,7 @@
             </section>
         </div>
 
-        <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-[650px]">
+        <div class="lg:col-span-8 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-[650px]">
             <div class="bg-slate-800 text-slate-200 px-4 py-3 flex justify-between items-center border-b border-slate-700">
                 <div class="flex items-center gap-2 text-xs font-semibold tracking-wider">
                     <i class="fa-solid fa-desktop text-amber-400"></i> NEO4J GRAPH REAL-TIME MONITOR
@@ -117,11 +117,11 @@
                         
                         <div class="bg-slate-800/90 border border-slate-700 p-3 rounded-lg shadow-sm flex flex-col">
                             <p class="text-xs font-bold text-emerald-400 mb-1.5 flex items-center justify-between border-b border-slate-700/50 pb-1">
-                                <span><i class="fa-solid fa-circle-dot mr-1"></i> 도출된 전체 노드 명세 (Nodes)</span>
+                                <span><i class="fa-solid fa-circle-dot mr-1"></i> 도출된 노드 명세 (Nodes)</span>
                                 <span class="bg-emerald-500/20 px-1.5 py-0.5 rounded text-[10px] font-mono text-emerald-300 font-bold">14 Nodes</span>
                             </p>
                             <ul class="text-[10.5px] text-slate-300 space-y-1 font-sans max-h-[135px] overflow-y-auto pr-1">
-                                <li>• <span class="text-emerald-400 font-semibold">[Document]</span> 나래_RCA_2026_06.pdf <span class="text-slate-500">(ID:1)</span></li>
+                                <li>• <span class="text-emerald-400 font-semibold">[Document]</span> <span id="summary-doc-name" class="text-slate-100">나래_RCA_2026_06.pdf</span> <span class="text-slate-500">(ID:1)</span></li>
                                 <li>• <span class="text-blue-400 font-semibold">[Asset]</span> 증기 터빈 및 내부 감속기 기어 <span class="text-slate-500">(ID:1)</span></li>
                                 <li>• <span class="text-rose-400 font-semibold">[Alarm]</span> 베어링 온도 이상 고온 경보 <span class="text-slate-500">(ID:1)</span></li>
                                 <li>• <span class="text-amber-400 font-semibold">[FailureMode]</span> 윤활유 공급 저하 / 기어 이상 마모 / 진동 스파이크 <span class="text-slate-500">(ID:3)</span></li>
@@ -133,7 +133,7 @@
                         
                         <div class="bg-slate-800/90 border border-slate-700 p-3 rounded-lg shadow-sm flex flex-col">
                             <p class="text-xs font-bold text-sky-400 mb-1.5 flex items-center justify-between border-b border-slate-700/50 pb-1">
-                                <span><i class="fa-solid fa-arrows-spin mr-1"></i> 전수 인과관계 매핑 (Relationships)</span>
+                                <span><i class="fa-solid fa-arrows-spin mr-1"></i> 인과관계 매핑 (Relationships)</span>
                                 <span class="bg-sky-500/20 px-1.5 py-0.5 rounded text-[10px] font-mono text-sky-300 font-bold">18 Edges</span>
                             </p>
                             <ul class="text-[10.5px] text-slate-300 space-y-1 font-sans max-h-[135px] overflow-y-auto pr-1">
@@ -150,8 +150,8 @@
                     
                     <div class="flex-1 w-full rounded-xl border border-slate-800 overflow-hidden relative min-h-[340px] flex flex-col bg-slate-950/40">
                         <div class="bg-slate-900/90 px-3 py-1.5 border-b border-slate-800 flex justify-between items-center text-[10px] text-slate-400 font-mono">
-                            <div><i class="fa-solid fa-database text-amber-500 mr-1"></i> Neo4j Live Query View (LIMIT 100)</div>
-                            <div class="text-slate-500">MATCH (n)-[r]->(m) RETURN n,r,m</div>
+                            <div><i class="fa-solid fa-database text-amber-500 mr-1"></i> Neo4j Live Document Query View</div>
+                            <div id="live-cypher-text" class="text-emerald-400 font-semibold">MATCH (d:Document {title: ...})-[r]-(m) RETURN d,r,m</div>
                         </div>
                         
                         <div class="flex-1 w-full relative">
@@ -229,7 +229,7 @@
         }
 
         window.onload = () => {
-            if (typeof gapi !== 'undefined') gapiLoadCallback();
+            if (typeof gapi !== 'undefined') gapiLoadCallbackCallback();
             setTimeout(gsiLoadCallback, 500);
         };
 
@@ -265,6 +265,9 @@
                 fileInfo.innerText = `📄 [선택됨] ${selectedFileName}`;
                 fileInfo.className = "text-blue-600 font-medium text-xs text-center border border-blue-200 rounded-lg py-2.5 bg-blue-50 px-2 truncate shadow-inner";
                 btnStartTransform.removeAttribute('disabled');
+                
+                // 파일 선택 시 요약 보드의 문서명 부분도 실시간 미리 동기화
+                document.getElementById('summary-doc-name').innerText = selectedFileName;
             }
         }
 
@@ -276,6 +279,9 @@
             viewPlaceholder.classList.add('hidden');
             graphContainer.classList.remove('hidden');
             loadingGraph.classList.remove('hidden');
+
+            // 💡 4. 요청 수렴: 하단 터미널 판에 실제 가동되는 정밀 타격 Cypher 쿼리 텍스트 출력
+            document.getElementById('live-cypher-text').innerText = `MATCH (d:Document {title: "${selectedFileName}"})-[r]-(m) RETURN d,r,m;`;
 
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 inline-block animate-ping"></span> 파이프라인 가동 중';
             monitorStatus.className = "flex items-center gap-1.5 text-[11px] text-blue-400 font-semibold";
@@ -322,12 +328,12 @@
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> 실시간 데이터베이스 동기화 완료';
             monitorStatus.className = "flex items-center gap-1.5 text-[11px] text-emerald-400 font-bold";
 
-            // 전체 카운트 명시 동기화
             document.getElementById('node-count').innerText = "14";
             document.getElementById('edge-count').innerText = "18";
 
+            // 💡 4. 요청 수렴: 선택된 실제 파일명을 마스터 노드 레이블로 동적 매핑
             const nodes = [
-                { id: 1, label: '나래_RCA_2026_06.pdf', shape: 'dot', size: 24, color: '#10b981', font: {color: '#fff', size: 12} },
+                { id: 1, label: selectedFileName, shape: 'dot', size: 24, color: '#10b981', font: {color: '#fff', size: 12} },
                 { id: 2, label: '증기 터빈 감속기 기어', shape: 'dot', size: 18, color: '#3b82f6', font: {color: '#fff', size: 11} },
                 { id: 3, label: '베어링 고온 경보', shape: 'dot', size: 16, color: '#f43f5e', font: {color: '#fff', size: 11} },
                 { id: 4, label: '오일 필터 마모 및 폐쇄', shape: 'dot', size: 15, color: '#eab308', font: {color: '#fff', size: 11} },
