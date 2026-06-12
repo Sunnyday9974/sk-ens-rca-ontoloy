@@ -1,1 +1,313 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나래 O&M RCA 온톨로지화</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        #network-canvas { width: 100%; height: 100%; background-color: #0f172a; }
+    </style>
+</head>
+<body class="bg-slate-100 text-gray-800 min-h-screen flex flex-col justify-between">
+
+    <header class="bg-blue-900 text-white py-5 px-8 shadow-md flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold tracking-wide"><i class="fa-solid fa-network-wired mr-3 text-blue-400"></i>나래 O&M RCA 리포트 온톨로지화</h1>
+            <p class="text-xs text-blue-200 mt-1">구글 드라이브의 RCA 리포트를 분석하여 Neo4j 지식 그래프로 실시간 변환 및 시연합니다.</p>
+        </div>
+        <div class="flex flex-col items-end gap-1.5">
+            <div class="bg-blue-800 text-white px-3 py-1.5 rounded text-xs font-semibold border border-blue-700 shadow-inner">
+                <i class="fa-solid fa-microchip mr-1.5 text-emerald-400 animate-pulse"></i>AI/DT TF 실시간 동기화 모드
+            </div>
+            <div class="text-[10px] text-blue-300 font-mono bg-blue-950/40 px-2 py-0.5 rounded border border-blue-800/30">
+                <i class="fa-solid fa-code-branch mr-1 text-amber-400"></i>소스 반영 시각: <span class="text-amber-300 font-bold">06/12 15:50</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 w-full max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 my-2">
+        
+        <div class="lg:col-span-4 flex flex-col gap-5">
+            <section class="p-5 bg-white shadow-sm rounded-xl border border-gray-200">
+                <h2 class="text-base font-semibold mb-3.5 text-gray-700 flex items-center gap-2">
+                    <i class="fa-solid fa-file-circle-plus text-blue-600"></i>1. RCA 파일 지정
+                </h2>
+                <div class="flex flex-col gap-3">
+                    <button id="btn-select-file" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-200 shadow-sm flex items-center justify-center gap-2 cursor-pointer">
+                        <i id="drive-icon" class="fa-brands fa-google-drive"></i> <span id="btn-text">구글 드라이브에서 파일 선택</span>
+                    </button>
+                    <div id="file-info" class="text-gray-400 italic text-xs text-center border border-dashed border-gray-200 rounded-lg py-2.5 bg-gray-50 px-2 truncate">
+                        선택된 파일이 없습니다.
+                    </div>
+                    <button id="btn-start-transform" disabled class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-md disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-play"></i> 온톨로지 변환 시작
+                    </button>
+                </div>
+            </section>
+
+            <section id="process-section" class="p-5 bg-white shadow-sm rounded-xl border border-gray-200 hidden flex-1">
+                <h2 class="text-base font-semibold mb-4 text-gray-700 flex items-center gap-2">
+                    <span id="engine-log-title-icon"><i class="fa-solid fa-spinner fa-spin text-blue-500"></i></span>2. 실시간 엔진 로그
+                </h2>
+                <div class="space-y-3.5">
+                    <div id="step-1" class="flex items-center gap-3.5 p-3 bg-gray-50 rounded-lg">
+                        <div class="step-icon text-gray-400 text-base"><i class="fa-regular fa-circle"></i></div>
+                        <p class="font-medium text-xs text-gray-600">구글 드라이브에서 RCA 파일 다운로드</p>
+                    </div>
+                    <div id="step-2" class="flex items-center gap-3.5 p-3 bg-gray-50 rounded-lg">
+                        <div class="step-icon text-gray-400 text-base"><i class="fa-regular fa-circle"></i></div>
+                        <p class="font-medium text-xs text-gray-600">LLM 기반 RCA 엔티티(Entity) 및 인과관계 추출</p>
+                    </div>
+                    <div id="step-3" class="flex items-center gap-3.5 p-3 bg-gray-50 rounded-lg">
+                        <div class="step-icon text-gray-400 text-base"><i class="fa-regular fa-circle"></i></div>
+                        <p class="font-medium text-xs text-gray-600">Neo4j Graph DB 지식 그래프 최종 반영 및 정렬</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="result-section" class="p-5 bg-emerald-50 border border-emerald-200 shadow-sm rounded-xl hidden">
+                <h2 class="text-base font-bold text-emerald-800 mb-1.5 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-check text-emerald-600"></i>변환 프로세스 완료!
+                </h2>
+                <p class="text-xs text-emerald-700 mb-4">RCA Agent가 쌓은 지식 자산 현황판입니다.</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white p-3 rounded-lg border border-emerald-100 text-center shadow-sm">
+                        <span class="block text-[11px] text-gray-400 font-medium">실시간 노드(Nodes)</span>
+                        <span id="node-count" class="text-2xl font-black text-slate-800">0</span>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg border border-emerald-100 text-center shadow-sm">
+                        <span class="block text-[11px] text-gray-400 font-medium">실시간 관계(Edges)</span>
+                        <span id="edge-count" class="text-2xl font-black text-slate-800">0</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="lg:col-span-8 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-[650px]">
+            <div class="bg-slate-800 text-slate-200 px-4 py-3 flex justify-between items-center border-b border-slate-700">
+                <div class="flex items-center gap-2 text-xs font-semibold tracking-wider">
+                    <i class="fa-solid fa-desktop text-amber-400"></i> NEO4J GRAPH REAL-TIME MONITOR
+                </div>
+                <div id="monitor-status" class="flex items-center gap-1.5 text-[11px] text-slate-400">
+                    <span class="w-2 h-2 rounded-full bg-slate-500 inline-block"></span> 대기 중
+                </div>
+            </div>
+            
+            <div class="flex-1 bg-slate-900 relative flex flex-col p-4 text-slate-400" id="monitor-body">
+                <div id="view-placeholder" class="absolute inset-0 flex flex-col justify-center items-center text-center p-6 space-y-4">
+                    <div class="text-5xl text-slate-700 animate-bounce"><i class="fa-solid fa-diagram-project"></i></div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-300">실시간 지식 오케스트레이션 대기</p>
+                        <p class="text-xs text-slate-500 mt-1">좌측 변환 버튼을 누르면 n8n 작동 후 Neo4j의 실제 매핑 결과가 실시간 드로잉됩니다.</p>
+                    </div>
+                </div>
+
+                <div id="graph-container" class="w-full h-full hidden flex flex-col gap-4 text-left transition-all duration-500 flex-1 relative">
+                    <div id="ontology-summary-box" class="grid grid-cols-1 md:grid-cols-2 gap-3 z-10">
+                        <div class="bg-slate-800/90 border border-slate-700 p-3 rounded-lg shadow-sm flex flex-col">
+                            <p class="text-xs font-bold text-emerald-400 mb-1.5 flex items-center justify-between border-b border-slate-700/50 pb-1">
+                                <span><i class="fa-solid fa-circle-dot mr-1"></i> 도출된 노드 명세 (Nodes)</span>
+                                <span id="summary-node-badge" class="bg-emerald-500/20 px-1.5 py-0.5 rounded text-[10px] font-mono text-emerald-300 font-bold">0 Nodes</span>
+                            </p>
+                            <ul id="live-nodes-list" class="text-[10.5px] text-slate-300 space-y-1 font-sans max-h-[135px] overflow-y-auto pr-1"></ul>
+                        </div>
+                        
+                        <div class="bg-slate-800/90 border border-slate-700 p-3 rounded-lg shadow-sm flex flex-col">
+                            <p class="text-xs font-bold text-sky-400 mb-1.5 flex items-center justify-between border-b border-slate-700/50 pb-1">
+                                <span><i class="fa-solid fa-arrows-spin mr-1"></i> 인과관계 매핑 (Relationships)</span>
+                                <span id="summary-edge-badge" class="bg-sky-500/20 px-1.5 py-0.5 rounded text-[10px] font-mono text-sky-300 font-bold">0 Edges</span>
+                            </p>
+                            <ul id="live-edges-list" class="text-[10.5px] text-slate-300 space-y-1 font-sans max-h-[135px] overflow-y-auto pr-1"></ul>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 w-full rounded-xl border border-slate-800 overflow-hidden relative min-h-[340px] flex flex-col bg-slate-950/40">
+                        <div class="bg-slate-900/90 px-3 py-1.5 border-b border-slate-800 flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                            <div><i class="fa-solid fa-database text-amber-500 mr-1"></i> Neo4j Live Document Query View</div>
+                            <div id="live-cypher-text" class="text-emerald-400 font-semibold">MATCH (d:Document {title: ...})-[r]-(m) RETURN d,r,m</div>
+                        </div>
+                        
+                        <div class="flex-1 w-full relative">
+                            <div id="network-canvas"></div>
+                            <div id="loading-graph" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center text-xs text-blue-400 gap-3">
+                                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-500"></i>
+                                <span class="font-medium">Neo4j Cloud 인프라로부터 실시간 스키마 파싱 중...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white text-center py-3 text-gray-400 text-xs border-t border-gray-200">
+        © 2026 나래 O&M AI/DT TF. All rights reserved.
+    </footer>
+
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <script>
+        const API_KEY = 'AIzaSyDUb9w8DUJ1z6rA3f1cWLvtK_dHML2B0Ys';
+        const CLIENT_ID = '226564701904-hr1l78rknenlm0fn3gul1cvmkve0ntuc.apps.googleusercontent.com';
+        const SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
+        const N8N_WEBHOOK_URL = 'https://seoneenam.app.n8n.cloud/webhook-test/rca-ontology-trigger';
+
+        let accessToken = null; let selectedFileId = null; let selectedFileName = null; let tokenClient = null; let pickerApiLoaded = false;
+
+        const btnSelectFile = document.getElementById('btn-select-file'); const btnStartTransform = document.getElementById('btn-start-transform');
+        const fileInfo = document.getElementById('file-info'); const processSection = document.getElementById('process-section'); const resultSection = document.getElementById('result-section');
+        const monitorStatus = document.getElementById('monitor-status'); const viewPlaceholder = document.getElementById('view-placeholder');
+        const graphContainer = document.getElementById('graph-container'); const loadingGraph = document.getElementById('loading-graph');
+
+        function gapiLoadCallback() { gapi.load('picker', () => { pickerApiLoaded = true; checkInfrastructureReady(); }); }
+        function gsiLoadCallback() {
+            if (typeof google !== 'undefined') {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID, scope: SCOPE,
+                    callback: (response) => { if (response.error !== undefined) return; accessToken = response.access_token; if (accessToken) createPicker(); },
+                });
+                checkInfrastructureReady();
+            }
+        }
+        function checkInfrastructureReady() { if (pickerApiLoaded && tokenClient) { document.getElementById('drive-icon').className = "fa-brands fa-google-drive text-emerald-400"; } }
+        window.onload = () => { if (typeof gapi !== 'undefined') gapiLoadCallback(); setTimeout(gsiLoadCallback, 400); };
+
+        btnSelectFile.addEventListener('click', () => { if (!tokenClient || typeof google === 'undefined') { gsiLoadCallback(); setTimeout(() => { tokenClient.requestAccessToken(); }, 300); return; } tokenClient.requestAccessToken(); });
+
+        function createPicker() {
+            if (!accessToken) { tokenClient.requestAccessToken(); return; }
+            try {
+                const view = new google.picker.View(google.picker.ViewId.DOCS); view.setMimeTypes("application/pdf");
+                const picker = new google.picker.PickerBuilder().addView(view).setOAuthToken(accessToken).setDeveloperKey(API_KEY).setCallback(pickerCallback).setTitle("나래 O&M RCA 리포트 선택 (PDF 전용)").build();
+                picker.setVisible(true);
+            } catch (err) { gsiLoadCallback(); }
+        }
+
+        function pickerCallback(data) {
+            if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
+                const doc = data[google.picker.Response.DOCUMENTS][0]; selectedFileId = doc[google.picker.Document.ID]; selectedFileName = doc[google.picker.Document.NAME];
+                fileInfo.innerText = `📄 [선택됨] ${selectedFileName}`;
+                fileInfo.className = "text-blue-600 font-medium text-xs text-center border border-blue-200 rounded-lg py-2.5 bg-blue-50 px-2 truncate shadow-inner";
+                btnStartTransform.removeAttribute('disabled');
+            }
+        }
+
+        btnStartTransform.addEventListener('click', async () => {
+            if(!selectedFileId) return;
+            document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-spinner fa-spin text-blue-500"></i>';
+            processSection.classList.remove('hidden'); resultSection.classList.add('hidden'); viewPlaceholder.classList.add('hidden'); graphContainer.classList.remove('hidden'); loadingGraph.classList.remove('hidden');
+            document.getElementById('live-cypher-text').innerText = `MATCH (d:Document {title: "${selectedFileName}"})-[r]-(m) RETURN d,r,m;`;
+            monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 inline-block animate-ping"></span> 파이프라인 가동 중';
+            resetAllStepsToDefault();
+
+            const step1 = document.getElementById('step-1'); setStepStatus(step1, 'loading');
+
+            try {
+                const response = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileId: selectedFileId, fileName: selectedFileName })
+                });
+
+                if (response.ok) {
+                    const n8nRawData = await response.json();
+                    runSynchronizedSteps(n8nRawData);
+                } else {
+                    showEmptyError();
+                }
+            } catch (e) {
+                showEmptyError();
+            }
+        });
+
+        function runSynchronizedSteps(realData) {
+            const step1 = document.getElementById('step-1'); const step2 = document.getElementById('step-2'); const step3 = document.getElementById('step-3');
+            setTimeout(() => { setStepStatus(step1, 'success'); setStepStatus(step2, 'loading'); }, 1200);
+            setTimeout(() => { setStepStatus(step2, 'success'); setStepStatus(step3, 'loading'); }, 3200);
+            setTimeout(() => {
+                setStepStatus(step3, 'success');
+                document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+                render100PercentLiveGraph(realData);
+            }, 5200);
+        }
+
+        function showEmptyError() {
+            loadingGraph.classList.add('hidden');
+            document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-500"></i>';
+            monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span> 통신 데이터 공백';
+            alert("n8n으로부터 리턴된 변환 데이터 배열이 비어있습니다. n8n마지막 노드 전송 설정을 확인해주세요.");
+        }
+
+        function resetAllStepsToDefault() { setStepStatus(document.getElementById('step-1'), 'default'); setStepStatus(document.getElementById('step-2'), 'default'); setStepStatus(document.getElementById('step-3'), 'default'); }
+
+        // 💡 [최종 수정]: 가짜 대피용 하드코딩 배열을 완전히 녹여 없앤 청정 렌더링 시스템
+        function render100PercentLiveGraph(resultData) {
+            loadingGraph.classList.add('hidden'); resultSection.classList.remove('hidden');
+            monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> 실시간 데이터베이스 동기화 완료';
+            monitorStatus.className = "flex items-center gap-1.5 text-[11px] text-emerald-400 font-bold";
+
+            let visNodes = []; let visEdges = []; let nodesMap = new Map(); let edgesMap = new Map();
+            const colorPalette = { 'Document': '#10b981', 'Asset': '#3b82f6', 'Alarm': '#f43f5e', 'FailureMode': '#eab308', 'CauseStep': '#8b5cf6', 'Action': '#ec4899', 'Lesson': '#64748b' };
+
+            if (resultData && resultData.length > 0) {
+                resultData.forEach(row => {
+                    if (row.data && row.data.values) {
+                        row.data.values.forEach(val => {
+                            const sNode = val[0]; const rRel = val[1]; const tNode = val[2];
+                            [sNode, tNode].forEach(node => {
+                                if(node && node.elementId && !nodesMap.has(node.elementId)) {
+                                    const typeLabel = node.labels ? node.labels[0] : 'Nodes';
+                                    const textBody = node.properties ? (node.properties.title || node.properties.name || node.properties.id) : '개체';
+                                    nodesMap.set(node.elementId, { id: node.elementId, label: textBody, type: typeLabel, shape: 'dot', size: typeLabel === 'Document' ? 24 : 15, color: colorPalette[typeLabel] || '#94a3b8' });
+                                }
+                            });
+                            if(rRel && rRel.elementId && !edgesMap.has(rRel.elementId)) { edgesMap.set(rRel.elementId, true); visEdges.push({ from: rRel.startElementId, to: rRel.endElementId, label: rRel.type }); }
+                        });
+                    }
+                });
+                visNodes = Array.from(nodesMap.values());
+            }
+
+            // 상단 텍스트 명세 및 배지 업데이트 구동
+            const nodesListUl = document.getElementById('live-nodes-list'); const edgesListUl = document.getElementById('live-edges-list');
+            nodesListUl.innerHTML = ''; edgesListUl.innerHTML = '';
+
+            visNodes.forEach(n => {
+                const li = document.createElement('li'); li.innerHTML = `• <span style="color:${n.color}; font-weight:600;">[${n.type}]</span> ${n.label}`; nodesListUl.appendChild(li);
+            });
+            visEdges.forEach(e => {
+                const fromNode = nodesMap.get(e.from); const toNode = nodesMap.get(e.to);
+                if(fromNode && toNode) { const li = document.createElement('li'); li.innerHTML = `• <span class="text-sky-400 font-semibold">[:${e.label}]</span> ${fromNode.label.substring(0,12)}.. ➔ ${toNode.label.substring(0,12)}..`; edgesListUl.appendChild(li); }
+            });
+
+            document.getElementById('node-count').innerText = visNodes.length; document.getElementById('edge-count').innerText = visEdges.length;
+            document.getElementById('summary-node-badge').innerText = `${visNodes.length} Nodes`; document.getElementById('summary-edge-badge').innerText = `${visEdges.length} Edges`;
+
+            if(visNodes.length === 0) {
+                document.getElementById('network-canvas').innerHTML = `<div class="flex h-full items-center justify-center text-slate-500 text-xs"><p>데이터 가동 성공. 단, n8n 반환 바디가 비어있어 캔버스를 대기합니다.</p></div>`;
+                return;
+            }
+
+            const container = document.getElementById('network-canvas'); const data = { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) };
+            const options = {
+                edges: { arrows: { to: { Bavarian: true, scaleFactor: 0.45 } }, width: 1.2, color: { color: '#475569', highlight: '#38bdf8', hover: '#64748b' }, font: { color: '#94a3b8', size: 9, face: 'monospace', strokeWidth: 0, align: 'top' } },
+                nodes: { font: { color: '#ffffff', size: 10, face: 'sans-serif' } },
+                physics: { barnesHut: { gravitationalConstant: -2600, centralGravity: 0.26, springLength: 90 }, stabilization: { iterations: 120 } },
+                interaction: { hover: true, tooltipDelay: 100 }
+            };
+            new vis.Network(container, data, options);
+        }
+
+        function setStepStatus(stepElement, status) {
+            const iconDiv = stepElement.querySelector('.step-icon');
+            if(status === 'loading') { stepElement.className = "flex items-center gap-3.5 p-3 bg-blue-50 rounded-lg border border-blue-200 text-blue-800 font-medium text-xs animate-pulse"; iconDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-blue-500"></i>'; }
+            else if(status === 'success') { stepElement.className = "flex items-center gap-3.5 p-3 bg-emerald-50/60 rounded-lg border border-emerald-100 text-gray-500 text-xs"; iconDiv.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>'; }
+            else { stepElement.className = "flex items-center gap-3.5 p-3 bg-gray-50 rounded-lg text-gray-400 text-xs"; iconDiv.innerHTML = '<i class="fa-regular fa-circle text-gray-400"></i>'; }
+        }
+    </script>
+</body>
+</html>
 
