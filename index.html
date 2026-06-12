@@ -27,7 +27,7 @@
                 <i class="fa-solid fa-microchip mr-1.5 text-emerald-400 animate-pulse"></i>AI/DT TF 실시간 동기화 모드
             </div>
             <div class="text-[10px] text-blue-300 font-mono bg-blue-950/40 px-2 py-0.5 rounded border border-blue-800/30">
-                <i class="fa-solid fa-code-branch mr-1 text-amber-400"></i>소스 반영 시각: <span class="text-amber-300 font-bold">06/12 14:50</span>
+                <i class="fa-solid fa-code-branch mr-1 text-amber-400"></i>소스 반영 시각: <span class="text-amber-300 font-bold">06/12 15:10</span>
             </div>
         </div>
     </header>
@@ -119,17 +119,15 @@
                                 <span><i class="fa-solid fa-circle-dot mr-1"></i> 도출된 노드 명세 (Nodes)</span>
                                 <span id="summary-node-badge" class="bg-emerald-500/20 px-1.5 py-0.5 rounded text-[10px] font-mono text-emerald-300 font-bold">0 Nodes</span>
                             </p>
-                            <ul id="live-nodes-list" class="text-[10.5px] text-slate-300 space-y-1 font-sans max-h-[135px] overflow-y-auto pr-1">
-                                </ul>
+                            <ul id="live-nodes-list" class="text-[10.5px] text-slate-300 space-y-1 font-sans max-h-[135px] overflow-y-auto pr-1"></ul>
                         </div>
                         
                         <div class="bg-slate-800/90 border border-slate-700 p-3 rounded-lg shadow-sm flex flex-col">
                             <p class="text-xs font-bold text-sky-400 mb-1.5 flex items-center justify-between border-b border-slate-700/50 pb-1">
-                                <span><i class="fa-solid fa-arrows-spin mr-1"></i> 인과관계 관계 매핑 (Relationships)</span>
+                                <span><i class="fa-solid fa-arrows-spin mr-1"></i> 인과관계 매핑 (Relationships)</span>
                                 <span id="summary-edge-badge" class="bg-sky-500/20 px-1.5 py-0.5 rounded text-[10px] font-mono text-sky-300 font-bold">0 Edges</span>
                             </p>
-                            <ul id="live-edges-list" class="text-[10.5px] text-slate-300 space-y-1 font-sans max-h-[135px] overflow-y-auto pr-1">
-                                </ul>
+                            <ul id="live-edges-list" class="text-[10.5px] text-slate-300 space-y-1 font-sans max-h-[135px] overflow-y-auto pr-1"></ul>
                         </div>
                     </div>
                     
@@ -195,7 +193,7 @@
                     callback: (response) => {
                         if (response.error !== undefined) return;
                         accessToken = response.access_token;
-                        if (accessToken && pickerApiLoaded) createPicker();
+                        if (accessToken) createPicker();
                     },
                 });
                 checkInfrastructureReady();
@@ -213,12 +211,22 @@
             setTimeout(gsiLoadCallback, 400);
         };
 
+        // 💡 [초안정화 패치]: 캐시 충돌로 객체가 잠기더라도 클릭 시점에 즉시 강제 리빌드 수행
         btnSelectFile.addEventListener('click', () => {
-            if (!tokenClient) { gsiLoadCallback(); return; }
+            if (!tokenClient || typeof google === 'undefined') {
+                gsiLoadCallback();
+                setTimeout(() => { tokenClient.requestAccessToken(); }, 300);
+                return;
+            }
             tokenClient.requestAccessToken();
         });
 
         function createPicker() {
+            // 💡 [보안 가드]: 최악의 캐시 상황에서 토큰이 비어있을 경우 예외 차단 후 재요청 유도
+            if (!accessToken) {
+                tokenClient.requestAccessToken();
+                return;
+            }
             try {
                 const view = new google.picker.View(google.picker.ViewId.DOCS);
                 view.setMimeTypes("application/pdf");
@@ -226,7 +234,11 @@
                     .addView(view).setOAuthToken(accessToken).setDeveloperKey(API_KEY)
                     .setCallback(pickerCallback).setTitle("나래 O&M RCA 리포트 선택 (PDF 전용)").build();
                 picker.setVisible(true);
-            } catch (err) { alert("구글 드라이브 선택기를 여는 중 오류가 발생했습니다."); }
+            } catch (err) {
+                console.error(err);
+                // 객체 크래시 시 즉각 복구 우회책 가동
+                gsiLoadCallback();
+            }
         }
 
         function pickerCallback(data) {
@@ -240,11 +252,9 @@
             }
         }
 
-        // 변환 시작 버튼 클릭 이벤트 부
         btnStartTransform.addEventListener('click', async () => {
             if(!selectedFileId) return;
             
-            // 💡 패치: 초기 마운트 시 타이틀 스피너 활성화 및 가동 알림
             document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-spinner fa-spin text-blue-500"></i>';
             processSection.classList.remove('hidden');
             resultSection.classList.add('hidden');
@@ -255,15 +265,12 @@
             document.getElementById('live-cypher-text').innerText = `MATCH (d:Document {title: "${selectedFileName}"})-[r]-(m) RETURN d,r,m;`;
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 inline-block animate-ping"></span> 파이프라인 가동 중';
 
-            // 💡 패치: 모든 step 상태를 일단 미완료(default)로 엄격히 리셋
             resetAllStepsToDefault();
 
-            // 1단계 즉시 가동 (다운로드 시작)
             const step1 = document.getElementById('step-1');
             setStepStatus(step1, 'loading');
 
             try {
-                // n8n 실시간 비동기 연동 트리거 발송
                 const response = await fetch(N8N_WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -272,7 +279,6 @@
 
                 if (response.ok) {
                     const n8nRawData = await response.json();
-                    // 💡 패치: 통신 완료 응답을 받아온 시점부터 스텝 바이 스텝 애니메이션 가동 연동
                     runSynchronizedSteps(n8nRawData);
                 } else {
                     fallbackMockData();
@@ -282,32 +288,24 @@
             }
         });
 
-        // 💡 [핵심 패치 1]: 실제 연산 흐름과 완벽히 일치하는 동기화 시퀀스
         function runSynchronizedSteps(realData) {
             const step1 = document.getElementById('step-1');
-            const "step2" = document.getElementById('step-2');
+            const step2 = document.getElementById('step-2');
             const step3 = document.getElementById('step-3');
 
-            // 1. 다운로드 완료 ➔ 2단계 (LLM 엔티티 추출) 점등
             setTimeout(() => {
                 setStepStatus(step1, 'success');
                 setStepStatus(step2, 'loading');
             }, 1200);
 
-            // 2. AI 분석 완료 ➔ 3단계 (Neo4j 적재 정렬) 점등
             setTimeout(() => {
                 setStepStatus(step2, 'success');
                 setStepStatus(step3, 'loading');
             }, 3200);
 
-            // 3. 최종 적재 및 렌더링 완료 ➔ 무한 로딩 정지 가드레일 작동
             setTimeout(() => {
                 setStepStatus(step3, 'success');
-                
-                // 💡 패치: 상단 타이틀 무한 휠 스피너를 체크마크로 영구 전환
                 document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
-                
-                // 데이터 드로잉 주입
                 render100PercentLiveGraph(realData);
             }, 5200);
         }
@@ -370,7 +368,6 @@
                 visNodes = Array.from(nodesMap.values());
             }
 
-            // DB 리셋 후 초기 마운트 백업 가이드라인 매핑
             if(visNodes.length === 0) {
                 visNodes = [
                     { id: "1", label: selectedFileName, type: "Document", shape: "dot", size: 24, color: "#10b981" },
@@ -395,7 +392,6 @@
                 visNodes.forEach(n => nodesMap.set(n.id, n));
             }
 
-            // 상단 요약 보드 동적 인쇄
             const nodesListUl = document.getElementById('live-nodes-list');
             const edgesListUl = document.getElementById('live-edges-list');
             nodesListUl.innerHTML = '';
@@ -417,13 +413,11 @@
                 }
             });
 
-            // 통계 서머리 동기화
             document.getElementById('node-count').innerText = visNodes.length;
             document.getElementById('edge-count').innerText = visEdges.length;
             document.getElementById('summary-node-badge').innerText = `${visNodes.length} Nodes`;
             document.getElementById('summary-edge-badge').innerText = `${visEdges.length} Edges`;
 
-            // 하단 거미줄 그래픽 마운트
             const container = document.getElementById('network-canvas');
             const data = { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) };
             
