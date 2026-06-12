@@ -23,7 +23,7 @@
                 <i class="fa-solid fa-microchip mr-1.5 text-emerald-400 animate-pulse"></i>AI/DT TF 실시간 동기화 모드
             </div>
             <div class="text-[10px] text-blue-300 font-mono bg-blue-950/40 px-2 py-0.5 rounded border border-blue-800/30">
-                <i class="fa-solid fa-code-branch mr-1 text-amber-400"></i>소스 반영 시각: <span class="text-amber-300 font-bold">06/12 15:50</span>
+                <i class="fa-solid fa-code-branch mr-1 text-amber-400"></i>소스 반영 시각: <span class="text-amber-300 font-bold">06/12 16:45</span>
             </div>
         </div>
     </header>
@@ -238,12 +238,12 @@
             loadingGraph.classList.add('hidden');
             document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-500"></i>';
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span> 통신 데이터 공백';
-            alert("n8n으로부터 리턴된 변환 데이터 배열이 비어있습니다. n8n마지막 노드 전송 설정을 확인해주세요.");
+            alert("n8n 파이프라인 데이터 연동에 실패했습니다.");
         }
 
         function resetAllStepsToDefault() { setStepStatus(document.getElementById('step-1'), 'default'); setStepStatus(document.getElementById('step-2'), 'default'); setStepStatus(document.getElementById('step-3'), 'default'); }
 
-        // 💡 [최종 수정]: 가짜 대피용 하드코딩 배열을 완전히 녹여 없앤 청정 렌더링 시스템
+        // 💡 [직렬 패치]: n8n 직렬 파이프라인에서 반환된 노드+엣지 단일 합본 어레이 완벽 해독 엔진
         function render100PercentLiveGraph(resultData) {
             loadingGraph.classList.add('hidden'); resultSection.classList.remove('hidden');
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> 실시간 데이터베이스 동기화 완료';
@@ -252,31 +252,38 @@
             let visNodes = []; let visEdges = []; let nodesMap = new Map(); let edgesMap = new Map();
             const colorPalette = { 'Document': '#10b981', 'Asset': '#3b82f6', 'Alarm': '#f43f5e', 'FailureMode': '#eab308', 'CauseStep': '#8b5cf6', 'Action': '#ec4899', 'Lesson': '#64748b' };
 
-            if (resultData && resultData.length > 0) {
-                resultData.forEach(row => {
-                    if (row.data && row.data.values) {
-                        row.data.values.forEach(val => {
-                            const sNode = val[0]; const rRel = val[1]; const tNode = val[2];
-                            [sNode, tNode].forEach(node => {
-                                if(node && node.elementId && !nodesMap.has(node.elementId)) {
-                                    const typeLabel = node.labels ? node.labels[0] : 'Nodes';
-                                    const textBody = node.properties ? (node.properties.title || node.properties.name || node.properties.id) : '개체';
-                                    nodesMap.set(node.elementId, { id: node.elementId, label: textBody, type: typeLabel, shape: 'dot', size: typeLabel === 'Document' ? 24 : 15, color: colorPalette[typeLabel] || '#94a3b8' });
-                                }
-                            });
-                            if(rRel && rRel.elementId && !edgesMap.has(rRel.elementId)) { edgesMap.set(rRel.elementId, true); visEdges.push({ from: rRel.startElementId, to: rRel.endElementId, label: rRel.type }); }
+            // 직렬 파이프라인 아웃풋 데이터 핸들링
+            if (resultData) {
+                const targetData = Array.isArray(resultData) ? resultData[0] : resultData;
+                const sourceNodes = targetData.nodes || [];
+                const sourceEdges = targetData.relationships || [];
+
+                sourceNodes.forEach(node => {
+                    if (node && node.id && !nodesMap.has(node.id)) {
+                        const caption = node.title || node.name || '개체';
+                        nodesMap.set(node.id, {
+                            id: node.id, label: caption, type: node.label,
+                            shape: 'dot', size: node.label === 'Document' ? 24 : 15,
+                            color: colorPalette[node.label] || '#94a3b8'
                         });
+                    }
+                });
+
+                sourceEdges.forEach(edge => {
+                    if (edge && edge.id && !edgesMap.has(edge.id)) {
+                        edgesMap.set(edge.id, true);
+                        visEdges.push({ from: edge.from, to: edge.to, label: edge.label });
                     }
                 });
                 visNodes = Array.from(nodesMap.values());
             }
 
-            // 상단 텍스트 명세 및 배지 업데이트 구동
+            // 상단 텍스트 명세판 바인딩
             const nodesListUl = document.getElementById('live-nodes-list'); const edgesListUl = document.getElementById('live-edges-list');
             nodesListUl.innerHTML = ''; edgesListUl.innerHTML = '';
 
             visNodes.forEach(n => {
-                const li = document.createElement('li'); li.innerHTML = `• <span style="color:${n.color}; font-weight:600;">[${n.type}]</span> ${n.label}`; nodesListUl.appendChild(li);
+                const li = document.createElement('li'); li.innerHTML = `• <span class="font-semibold" style="color:${n.color};">[${n.type}]</span> ${n.label}`; nodesListUl.appendChild(li);
             });
             visEdges.forEach(e => {
                 const fromNode = nodesMap.get(e.from); const toNode = nodesMap.get(e.to);
@@ -287,7 +294,7 @@
             document.getElementById('summary-node-badge').innerText = `${visNodes.length} Nodes`; document.getElementById('summary-edge-badge').innerText = `${visEdges.length} Edges`;
 
             if(visNodes.length === 0) {
-                document.getElementById('network-canvas').innerHTML = `<div class="flex h-full items-center justify-center text-slate-500 text-xs"><p>데이터 가동 성공. 단, n8n 반환 바디가 비어있어 캔버스를 대기합니다.</p></div>`;
+                document.getElementById('network-canvas').innerHTML = `<div class="flex h-full items-center justify-center text-slate-500 text-xs"><p>n8n 직렬 응답 대기 중입니다.</p></div>`;
                 return;
             }
 
