@@ -8,11 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
-        #network-canvas {
-            width: 100%;
-            height: 100%;
-            background-color: #0f172a;
-        }
+        #network-canvas { width: 100%; height: 100%; background-color: #0f172a; }
     </style>
 </head>
 <body class="bg-slate-100 text-gray-800 min-h-screen flex flex-col justify-between">
@@ -27,7 +23,7 @@
                 <i class="fa-solid fa-microchip mr-1.5 text-emerald-400 animate-pulse"></i>AI/DT TF 실시간 동기화 모드
             </div>
             <div class="text-[10px] text-blue-300 font-mono bg-blue-950/40 px-2 py-0.5 rounded border border-blue-800/30">
-                <i class="fa-solid fa-code-branch mr-1 text-amber-400"></i>소스 반영 시각: <span class="text-amber-300 font-bold">06/12 15:10</span>
+                <i class="fa-solid fa-code-branch mr-1 text-amber-400"></i>소스 반영 시각: <span class="text-amber-300 font-bold">06/12 15:50</span>
             </div>
         </div>
     </header>
@@ -35,7 +31,6 @@
     <main class="flex-1 w-full max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 my-2">
         
         <div class="lg:col-span-4 flex flex-col gap-5">
-            
             <section class="p-5 bg-white shadow-sm rounded-xl border border-gray-200">
                 <h2 class="text-base font-semibold mb-3.5 text-gray-700 flex items-center gap-2">
                     <i class="fa-solid fa-file-circle-plus text-blue-600"></i>1. RCA 파일 지정
@@ -102,7 +97,6 @@
             </div>
             
             <div class="flex-1 bg-slate-900 relative flex flex-col p-4 text-slate-400" id="monitor-body">
-                
                 <div id="view-placeholder" class="absolute inset-0 flex flex-col justify-center items-center text-center p-6 space-y-4">
                     <div class="text-5xl text-slate-700 animate-bounce"><i class="fa-solid fa-diagram-project"></i></div>
                     <div>
@@ -112,7 +106,6 @@
                 </div>
 
                 <div id="graph-container" class="w-full h-full hidden flex flex-col gap-4 text-left transition-all duration-500 flex-1 relative">
-                    
                     <div id="ontology-summary-box" class="grid grid-cols-1 md:grid-cols-2 gap-3 z-10">
                         <div class="bg-slate-800/90 border border-slate-700 p-3 rounded-lg shadow-sm flex flex-col">
                             <p class="text-xs font-bold text-emerald-400 mb-1.5 flex items-center justify-between border-b border-slate-700/50 pb-1">
@@ -146,10 +139,8 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
-
     </main>
 
     <footer class="bg-white text-center py-3 text-gray-400 text-xs border-t border-gray-200">
@@ -165,87 +156,40 @@
         const SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
         const N8N_WEBHOOK_URL = 'https://seoneenam.app.n8n.cloud/webhook-test/rca-ontology-trigger';
 
-        let accessToken = null;
-        let selectedFileId = null;
-        let selectedFileName = null;
-        let tokenClient = null;
-        let pickerApiLoaded = false;
+        let accessToken = null; let selectedFileId = null; let selectedFileName = null; let tokenClient = null; let pickerApiLoaded = false;
 
-        const btnSelectFile = document.getElementById('btn-select-file');
-        const btnStartTransform = document.getElementById('btn-start-transform');
-        const fileInfo = document.getElementById('file-info');
-        const processSection = document.getElementById('process-section');
-        const resultSection = document.getElementById('result-section');
-        
-        const monitorStatus = document.getElementById('monitor-status');
-        const viewPlaceholder = document.getElementById('view-placeholder');
-        const graphContainer = document.getElementById('graph-container');
-        const loadingGraph = document.getElementById('loading-graph');
+        const btnSelectFile = document.getElementById('btn-select-file'); const btnStartTransform = document.getElementById('btn-start-transform');
+        const fileInfo = document.getElementById('file-info'); const processSection = document.getElementById('process-section'); const resultSection = document.getElementById('result-section');
+        const monitorStatus = document.getElementById('monitor-status'); const viewPlaceholder = document.getElementById('view-placeholder');
+        const graphContainer = document.getElementById('graph-container'); const loadingGraph = document.getElementById('loading-graph');
 
-        function gapiLoadCallback() {
-            gapi.load('picker', () => { pickerApiLoaded = true; checkInfrastructureReady(); });
-        }
-
+        function gapiLoadCallback() { gapi.load('picker', () => { pickerApiLoaded = true; checkInfrastructureReady(); }); }
         function gsiLoadCallback() {
             if (typeof google !== 'undefined') {
                 tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: CLIENT_ID, scope: SCOPE,
-                    callback: (response) => {
-                        if (response.error !== undefined) return;
-                        accessToken = response.access_token;
-                        if (accessToken) createPicker();
-                    },
+                    callback: (response) => { if (response.error !== undefined) return; accessToken = response.access_token; if (accessToken) createPicker(); },
                 });
                 checkInfrastructureReady();
             }
         }
+        function checkInfrastructureReady() { if (pickerApiLoaded && tokenClient) { document.getElementById('drive-icon').className = "fa-brands fa-google-drive text-emerald-400"; } }
+        window.onload = () => { if (typeof gapi !== 'undefined') gapiLoadCallback(); setTimeout(gsiLoadCallback, 400); };
 
-        function checkInfrastructureReady() {
-            if (pickerApiLoaded && tokenClient) {
-                document.getElementById('drive-icon').className = "fa-brands fa-google-drive text-emerald-400";
-            }
-        }
-
-        window.onload = () => {
-            if (typeof gapi !== 'undefined') gapiLoadCallback();
-            setTimeout(gsiLoadCallback, 400);
-        };
-
-        // 💡 [초안정화 패치]: 캐시 충돌로 객체가 잠기더라도 클릭 시점에 즉시 강제 리빌드 수행
-        btnSelectFile.addEventListener('click', () => {
-            if (!tokenClient || typeof google === 'undefined') {
-                gsiLoadCallback();
-                setTimeout(() => { tokenClient.requestAccessToken(); }, 300);
-                return;
-            }
-            tokenClient.requestAccessToken();
-        });
+        btnSelectFile.addEventListener('click', () => { if (!tokenClient || typeof google === 'undefined') { gsiLoadCallback(); setTimeout(() => { tokenClient.requestAccessToken(); }, 300); return; } tokenClient.requestAccessToken(); });
 
         function createPicker() {
-            // 💡 [보안 가드]: 최악의 캐시 상황에서 토큰이 비어있을 경우 예외 차단 후 재요청 유도
-            if (!accessToken) {
-                tokenClient.requestAccessToken();
-                return;
-            }
+            if (!accessToken) { tokenClient.requestAccessToken(); return; }
             try {
-                const view = new google.picker.View(google.picker.ViewId.DOCS);
-                view.setMimeTypes("application/pdf");
-                const picker = new google.picker.PickerBuilder()
-                    .addView(view).setOAuthToken(accessToken).setDeveloperKey(API_KEY)
-                    .setCallback(pickerCallback).setTitle("나래 O&M RCA 리포트 선택 (PDF 전용)").build();
+                const view = new google.picker.View(google.picker.ViewId.DOCS); view.setMimeTypes("application/pdf");
+                const picker = new google.picker.PickerBuilder().addView(view).setOAuthToken(accessToken).setDeveloperKey(API_KEY).setCallback(pickerCallback).setTitle("나래 O&M RCA 리포트 선택 (PDF 전용)").build();
                 picker.setVisible(true);
-            } catch (err) {
-                console.error(err);
-                // 객체 크래시 시 즉각 복구 우회책 가동
-                gsiLoadCallback();
-            }
+            } catch (err) { gsiLoadCallback(); }
         }
 
         function pickerCallback(data) {
             if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
-                const doc = data[google.picker.Response.DOCUMENTS][0];
-                selectedFileId = doc[google.picker.Document.ID];
-                selectedFileName = doc[google.picker.Document.NAME];
+                const doc = data[google.picker.Response.DOCUMENTS][0]; selectedFileId = doc[google.picker.Document.ID]; selectedFileName = doc[google.picker.Document.NAME];
                 fileInfo.innerText = `📄 [선택됨] ${selectedFileName}`;
                 fileInfo.className = "text-blue-600 font-medium text-xs text-center border border-blue-200 rounded-lg py-2.5 bg-blue-50 px-2 truncate shadow-inner";
                 btnStartTransform.removeAttribute('disabled');
@@ -254,26 +198,17 @@
 
         btnStartTransform.addEventListener('click', async () => {
             if(!selectedFileId) return;
-            
             document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-spinner fa-spin text-blue-500"></i>';
-            processSection.classList.remove('hidden');
-            resultSection.classList.add('hidden');
-            viewPlaceholder.classList.add('hidden');
-            graphContainer.classList.remove('hidden');
-            loadingGraph.classList.remove('hidden');
-
+            processSection.classList.remove('hidden'); resultSection.classList.add('hidden'); viewPlaceholder.classList.add('hidden'); graphContainer.classList.remove('hidden'); loadingGraph.classList.remove('hidden');
             document.getElementById('live-cypher-text').innerText = `MATCH (d:Document {title: "${selectedFileName}"})-[r]-(m) RETURN d,r,m;`;
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 inline-block animate-ping"></span> 파이프라인 가동 중';
-
             resetAllStepsToDefault();
 
-            const step1 = document.getElementById('step-1');
-            setStepStatus(step1, 'loading');
+            const step1 = document.getElementById('step-1'); setStepStatus(step1, 'loading');
 
             try {
                 const response = await fetch(N8N_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ fileId: selectedFileId, fileName: selectedFileName })
                 });
 
@@ -281,28 +216,17 @@
                     const n8nRawData = await response.json();
                     runSynchronizedSteps(n8nRawData);
                 } else {
-                    fallbackMockData();
+                    showEmptyError();
                 }
             } catch (e) {
-                fallbackMockData();
+                showEmptyError();
             }
         });
 
         function runSynchronizedSteps(realData) {
-            const step1 = document.getElementById('step-1');
-            const step2 = document.getElementById('step-2');
-            const step3 = document.getElementById('step-3');
-
-            setTimeout(() => {
-                setStepStatus(step1, 'success');
-                setStepStatus(step2, 'loading');
-            }, 1200);
-
-            setTimeout(() => {
-                setStepStatus(step2, 'success');
-                setStepStatus(step3, 'loading');
-            }, 3200);
-
+            const step1 = document.getElementById('step-1'); const step2 = document.getElementById('step-2'); const step3 = document.getElementById('step-3');
+            setTimeout(() => { setStepStatus(step1, 'success'); setStepStatus(step2, 'loading'); }, 1200);
+            setTimeout(() => { setStepStatus(step2, 'success'); setStepStatus(step3, 'loading'); }, 3200);
             setTimeout(() => {
                 setStepStatus(step3, 'success');
                 document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
@@ -310,147 +234,78 @@
             }, 5200);
         }
 
-        function fallbackMockData() {
-            runSynchronizedSteps(null);
-        }
-
-        function resetAllStepsToDefault() {
-            setStepStatus(document.getElementById('step-1'), 'default');
-            setStepStatus(document.getElementById('step-2'), 'default');
-            setStepStatus(document.getElementById('step-3'), 'default');
-        }
-
-        function render100PercentLiveGraph(resultData) {
+        function showEmptyError() {
             loadingGraph.classList.add('hidden');
-            resultSection.classList.remove('hidden');
-            
+            document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-500"></i>';
+            monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span> 통신 데이터 공백';
+            alert("n8n으로부터 리턴된 변환 데이터 배열이 비어있습니다. n8n마지막 노드 전송 설정을 확인해주세요.");
+        }
+
+        function resetAllStepsToDefault() { setStepStatus(document.getElementById('step-1'), 'default'); setStepStatus(document.getElementById('step-2'), 'default'); setStepStatus(document.getElementById('step-3'), 'default'); }
+
+        // 💡 [최종 수정]: 가짜 대피용 하드코딩 배열을 완전히 녹여 없앤 청정 렌더링 시스템
+        function render100PercentLiveGraph(resultData) {
+            loadingGraph.classList.add('hidden'); resultSection.classList.remove('hidden');
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> 실시간 데이터베이스 동기화 완료';
             monitorStatus.className = "flex items-center gap-1.5 text-[11px] text-emerald-400 font-bold";
 
-            let visNodes = [];
-            let visEdges = [];
-            let nodesMap = new Map();
-            let edgesMap = new Map();
-
-            const colorPalette = {
-                'Document': '#10b981', 'Asset': '#3b82f6', 'Alarm': '#f43f5e',
-                'FailureMode': '#eab308', 'CauseStep': '#8b5cf6', 'Action': '#ec4899', 'Lesson': '#64748b'
-            };
+            let visNodes = []; let visEdges = []; let nodesMap = new Map(); let edgesMap = new Map();
+            const colorPalette = { 'Document': '#10b981', 'Asset': '#3b82f6', 'Alarm': '#f43f5e', 'FailureMode': '#eab308', 'CauseStep': '#8b5cf6', 'Action': '#ec4899', 'Lesson': '#64748b' };
 
             if (resultData && resultData.length > 0) {
                 resultData.forEach(row => {
                     if (row.data && row.data.values) {
                         row.data.values.forEach(val => {
-                            const sNode = val[0];
-                            const rRel = val[1];
-                            const tNode = val[2];
-
+                            const sNode = val[0]; const rRel = val[1]; const tNode = val[2];
                             [sNode, tNode].forEach(node => {
                                 if(node && node.elementId && !nodesMap.has(node.elementId)) {
                                     const typeLabel = node.labels ? node.labels[0] : 'Nodes';
                                     const textBody = node.properties ? (node.properties.title || node.properties.name || node.properties.id) : '개체';
-                                    
-                                    nodesMap.set(node.elementId, {
-                                        id: node.elementId, label: textBody, type: typeLabel,
-                                        shape: 'dot', size: typeLabel === 'Document' ? 24 : 15,
-                                        color: colorPalette[typeLabel] || '#94a3b8'
-                                    });
+                                    nodesMap.set(node.elementId, { id: node.elementId, label: textBody, type: typeLabel, shape: 'dot', size: typeLabel === 'Document' ? 24 : 15, color: colorPalette[typeLabel] || '#94a3b8' });
                                 }
                             });
-
-                            if(rRel && rRel.elementId && !edgesMap.has(rRel.elementId)) {
-                                edgesMap.set(rRel.elementId, true);
-                                visEdges.push({ from: rRel.startElementId, to: rRel.endElementId, label: rRel.type });
-                            }
+                            if(rRel && rRel.elementId && !edgesMap.has(rRel.elementId)) { edgesMap.set(rRel.elementId, true); visEdges.push({ from: rRel.startElementId, to: rRel.endElementId, label: rRel.type }); }
                         });
                     }
                 });
                 visNodes = Array.from(nodesMap.values());
             }
 
-            if(visNodes.length === 0) {
-                visNodes = [
-                    { id: "1", label: selectedFileName, type: "Document", shape: "dot", size: 24, color: "#10b981" },
-                    { id: "2", label: "Induced Draft Fan (ID-FAN-01)", type: "Asset", shape: "dot", size: 18, color: "#3b82f6" },
-                    { id: "3", label: "배기가스 세정탑 (Scrubber)", type: "Asset", shape: "dot", size: 15, color: "#3b82f6" },
-                    { id: "4", label: "AL_FAN_VIB_HIGH (송풍기 베어링 진동 위험)", type: "Alarm", shape: "dot", size: 16, color: "#f43f5e" },
-                    { id: "5", label: "FM_UNBALANCE (임펠러 분진 고착 불평형 진동)", type: "FailureMode", shape: "dot", size: 16, color: "#eab308" },
-                    { id: "6", label: "1단계: 배기가스 세정탑 후단 디미스터 파손", type: "CauseStep", shape: "dot", size: 15, color: "#8b5cf6" },
-                    { id: "7", label: "2단계: 플라이 애시 분진 날개 비대칭 부착", type: "CauseStep", shape: "dot", size: 15, color: "#8b5cf6" },
-                    { id: "8", label: "3단계: 고속 회전 시 무게 균형 파괴 언밸런스", type: "CauseStep", shape: "dot", size: 15, color: "#8b5cf6" },
-                    { id: "9", label: "ACT_01: 날개 표면 고착 분진 전량 치핑 세정", type: "Action", shape: "dot", size: 15, color: "#ec4899" },
-                    { id: "10", label: "ACT_02: 현장 정적/동적 밸런싱 진동 안정화", type: "Action", shape: "dot", size: 15, color: "#ec4899" },
-                    { id: "11", label: "LSN_08: 전단 세정탑 디미스터 건전성 연계 점검", type: "Lesson", shape: "dot", size: 15, color: "#64748b" }
-                ];
-
-                visEdges = [
-                    { from: "2", to: "1", label: "ANALYZED_IN" }, { from: "4", to: "2", label: "OCCURRED_IN" }, { from: "2", to: "5", label: "SHOWS_MODE" },
-                    { from: "5", to: "8", label: "INITIATED_BY" }, { from: "8", to: "7", label: "TRIGGERED_BY" }, { from: "7", to: "6", label: "TRIGGERED_BY" },
-                    { from: "6", to: "3", label: "LOCATED_IN" }, { from: "9", to: "2", label: "ACTION_TAKEN" }, { from: "10", to: "2", label: "ACTION_TAKEN" },
-                    { from: "11", to: "5", label: "PREVENTED_BY" }
-                ];
-                visNodes.forEach(n => nodesMap.set(n.id, n));
-            }
-
-            const nodesListUl = document.getElementById('live-nodes-list');
-            const edgesListUl = document.getElementById('live-edges-list');
-            nodesListUl.innerHTML = '';
-            edgesListUl.innerHTML = '';
+            // 상단 텍스트 명세 및 배지 업데이트 구동
+            const nodesListUl = document.getElementById('live-nodes-list'); const edgesListUl = document.getElementById('live-edges-list');
+            nodesListUl.innerHTML = ''; edgesListUl.innerHTML = '';
 
             visNodes.forEach(n => {
-                const li = document.createElement('li');
-                li.innerHTML = `• <span style="color:${n.color}; font-weight:600;">[${n.type}]</span> ${n.label}`;
-                nodesListUl.appendChild(li);
+                const li = document.createElement('li'); li.innerHTML = `• <span style="color:${n.color}; font-weight:600;">[${n.type}]</span> ${n.label}`; nodesListUl.appendChild(li);
             });
-
             visEdges.forEach(e => {
-                const fromNode = nodesMap.get(e.from);
-                const toNode = nodesMap.get(e.to);
-                if(fromNode && toNode) {
-                    const li = document.createElement('li');
-                    li.innerHTML = `• <span class="text-sky-400 font-semibold">[:${e.label}]</span> ${fromNode.label.substring(0,12)}.. ➔ ${toNode.label.substring(0,12)}..`;
-                    edgesListUl.appendChild(li);
-                }
+                const fromNode = nodesMap.get(e.from); const toNode = nodesMap.get(e.to);
+                if(fromNode && toNode) { const li = document.createElement('li'); li.innerHTML = `• <span class="text-sky-400 font-semibold">[:${e.label}]</span> ${fromNode.label.substring(0,12)}.. ➔ ${toNode.label.substring(0,12)}..`; edgesListUl.appendChild(li); }
             });
 
-            document.getElementById('node-count').innerText = visNodes.length;
-            document.getElementById('edge-count').innerText = visEdges.length;
-            document.getElementById('summary-node-badge').innerText = `${visNodes.length} Nodes`;
-            document.getElementById('summary-edge-badge').innerText = `${visEdges.length} Edges`;
+            document.getElementById('node-count').innerText = visNodes.length; document.getElementById('edge-count').innerText = visEdges.length;
+            document.getElementById('summary-node-badge').innerText = `${visNodes.length} Nodes`; document.getElementById('summary-edge-badge').innerText = `${visEdges.length} Edges`;
 
-            const container = document.getElementById('network-canvas');
-            const data = { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) };
-            
+            if(visNodes.length === 0) {
+                document.getElementById('network-canvas').innerHTML = `<div class="flex h-full items-center justify-center text-slate-500 text-xs"><p>데이터 가동 성공. 단, n8n 반환 바디가 비어있어 캔버스를 대기합니다.</p></div>`;
+                return;
+            }
+
+            const container = document.getElementById('network-canvas'); const data = { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) };
             const options = {
-                edges: {
-                    arrows: { to: { Bavarian: true, scaleFactor: 0.45 } },
-                    width: 1.2,
-                    color: { color: '#475569', highlight: '#38bdf8', hover: '#64748b' },
-                    font: { color: '#94a3b8', size: 9, face: 'monospace', strokeWidth: 0, align: 'top' }
-                },
+                edges: { arrows: { to: { Bavarian: true, scaleFactor: 0.45 } }, width: 1.2, color: { color: '#475569', highlight: '#38bdf8', hover: '#64748b' }, font: { color: '#94a3b8', size: 9, face: 'monospace', strokeWidth: 0, align: 'top' } },
                 nodes: { font: { color: '#ffffff', size: 10, face: 'sans-serif' } },
-                physics: {
-                    barnesHut: { gravitationalConstant: -2600, centralGravity: 0.26, springLength: 90 },
-                    stabilization: { iterations: 120 }
-                },
+                physics: { barnesHut: { gravitationalConstant: -2600, centralGravity: 0.26, springLength: 90 }, stabilization: { iterations: 120 } },
                 interaction: { hover: true, tooltipDelay: 100 }
             };
-
             new vis.Network(container, data, options);
         }
 
         function setStepStatus(stepElement, status) {
             const iconDiv = stepElement.querySelector('.step-icon');
-            if(status === 'loading') {
-                stepElement.className = "flex items-center gap-3.5 p-3 bg-blue-50 rounded-lg border border-blue-200 text-blue-800 font-medium text-xs animate-pulse";
-                iconDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-blue-500"></i>';
-            } else if(status === 'success') {
-                stepElement.className = "flex items-center gap-3.5 p-3 bg-emerald-50/60 rounded-lg border border-emerald-100 text-gray-500 text-xs";
-                iconDiv.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
-            } else {
-                stepElement.className = "flex items-center gap-3.5 p-3 bg-gray-50 rounded-lg text-gray-400 text-xs";
-                iconDiv.innerHTML = '<i class="fa-regular fa-circle text-gray-400"></i>';
-            }
+            if(status === 'loading') { stepElement.className = "flex items-center gap-3.5 p-3 bg-blue-50 rounded-lg border border-blue-200 text-blue-800 font-medium text-xs animate-pulse"; iconDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-blue-500"></i>'; }
+            else if(status === 'success') { stepElement.className = "flex items-center gap-3.5 p-3 bg-emerald-50/60 rounded-lg border border-emerald-100 text-gray-500 text-xs"; iconDiv.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>'; }
+            else { stepElement.className = "flex items-center gap-3.5 p-3 bg-gray-50 rounded-lg text-gray-400 text-xs"; iconDiv.innerHTML = '<i class="fa-regular fa-circle text-gray-400"></i>'; }
         }
     </script>
 </body>
