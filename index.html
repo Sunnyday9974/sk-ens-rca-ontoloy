@@ -39,7 +39,7 @@
                 실시간 동기화 활성화
             </div>
             <div class="text-[10px] text-slate-400 font-mono bg-black/40 px-2.5 py-1 rounded border border-slate-800">
-                소스 반영 시각: <span class="text-amber-400 font-bold">06.15 20:10</span>
+                소스 반영 시각: <span class="text-amber-400 font-bold">06.15 20:30</span>
             </div>
         </div>
     </header>
@@ -54,7 +54,7 @@
                 </h2>
                 <div class="flex flex-col gap-2">
                     <button id="btn-select-file" class="w-full bg-slate-900 hover:bg-black text-white font-bold text-xs py-2.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2 cursor-pointer">
-                        <i id="drive-icon" class="fa-brands fa-google-drive text-emerald-400"></i> 구글 드라이브 리포트 선택
+                        <i id="drive-icon" class="fa-brands fa-google-drive text-amber-400"></i> 구글 드라이브 리포트 선택
                     </button>
                     <div id="file-info" class="text-slate-400 italic text-[11px] text-center border border-dashed border-slate-200 rounded-xl py-2 bg-slate-50 px-2 truncate">
                         파일을 선택해 주세요.
@@ -222,7 +222,16 @@
                 checkInfrastructureReady();
             }
         }
-        function checkInfrastructureReady() { if (pickerApiLoaded && tokenClient) { document.getElementById('drive-icon').className = "fa-brands fa-google-drive text-emerald-400 animate-bounce"; } }
+        
+        // 🌟 [안전 인프라 복원]: 아이콘 유실 시 발생하던 문법 예외 트랙에 방어 코드 장착 완료
+        function checkInfrastructureReady() { 
+            if (pickerApiLoaded && tokenClient) { 
+                const driveIcon = document.getElementById('drive-icon');
+                if (driveIcon) {
+                    driveIcon.className = "fa-brands fa-google-drive text-emerald-400 animate-bounce"; 
+                }
+            } 
+        }
         window.onload = () => { if (typeof gapi !== 'undefined') gapiLoadCallback(); setTimeout(gsiLoadCallback, 400); };
 
         btnSelectFile.addEventListener('click', () => { if (!tokenClient || typeof google === 'undefined') { gsiLoadCallback(); setTimeout(() => { tokenClient.requestAccessToken(); }, 300); return; } tokenClient.requestAccessToken(); });
@@ -248,7 +257,6 @@
         btnStartTransform.addEventListener('click', async () => {
             if(!selectedFileId) return;
             
-            // 1. UI 뼈대부터 무조건 선개통 및 활성화
             processSection.classList.remove('hidden'); resultSection.classList.add('hidden'); viewPlaceholder.classList.add('hidden'); graphContainer.classList.remove('hidden'); loadingGraph.classList.add('hidden');
             document.getElementById('live-cypher-text').innerText = `MATCH (d:Document {title: "${selectedFileName}"})-[r]-(m) RETURN d,r,m;`;
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 inline-block animate-ping"></span> 실시간 분석 가동 중';
@@ -256,7 +264,6 @@
             startLiveTimer();
             resetAllStepsToDefault();
 
-            // 2. 1단계 분배 타이머 시뮬레이션 즉시 스타트
             let progress1 = 0;
             fakeProgressInterval = setInterval(() => {
                 if (progress1 < 100) {
@@ -268,12 +275,11 @@
                     if(progress1 === 100) {
                         clearInterval(fakeProgressInterval);
                         document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
-                        simulateStep2Progress(); // ➔ 안전하게 2단계 바 토스
+                        simulateStep2Progress();
                     }
                 }
             }, 150);
 
-            // 🌟 [CORS/문법 크래시 철벽 완화]: 자바스크립트 간섭 없이 n8n 웹훅 통신선 다이렉트 긴급 발사!!
             try {
                 const response = await fetch(N8N_WEBHOOK_URL, {
                     method: 'POST', 
@@ -284,8 +290,6 @@
                 if (response.ok) {
                     let n8nRawData = await response.json();
                     clearInterval(fakeProgressInterval);
-                    
-                    // 성공 수급 완료 ➔ 전 구간 올 체크 패치 기동
                     finalizeAllStepsSuccess(n8nRawData);
                 } else {
                     showDetailedError(`네트워크 상태 코드 에러: ${response.status} (${response.statusText})`);
@@ -305,7 +309,6 @@
             }, 100);
         }
 
-        // 2단계 가짜 프로그레스 바 동적 구동
         function simulateStep2Progress() {
             const step2Box = document.getElementById('step-2-box');
             if(step2Box) step2Box.classList.remove('opacity-40');
@@ -323,14 +326,11 @@
             }, 250);
         }
 
-        // 🌟 [동기화 마크 최종 보정]: n8n 분석이 마치는 순간 전 구간 프로그레스 바를 100%로 가득 채우고 모래시계 물리적 완전 정지!
         function finalizeAllStepsSuccess(realData) {
-            // 1단계 클리어
             document.getElementById('progress-bar-1').style.width = '100%';
             document.getElementById('step-1-sub').innerText = '100%';
             document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
             
-            // 2단계 클리어
             const step2Box = document.getElementById('step-2-box'); if(step2Box) step2Box.classList.remove('opacity-40');
             document.getElementById('progress-container-2').classList.remove('hidden');
             document.getElementById('progress-bar-2').style.width = '100%';
@@ -338,7 +338,6 @@
             document.getElementById('step-2-sub').className = "text-[10px] text-emerald-600 font-bold font-mono";
             document.getElementById('step-2-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
             
-            // 3단계 클리어
             const step3Box = document.getElementById('step-3-box'); if(step3Box) step3Box.classList.remove('opacity-40');
             document.getElementById('progress-container-3').classList.remove('hidden');
             document.getElementById('progress-bar-3').style.width = '100%';
@@ -346,7 +345,6 @@
             document.getElementById('step-3-sub').className = "text-[10px] text-emerald-600 font-bold font-mono";
             document.getElementById('step-3-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
             
-            // 🌟 [모래시계 무력화]: 실시간 로그 타이틀 옆의 모래시계 회전 아이콘을 완전 정적인 녹색 완수 마크로 치환!
             clearInterval(timerInterval);
             document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
             
