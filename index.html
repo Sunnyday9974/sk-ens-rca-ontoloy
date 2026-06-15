@@ -39,7 +39,7 @@
                 실시간 동기화 활성화
             </div>
             <div class="text-[10px] text-slate-400 font-mono bg-black/40 px-2.5 py-1 rounded border border-slate-800">
-                소스 반영 시각: <span class="text-amber-400 font-bold">06.15 18:20</span>
+                소스 반영 시각: <span class="text-amber-400 font-bold">06.15 18:50</span>
             </div>
         </div>
     </header>
@@ -124,7 +124,7 @@
                 </div>
             </div>
             
-            <div class="relative flex flex-col flex-1 min-h-[700px]" id="monitor-body">
+            <div class="relative flex flex-col flex-1 min-h-[750px]" id="monitor-body">
                 <div id="view-placeholder" class="absolute inset-0 flex flex-col justify-center items-center text-center p-6 space-y-4 z-20 bg-slate-50/50">
                     <div class="text-5xl text-slate-200"><i class="fa-solid fa-diagram-project"></i></div>
                     <div>
@@ -152,11 +152,11 @@
                         </div>
                     </div>
                     
-                    <div class="flex-1 w-full relative min-h-[450px]">
+                    <div class="flex-1 w-full relative min-h-[480px]">
                         <div id="network-canvas"></div>
                         <div id="loading-graph" class="absolute inset-0 bg-white/90 flex flex-col items-center justify-center text-xs text-blue-600 gap-3 z-30 hidden">
                             <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
-                            <span class="font-bold">Neo4j 클라우드와 지식 토폴로지 동기화 중...</span>
+                            <span class="font-bold">Neo4j 지식 토폴로지 동기화 및 정렬 중...</span>
                         </div>
                     </div>
 
@@ -189,6 +189,18 @@
         const fileInfo = document.getElementById('file-info'); const processSection = document.getElementById('process-section'); const resultSection = document.getElementById('result-section');
         const monitorStatus = document.getElementById('monitor-status'); const viewPlaceholder = document.getElementById('view-placeholder');
         const graphContainer = document.getElementById('graph-container'); const loadingGraph = document.getElementById('loading-graph');
+
+        // 🌟 [가독성 래핑 함수]: 원형 노드 아래의 긴 한 줄 자막을 15자 기준으로 강제 자동 줄바꿈(\n) 처리
+        function wrapTextByLength(text, maxLength = 15) {
+            if (!text) return '';
+            let result = '';
+            while (text.length > maxLength) {
+                result += text.substring(0, maxLength) + '\n';
+                text = text.substring(maxLength);
+            }
+            result += text;
+            return result;
+        }
 
         function gapiLoadCallback() { gapi.load('picker', () => { pickerApiLoaded = true; checkInfrastructureReady(); }); }
         function gsiLoadCallback() {
@@ -258,7 +270,7 @@
                     document.getElementById('step-1-sub').innerText = '100%';
                     let n8nRawData = await response.json();
                     
-                    // 🌟 [동기화 픽스]: n8n의 신호 응답 수급 직후, 2단계와 3단계를 유기적인 모션으로 고속 자동 동기화 개통
+                    // 🌟 [통신 연동 개통]: 데이터를 무사히 받았으므로 순차 애니메이션 트리거 가동
                     runSynchronizedSteps(n8nRawData);
                 } else {
                     showDetailedError(`네트워크 상태 코드 에러: ${response.status} (${response.statusText})`);
@@ -278,7 +290,7 @@
             }, 100);
         }
 
-        // 🌟 [UX 보정]: n8n 처리가 완료되면 백그라운드 홀딩 현상을 깨부수고 모든 스텝을 완료 마크로 다이렉트 전환
+        // 🌟 [동기화 마크 픽스]: 유실되어 있던 2스텝과 3스텝의 연쇄 녹색 체크 및 타이머 오프(Off) 개통
         function runSynchronizedSteps(realData) {
             document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
             
@@ -291,7 +303,6 @@
                 if (step2Icon) step2Icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
                 const step3Box = document.getElementById('step-3-box');
                 if (step3Box) step3Box.classList.remove('opacity-50');
-                
                 const step3Icon = document.getElementById('step-3-icon');
                 if (step3Icon) step3Icon.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
             }, 800);
@@ -300,7 +311,7 @@
                 const step3Icon = document.getElementById('step-3-icon');
                 if (step3Icon) step3Icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
                 
-                // 완진 선언 ➔ 타이머 정지 및 차트 기동
+                // 엔진 가동 최종 타이머 리셋 및 캔버스 드로잉 송출
                 clearInterval(timerInterval);
                 loadingGraph.classList.remove('hidden');
                 setTimeout(() => render100PercentLiveGraph(realData), 400);
@@ -324,7 +335,6 @@
                 return;
             }
 
-            // 🌟 [레이아웃 해제 조치]: 변환 완료 카드와 결과 바디 박스가 가림 없이 노출되도록 제어
             resultSection.classList.remove('hidden');
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span> 실시간 데이터베이스 동기화 완료';
             monitorStatus.className = "flex items-center gap-2 text-[10px] text-emerald-600 font-bold font-mono";
@@ -335,9 +345,21 @@
             rawNodes.forEach(node => {
                 if (node && node.id) {
                     const typeLabel = node.label || 'Nodes';
-                    const textBody = node.title || node.name || node.id_attr || '개체';
+                    
+                    // 🌟 [문서 식별 조건 패치]: Document 타입일 때 제목이 아닌 고유 문서 번호(docNo)를 캡션으로 채택!!
+                    let textBody = node.title || node.name || node.id_attr || '개체';
+                    if (typeLabel === 'Document' && node.docNo) {
+                        textBody = node.docNo;
+                    }
+                    
+                    // 🌟 [가독성 줄바꿈 패치]: 긴 텍스트 명세를 15자 기준으로 나누어 가로 팽창을 방지
+                    const formattedLabel = wrapTextByLength(textBody, 15);
+
                     nodesMap.set(node.id, {
-                        id: node.id, label: textBody, type: typeLabel, shape: 'dot',
+                        id: node.id, 
+                        label: formattedLabel, 
+                        type: typeLabel, 
+                        shape: 'dot',
                         size: typeLabel === 'Document' ? 22 : 12,
                         color: { background: colorPalette[typeLabel] || '#94a3b8', border: '#ffffff' },
                         font: { color: '#334155', size: 10, face: 'sans-serif', strokeWidth: 2, strokeColor: '#ffffff' }
@@ -358,28 +380,40 @@
                 });
             }
 
+            // 상단 50:50 명세 리스트 빌드 업데이트
             const nl = document.getElementById('live-nodes-list'); const el = document.getElementById('live-edges-list');
             if (nl) nl.innerHTML = ''; 
             if (el) el.innerHTML = '';
             
-            visNodes.forEach(n => { if (nl) nl.innerHTML += `<li class="border-b border-slate-100 pb-1 text-slate-700">• <b style="color:${n.color.background}">[${n.type}]</b> ${n.label}</li>`; });
+            visNodes.forEach(n => { 
+                // 목록 창 리스트 뷰는 끊김 없이 한 줄로 편안히 표출
+                const inlineLabel = n.label.replace(/\n/g, ' ');
+                if (nl) nl.innerHTML += `<li class="border-b border-slate-100 pb-1 text-slate-700 truncate">• <b style="color:${n.color.background}">[${n.type}]</b> ${inlineLabel}</li>`; 
+            });
+            
             visEdges.forEach(e => { 
                 const fromNode = nodesMap.get(e.from); const toNode = nodesMap.get(e.to);
                 if(fromNode && toNode) {
-                    if (el) el.innerHTML += `<li class="border-b border-slate-100 pb-1 text-slate-700">• <b class="text-blue-500">[:${e.label}]</b> ${fromNode.label.substring(0,10)}.. ➔ ${toNode.label.substring(0,10)}..</li>`; 
+                    const cleanFrom = fromNode.label.replace(/\n/g, ' ').substring(0,10);
+                    const cleanTo = toNode.label.replace(/\n/g, ' ').substring(0,10);
+                    if (el) el.innerHTML += `<li class="border-b border-slate-100 pb-1 text-slate-700 truncate">• <b class="text-blue-500">[:${e.label}]</b> ${cleanFrom}.. ➔ ${cleanTo}..</li>`; 
                 }
             });
             
+            // 🌟 [실시간 카운팅 활성화]: 0개로 굳어있던 뱃지를 진짜 수급된 카운트 숫자로 강제 주입!!
             const nc = document.getElementById('node-count'); const ec = document.getElementById('edge-count');
             if (nc) nc.innerText = visNodes.length; 
             if (ec) ec.innerText = visEdges.length;
+            
+            document.getElementById('summary-node-badge').innerText = `${visNodes.length} Nodes`;
+            document.getElementById('summary-edge-badge').innerText = `${visEdges.length} Edges`;
 
             if(networkInstance !== null) networkInstance.destroy();
             const container = document.getElementById('network-canvas');
             const data = { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) };
             const options = {
                 edges: { arrows: { to: { enabled: true, scaleFactor: 0.5 } }, width: 1.2, smooth: { type: 'continuous' } },
-                physics: { barnesHut: { gravitationalConstant: -3000, springLength: 120 }, stabilization: { iterations: 100 } }
+                physics: { barnesHut: { gravitationalConstant: -3000, springLength: 130 }, stabilization: { iterations: 100 } }
             };
             networkInstance = new vis.Network(container, data, options);
         }
