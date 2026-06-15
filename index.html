@@ -39,7 +39,7 @@
                 실시간 동기화 활성화
             </div>
             <div class="text-[10px] text-slate-400 font-mono bg-black/40 px-2.5 py-1 rounded border border-slate-800">
-                소스 반영 시각: <span class="text-amber-400 font-bold">06.15 20:45</span>
+                소스 반영 시각: <span class="text-amber-400 font-bold">06.15 20:55</span>
             </div>
         </div>
     </header>
@@ -189,7 +189,7 @@
     </footer>
 
     <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
 
     <script>
         const API_KEY = 'AIzaSyDUb9w8DUJ1z6rA3f1cWLvtK_dHML2B0Ys';
@@ -199,6 +199,11 @@
         
         let accessToken = null; let selectedFileId = null; let selectedFileName = null; let tokenClient = null; let pickerApiLoaded = false;
         let networkInstance = null; let timerInterval = null; let fakeProgressInterval = null;
+
+        const btnSelectFile = document.getElementById('btn-select-file'); const btnStartTransform = document.getElementById('btn-start-transform');
+        const fileInfo = document.getElementById('file-info'); const processSection = document.getElementById('process-section'); const resultSection = document.getElementById('result-section');
+        const monitorStatus = document.getElementById('monitor-status'); const viewPlaceholder = document.getElementById('view-placeholder');
+        const graphContainer = document.getElementById('graph-container'); const loadingGraph = document.getElementById('loading-graph');
 
         function wrapTextByLength(text, maxLength = 15) {
             if (!text) return '';
@@ -211,6 +216,7 @@
             return result.trim();
         }
 
+        // 🌟 [안전 연동 개통]: 구글 토큰 초기화 완료 직후 이벤트 리스너를 바인딩하여 무조건 클릭이 먹히도록 조치
         function gapiLoadCallback() { gapi.load('picker', () => { pickerApiLoaded = true; checkInfrastructureReady(); }); }
         function gsiLoadCallback() {
             if (typeof google !== 'undefined') {
@@ -222,18 +228,28 @@
             }
         }
         
-        // 🌟 [안전 예외 강화]: drive-icon 요소를 탐색할 때 예외가 나지 않도록 온전하게 이중 방어막 가동
         function checkInfrastructureReady() { 
             if (pickerApiLoaded && tokenClient) { 
                 const driveIcon = document.getElementById('drive-icon');
-                if (driveIcon) {
-                    driveIcon.className = "fa-brands fa-google-drive text-emerald-400 animate-bounce"; 
-                }
+                if (driveIcon) driveIcon.className = "fa-brands fa-google-drive text-emerald-400 animate-bounce"; 
             } 
         }
-        window.onload = () => { if (typeof gapi !== 'undefined') gapiLoadCallback(); setTimeout(gsiLoadCallback, 400); };
 
-        btnSelectFile.addEventListener('click', () => { if (!tokenClient || typeof google === 'undefined') { gsiLoadCallback(); setTimeout(() => { tokenClient.requestAccessToken(); }, 300); return; } tokenClient.requestAccessToken(); });
+        // 🌟 [안전장치 2번]: 혹시 모를 로딩 유실을 막기 위해 윈도우 로드 즉시 다이렉트 이벤트 수동 장착
+        window.addEventListener('DOMContentLoaded', () => {
+            if (typeof gapi !== 'undefined') gapiLoadCallback();
+            setTimeout(gsiLoadCallback, 200);
+            
+            // 🚀 [마스터 스위치 클릭 보정]: 어떤 상황이든 버튼을 누르면 구글 인증 프로세스를 즉시 강제 기동!
+            btnSelectFile.onclick = () => {
+                if (!tokenClient) {
+                    gsiLoadCallback();
+                    setTimeout(() => { tokenClient.requestAccessToken(); }, 300);
+                } else {
+                    tokenClient.requestAccessToken();
+                }
+            };
+        });
 
         function createPicker() {
             if (!accessToken) { tokenClient.requestAccessToken(); return; }
@@ -241,7 +257,7 @@
                 const view = new google.picker.View(google.picker.ViewId.DOCS); view.setMimeTypes("application/pdf");
                 const picker = new google.picker.PickerBuilder().addView(view).setOAuthToken(accessToken).setDeveloperKey(API_KEY).setCallback(pickerCallback).setTitle("RCA 리포트 PDF 선택").build();
                 picker.setVisible(true);
-            } catch (err) { gsiLoadCallback(); }
+            } catch (err) { alert("구글 팝업 차단을 해제해 주세요."); }
         }
 
         function pickerCallback(data) {
@@ -263,7 +279,7 @@
             startLiveTimer();
             resetAllStepsToDefault();
 
-            // 1단계 프로그레스 바 기동 연출
+            // 1단계 타임라인 가동
             let progress1 = 0;
             fakeProgressInterval = setInterval(() => {
                 if (progress1 < 100) {
@@ -275,7 +291,7 @@
                     if(progress1 === 100) {
                         clearInterval(fakeProgressInterval);
                         document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
-                        simulateStep2Progress(); // ➔ 2단계 릴레이 바 토스
+                        simulateStep2Progress();
                     }
                 }
             }, 150);
@@ -326,7 +342,6 @@
             }, 250);
         }
 
-        // 🌟 [연쇄 동기화 개통]: n8n 처리가 완료되면 전 구간의 바를 100% 가득 채우고 타이틀 옆 모래시계 정지 박제
         function finalizeAllStepsSuccess(realData) {
             document.getElementById('progress-bar-1').style.width = '100%';
             document.getElementById('step-1-sub').innerText = '100%';
@@ -346,7 +361,6 @@
             document.getElementById('step-3-sub').className = "text-[10px] text-emerald-600 font-bold font-mono";
             document.getElementById('step-3-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
             
-            // 타이머 정지 및 타이틀 모래시계 ➔ 체크 마크 고정 교정
             clearInterval(timerInterval);
             document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
             
@@ -356,7 +370,6 @@
 
         function render100PercentLiveGraph(resultData) {
             loadingGraph.classList.add('hidden');
-            
             let targetData = resultData;
             if (Array.isArray(targetData) && targetData.length > 0) targetData = targetData[0];
             if (targetData && targetData.json) targetData = targetData.json;
@@ -381,9 +394,7 @@
                 if (node && node.id) {
                     const typeLabel = node.label || 'Nodes';
                     let textBody = node.title || node.name || node.id_attr || '개체';
-                    if (typeLabel === 'Document' && node.docNo) {
-                        textBody = node.docNo;
-                    }
+                    if (typeLabel === 'Document' && node.docNo) { textBody = node.docNo; }
                     const formattedLabel = wrapTextByLength(textBody, 15);
 
                     nodesMap.set(node.id, {
@@ -459,14 +470,12 @@
             document.getElementById('step-2-sub').className = "text-[10px] text-slate-400 font-bold font-mono";
             const pc2 = document.getElementById('progress-container-2'); if(pc2) pc2.classList.add('hidden');
             const pb2 = document.getElementById('progress-bar-2'); if(pb2) pb2.style.width = '0%';
-            const s2b = document.getElementById('step-2-box'); if(s2b) s2b.classList.add('opacity-40');
             
             document.getElementById('step-3-icon').innerHTML = '<i class="fa-regular fa-circle"></i>';
             document.getElementById('step-3-sub').innerText = '대기';
             document.getElementById('step-3-sub').className = "text-[10px] text-slate-400 font-bold font-mono";
             const pc3 = document.getElementById('progress-container-3'); if(pc3) pc3.classList.add('hidden');
             const pb3 = document.getElementById('progress-bar-3'); if(pb3) pb3.style.width = '0%';
-            const s3b = document.getElementById('step-3-box'); if(s3b) s3b.classList.add('opacity-40');
         }
     </script>
 </body>
