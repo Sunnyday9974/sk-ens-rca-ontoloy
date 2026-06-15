@@ -10,17 +10,18 @@
     <style>
         /* 🌟 [가독성 테마]: 눈이 편안한 밝은 격자 스타일의 인텔리전트 캔버스 */
         #network-canvas { 
-            width: 100%; height: 100%; background-color: #f8fafc; 
+            width: 100%; 
+            height: 100%; 
+            background-color: #f8fafc; 
             background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
             background-size: 24px 24px;
         }
-        /* 스크롤바 없는 컴팩트 고정 레이아웃 */
-        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-slate-50 text-gray-800 min-h-screen flex flex-col font-sans overflow-hidden">
+<body class="bg-slate-50 text-gray-800 min-h-screen flex flex-col font-sans">
 
     <header class="bg-slate-900 text-white py-4 px-8 shadow-md flex justify-between items-center z-50">
         <div>
@@ -30,7 +31,7 @@
             <p class="text-[11px] text-slate-400 mt-0.5">RCA 리포트 분석 ➔ AI 온톨로지 추출 ➔ Neo4j 매핑 실시간 파이프라인</p>
         </div>
         <div class="flex items-center gap-4">
-            <div class="bg-blue-500/10 text-blue-300 px-3 py-1.5 rounded-lg text-[11px] font-bold border border-blue-500/3Calculated flex items-center gap-2">
+            <div class="bg-blue-500/10 text-blue-300 px-3 py-1.5 rounded-lg text-[11px] font-bold border border-blue-500/30 flex items-center gap-2">
                 <span class="relative flex h-2 w-2">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -38,14 +39,14 @@
                 실시간 동기화 활성화
             </div>
             <div class="text-[10px] text-slate-400 font-mono bg-black/40 px-2.5 py-1 rounded border border-slate-800">
-                소스 반영 시각: <span class="text-amber-400 font-bold">06.15 17:55</span>
+                소스 반영 시각: <span class="text-amber-400 font-bold">06.15 18:20</span>
             </div>
         </div>
     </header>
 
-    <main class="w-full max-w-[1700px] mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 max-h-[calc(100vh-80px)]">
+    <main class="w-full max-w-[1700px] mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
         
-        <div class="lg:col-span-3 flex flex-col gap-5 h-full overflow-hidden">
+        <div class="lg:col-span-3 flex flex-col gap-5">
             
             <section class="p-5 bg-white shadow-sm rounded-2xl border border-slate-200">
                 <h2 class="text-xs font-bold mb-4 text-slate-500 uppercase tracking-widest flex items-center gap-2">
@@ -64,7 +65,7 @@
                 </div>
             </section>
 
-            <section id="process-section" class="p-5 bg-white shadow-sm rounded-2xl border border-slate-200 flex flex-col flex-1 min-h-0 hidden">
+            <section id="process-section" class="p-5 bg-white shadow-sm rounded-2xl border border-slate-200 flex flex-col hidden">
                 <h2 class="text-xs font-bold mb-4 text-slate-500 uppercase tracking-widest flex items-center justify-between">
                     <span class="flex items-center gap-2">
                         <span id="engine-log-title-icon"><i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i></span> 
@@ -73,8 +74,8 @@
                     <span id="mini-timer" class="text-[10px] font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">0.0s</span>
                 </h2>
                 
-                <div class="space-y-3 flex-1 overflow-y-auto">
-                    <div id="step-1" class="p-4 bg-slate-50 rounded-xl transition-all duration-300 border border-transparent">
+                <div class="space-y-3">
+                    <div id="step-1" class="p-4 bg-slate-50 rounded-xl border border-slate-100 transition-all duration-300">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-2">
                                 <div class="step-icon text-blue-600 text-xs" id="step-1-icon"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
@@ -87,24 +88,24 @@
                         </div>
                     </div>
                     
-                    <div id="step-2" class="flex items-center gap-3 p-3.5 bg-slate-50 rounded-xl opacity-50" id="step-2-box">
+                    <div id="step-2" class="flex items-center gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-100 opacity-50 transition-all duration-300" id="step-2-box">
                         <div class="step-icon text-slate-300" id="step-2-icon"><i class="fa-regular fa-circle"></i></div>
                         <p class="font-bold text-[11px] text-slate-600">AI 엔티티 및 인과관계 추출</p>
                     </div>
                     
-                    <div id="step-3" class="flex items-center gap-3 p-3.5 bg-slate-50 rounded-xl opacity-50" id="step-3-box">
+                    <div id="step-3" class="flex items-center gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-100 opacity-50 transition-all duration-300" id="step-3-box">
                         <div class="step-icon text-slate-300" id="step-3-icon"><i class="fa-regular fa-circle"></i></div>
                         <p class="font-bold text-[11px] text-slate-600">Neo4j 지식 그래프 매핑</p>
                     </div>
                 </div>
 
-                <div id="result-section" class="mt-4 pt-4 border-t border-slate-100 hidden animate-fade-in">
+                <div id="result-section" class="mt-4 pt-4 border-t border-slate-100 hidden">
                     <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-emerald-500 p-3 rounded-xl text-center shadow-md">
+                        <div class="bg-emerald-500 p-3 rounded-xl text-center shadow-md shadow-emerald-100">
                             <span class="block text-[10px] text-emerald-100 font-medium">추출 노드</span>
                             <span id="node-count" class="text-xl font-black text-white font-mono leading-none">0</span>
                         </div>
-                        <div class="bg-sky-500 p-3 rounded-xl text-center shadow-md">
+                        <div class="bg-sky-500 p-3 rounded-xl text-center shadow-md shadow-sky-100">
                             <span class="block text-[10px] text-sky-100 font-medium">인과관계</span>
                             <span id="edge-count" class="text-xl font-black text-white font-mono leading-none">0</span>
                         </div>
@@ -113,9 +114,9 @@
             </section>
         </div>
 
-        <div class="lg:col-span-9 bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden flex flex-col min-h-0">
+        <div class="lg:col-span-9 bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden flex flex-col">
             <div class="bg-slate-900 text-slate-300 px-5 py-3 flex justify-between items-center border-b border-slate-800">
-                <div class="flex items-center gap-3 text-[10px] font-bold tracking-widest uppercase">
+                <div class="flex items-center gap-3 text-[10px] font-bold tracking-widest uppercase font-mono">
                     <i class="fa-solid fa-chart-line text-blue-400"></i> Neo4j Knowledge Graph Engine View
                 </div>
                 <div id="monitor-status" class="flex items-center gap-2 text-[10px] text-slate-500">
@@ -123,7 +124,7 @@
                 </div>
             </div>
             
-            <div class="flex-1 relative min-h-0" id="monitor-body">
+            <div class="relative flex flex-col flex-1 min-h-[700px]" id="monitor-body">
                 <div id="view-placeholder" class="absolute inset-0 flex flex-col justify-center items-center text-center p-6 space-y-4 z-20 bg-slate-50/50">
                     <div class="text-5xl text-slate-200"><i class="fa-solid fa-diagram-project"></i></div>
                     <div>
@@ -132,32 +133,35 @@
                     </div>
                 </div>
 
-                <div id="graph-container" class="w-full h-full hidden flex flex-col flex-1 min-h-0 relative">
-                    <div id="ontology-summary-box" class="absolute top-4 left-4 z-10 flex gap-3 pointer-events-none">
-                        <div class="bg-white/90 backdrop-blur shadow-lg border border-slate-200 p-3.5 rounded-2xl min-w-[180px]">
-                            <p class="text-[10px] font-black text-emerald-600 mb-2 border-b border-emerald-100 pb-1 flex items-center gap-1">
-                                <i class="fa-solid fa-tags"></i> NODES LIST
+                <div id="graph-container" class="w-full h-full hidden flex flex-col flex-1 relative">
+                    
+                    <div id="ontology-summary-box" class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 border-b border-slate-200">
+                        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col">
+                            <p class="text-[11px] font-black text-emerald-600 mb-2 border-b border-emerald-50 pb-1.5 flex items-center justify-between">
+                                <span><i class="fa-solid fa-tags mr-1"></i> 도출된 노드 명세 (Nodes)</span>
+                                <span id="summary-node-badge" class="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full text-[9px] font-bold font-mono">0 Nodes</span>
                             </p>
-                            <ul id="live-nodes-list" class="text-[10px] text-slate-600 space-y-1 max-h-[120px] overflow-y-auto pointer-events-auto"></ul>
+                            <ul id="live-nodes-list" class="text-[11px] text-slate-600 space-y-1 max-h-[110px] overflow-y-auto pr-1"></ul>
                         </div>
-                        <div class="bg-white/90 backdrop-blur shadow-lg border border-slate-200 p-3.5 rounded-2xl min-w-[180px]">
-                            <p class="text-[10px] font-black text-sky-600 mb-2 border-b border-sky-100 pb-1 flex items-center gap-1">
-                                <i class="fa-solid fa-link"></i> CAUSAL RELATIONS
+                        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col">
+                            <p class="text-[11px] font-black text-blue-600 mb-2 border-b border-blue-50 pb-1.5 flex items-center justify-between">
+                                <span><i class="fa-solid fa-circle-nodes mr-1"></i> 인과관계 매핑 (Relationships)</span>
+                                <span id="summary-edge-badge" class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full text-[9px] font-bold font-mono">0 Edges</span>
                             </p>
-                            <ul id="live-edges-list" class="text-[10px] text-slate-600 space-y-1 max-h-[120px] overflow-y-auto pointer-events-auto"></ul>
+                            <ul id="live-edges-list" class="text-[11px] text-slate-600 space-y-1 max-h-[110px] overflow-y-auto pr-1"></ul>
                         </div>
                     </div>
                     
-                    <div class="flex-1 w-full relative">
+                    <div class="flex-1 w-full relative min-h-[450px]">
                         <div id="network-canvas"></div>
-                        <div id="loading-graph" class="absolute inset-0 bg-white/80 flex flex-col items-center justify-center text-xs text-blue-600 gap-3 z-30 hidden">
+                        <div id="loading-graph" class="absolute inset-0 bg-white/90 flex flex-col items-center justify-center text-xs text-blue-600 gap-3 z-30 hidden">
                             <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
                             <span class="font-bold">Neo4j 클라우드와 지식 토폴로지 동기화 중...</span>
                         </div>
                     </div>
 
-                    <div class="bg-slate-900 px-4 py-2 flex justify-between items-center text-[9px] text-slate-500 font-mono border-t border-slate-800">
-                        <div class="flex items-center gap-2"><i class="fa-solid fa-terminal text-amber-500"></i> NEO4J LIVE QUERY</div>
+                    <div class="bg-slate-900 px-4 py-2.5 flex justify-between items-center text-[9px] text-slate-500 font-mono border-t border-slate-800">
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-terminal text-amber-500"></i> NEO4J LIVE TARGET CYAN VIEW</div>
                         <div id="live-cypher-text" class="text-blue-400">MATCH (d:Document)-[r]-(m) RETURN d,r,m</div>
                     </div>
                 </div>
@@ -165,7 +169,7 @@
         </div>
     </main>
 
-    <footer class="bg-white py-3 text-slate-400 text-[10px] text-center border-t border-slate-200">
+    <footer class="bg-white py-3 text-slate-400 text-[10px] text-center border-t border-slate-200 mt-auto">
         © 2026 나래 O&M AI/DT TF. Intellectual Asset Management System v2.0
     </footer>
 
@@ -253,6 +257,8 @@
                     document.getElementById('progress-bar').style.width = '100%';
                     document.getElementById('step-1-sub').innerText = '100%';
                     let n8nRawData = await response.json();
+                    
+                    // 🌟 [동기화 픽스]: n8n의 신호 응답 수급 직후, 2단계와 3단계를 유기적인 모션으로 고속 자동 동기화 개통
                     runSynchronizedSteps(n8nRawData);
                 } else {
                     showDetailedError(`네트워크 상태 코드 에러: ${response.status} (${response.statusText})`);
@@ -272,11 +278,12 @@
             }, 100);
         }
 
+        // 🌟 [UX 보정]: n8n 처리가 완료되면 백그라운드 홀딩 현상을 깨부수고 모든 스텝을 완료 마크로 다이렉트 전환
         function runSynchronizedSteps(realData) {
             document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+            
             const step2Box = document.getElementById('step-2-box');
             if (step2Box) step2Box.classList.remove('opacity-50');
-            
             const step2Icon = document.getElementById('step-2-icon');
             if (step2Icon) step2Icon.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
             
@@ -287,15 +294,17 @@
                 
                 const step3Icon = document.getElementById('step-3-icon');
                 if (step3Icon) step3Icon.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
-            }, 1200);
+            }, 800);
             
             setTimeout(() => {
                 const step3Icon = document.getElementById('step-3-icon');
                 if (step3Icon) step3Icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+                
+                // 완진 선언 ➔ 타이머 정지 및 차트 기동
                 clearInterval(timerInterval);
                 loadingGraph.classList.remove('hidden');
                 setTimeout(() => render100PercentLiveGraph(realData), 400);
-            }, 2600);
+            }, 1800);
         }
 
         function render100PercentLiveGraph(resultData) {
@@ -309,17 +318,16 @@
             let rawEdges = targetData?.relationships || targetData?.edges;
 
             if (!rawNodes || !Array.isArray(rawNodes)) {
-                const rawString = JSON.stringify(targetData, null, 2);
-                console.error("수신 데이터 구조 오류:", targetData);
                 if(timerInterval) clearInterval(timerInterval);
                 document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-500"></i>';
-                
-                alert(`[데이터 구조 변환 가이드]\n\nn8n 통신은 성공했으나 반환된 데이터 내부에 'nodes' 배열이 없습니다.\n\n*조치: n8n 최종 노드의 출력 키 명칭을 'nodes'와 'relationships'로 맞춰주세요.`);
+                alert(`[데이터 구조 가이드]\nn8n 반환 바디에 'nodes' 배열이 보이지 않습니다.`);
                 return;
             }
 
+            // 🌟 [레이아웃 해제 조치]: 변환 완료 카드와 결과 바디 박스가 가림 없이 노출되도록 제어
             resultSection.classList.remove('hidden');
-            monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> DB 싱크 완료';
+            monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span> 실시간 데이터베이스 동기화 완료';
+            monitorStatus.className = "flex items-center gap-2 text-[10px] text-emerald-600 font-bold font-mono";
             
             let visNodes = []; let visEdges = []; let nodesMap = new Map();
             const colorPalette = { 'Document': '#059669', 'Asset': '#2563eb', 'Alarm': '#dc2626', 'FailureMode': '#d97706', 'CauseStep': '#7c3aed', 'Action': '#db2777', 'Lesson': '#4b5563' };
@@ -354,8 +362,13 @@
             if (nl) nl.innerHTML = ''; 
             if (el) el.innerHTML = '';
             
-            visNodes.forEach(n => { if (nl) nl.innerHTML += `<li class="border-b border-slate-50 pb-0.5">• <b style="color:${n.color.background}">[${n.type}]</b> ${n.label.substring(0,18)}</li>`; });
-            visEdges.forEach(e => { if (el) el.innerHTML += `<li class="border-b border-slate-50 pb-0.5">• <b>[:${e.label}]</b> ${e.label}</li>`; });
+            visNodes.forEach(n => { if (nl) nl.innerHTML += `<li class="border-b border-slate-100 pb-1 text-slate-700">• <b style="color:${n.color.background}">[${n.type}]</b> ${n.label}</li>`; });
+            visEdges.forEach(e => { 
+                const fromNode = nodesMap.get(e.from); const toNode = nodesMap.get(e.to);
+                if(fromNode && toNode) {
+                    if (el) el.innerHTML += `<li class="border-b border-slate-100 pb-1 text-slate-700">• <b class="text-blue-500">[:${e.label}]</b> ${fromNode.label.substring(0,10)}.. ➔ ${toNode.label.substring(0,10)}..</li>`; 
+                }
+            });
             
             const nc = document.getElementById('node-count'); const ec = document.getElementById('edge-count');
             if (nc) nc.innerText = visNodes.length; 
@@ -375,16 +388,13 @@
             if(timerInterval) clearInterval(timerInterval);
             const titleIcon = document.getElementById('engine-log-title-icon');
             if (titleIcon) titleIcon.innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-500"></i>';
-            alert(`[나래 O&M 파이프라인 에러 리포트]\n\n원인: ${reason}\n\n조치 가이드: n8n 캔버스의 'Listen for test event' - 수동 테스트 모드가 잘 켜져있는지 확인해 보세요.`); 
+            alert(`[나래 O&M 파이프라인 에러 리포트]\n\n원인: ${reason}`); 
         }
         
         function resetAllStepsToDefault() { 
-            const s1i = document.getElementById('step-1-icon');
-            if (s1i) s1i.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
-            
+            const s1i = document.getElementById('step-1-icon'); if (s1i) s1i.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
             const s2i = document.getElementById('step-2-icon'); if (s2i) s2i.innerHTML = '<i class="fa-regular fa-circle"></i>';
             const s3i = document.getElementById('step-3-icon'); if (s3i) s3i.innerHTML = '<i class="fa-regular fa-circle"></i>';
-            
             const s2b = document.getElementById('step-2-box'); if (s2b) s2b.classList.add('opacity-50');
             const s3b = document.getElementById('step-3-box'); if (s3b) s3b.classList.add('opacity-50');
         }
