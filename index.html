@@ -8,13 +8,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
-        /* 🌟 [가독성 혁신]: 어두운 배경을 버리고 눈이 편안한 밝은 격자 스타일로 캔버스 변경 */
         #network-canvas { 
             width: 100%; height: 100%; background-color: #f8fafc; 
             background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
             background-size: 24px 24px;
         }
-        /* 스크롤바 없는 컴팩트 레이아웃 */
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -37,14 +35,13 @@
                 </span>
                 실시간 동기화 활성화
             </div>
-            <div class="text-[10px] text-slate-500 font-mono bg-black/30 px-2 py-1 rounded">Update: 06.15 17:25</div>
+            <div class="text-[10px] text-slate-500 font-mono bg-black/30 px-2 py-1 rounded">Update: 06.15 17:45</div>
         </div>
     </header>
 
     <main class="w-full max-w-[1700px] mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 max-h-[calc(100vh-80px)]">
         
         <div class="lg:col-span-3 flex flex-col gap-5 h-full overflow-hidden">
-            
             <section class="p-5 bg-white shadow-sm rounded-2xl border border-slate-200">
                 <h2 class="text-xs font-bold mb-4 text-slate-500 uppercase tracking-widest flex items-center gap-2">
                     <i class="fa-solid fa-file-pdf text-rose-500"></i> Step 1. 파일 지정
@@ -174,8 +171,6 @@
         const API_KEY = 'AIzaSyDUb9w8DUJ1z6rA3f1cWLvtK_dHML2B0Ys';
         const CLIENT_ID = '226564701904-hr1l78rknenlm0fn3gul1cvmkve0ntuc.apps.googleusercontent.com';
         const SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
-        
-        // 🌟 운영서버 다이렉트 통신선 고정
         const N8N_WEBHOOK_URL = 'https://seoneenam.app.n8n.cloud/webhook-test/rca-ontology-trigger';
         
         let accessToken = null; let selectedFileId = null; let selectedFileName = null; let tokenClient = null; let pickerApiLoaded = false;
@@ -222,12 +217,10 @@
         btnStartTransform.addEventListener('click', async () => {
             if(!selectedFileId) return;
             
-            // UI 초기화
             processSection.classList.remove('hidden'); resultSection.classList.add('hidden'); viewPlaceholder.classList.add('hidden'); graphContainer.classList.remove('hidden'); loadingGraph.classList.add('hidden');
             document.getElementById('live-cypher-text').innerText = `MATCH (d:Document {title: "${selectedFileName}"})-[r]-(m) RETURN d,r,m;`;
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 inline-block animate-ping"></span> 실시간 분석 가동 중';
             
-            // 타이머 및 가짜 프로그레스 바 기동
             startLiveTimer();
             document.getElementById('progress-bar').style.width = '0%';
             document.getElementById('step-1-sub').innerText = '0%';
@@ -242,7 +235,6 @@
                 }
             }, 250);
 
-            // 🌟 [안전화 대혁신]: 위험한 클래스 스위칭 함수를 완전히 우회하여 n8n 웹훅 통신선 무조건 선출발!!
             try {
                 const response = await fetch(N8N_WEBHOOK_URL, {
                     method: 'POST', 
@@ -256,14 +248,13 @@
                     document.getElementById('progress-bar').style.width = '100%';
                     document.getElementById('step-1-sub').innerText = '100%';
                     let n8nRawData = await response.json();
-                    if (Array.isArray(n8nRawData) && n8nRawData.length > 0) n8nRawData = n8nRawData[0];
                     runSynchronizedSteps(n8nRawData);
                 } else {
-                    showEmptyError();
+                    showDetailedError(`네트워크 상태 코드 에러: ${response.status} (${response.statusText})`);
                 }
             } catch (e) {
                 clearInterval(fakeProgressInterval);
-                showEmptyError();
+                showDetailedError(`브라우저 fetch 예외 발생: ${e.message}`);
             }
         });
 
@@ -277,7 +268,6 @@
         }
 
         function runSynchronizedSteps(realData) {
-            // 1단계 성공 변환 및 2단계 라이브 로딩 연출
             document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
             const step2Box = document.getElementById('step-2-box');
             step2Box.classList.remove('opacity-50');
@@ -298,18 +288,35 @@
             }, 2600);
         }
 
+        // 🌟 [구조 방어 자동 디버깅 매핑 엔진]: 데이터가 리스트이건, 내부 객체이건 끝까지 추적
         function render100PercentLiveGraph(resultData) {
-            loadingGraph.classList.add('hidden'); resultSection.classList.remove('hidden');
+            loadingGraph.classList.add('hidden');
+            
+            // 1단계: n8n이 가끔 데이터를 중첩 리스트 [[ ... ]] 형태로 줄 때를 대비한 전처리
+            let targetData = resultData;
+            if (Array.isArray(targetData) && targetData.length > 0) targetData = targetData[0];
+            if (targetData && targetData.json) targetData = targetData.json;
+
+            // 2단계: 최상위에 nodes가 없을 경우 전체 객체를 뒤져서 배열을 강제 탐색하는 방어 코드
+            let rawNodes = targetData?.nodes;
+            let rawEdges = targetData?.relationships || targetData?.edges;
+
+            if (!rawNodes || !Array.isArray(rawNodes)) {
+                // 구조가 어긋난 경우 사용자에게 n8n 반환 포맷을 콘솔과 화면으로 가이드
+                const rawString = JSON.stringify(targetData, null, 2);
+                console.error("수신 데이터 구조 오류:", targetData);
+                if(timerInterval) clearInterval(timerInterval);
+                document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-500"></i>';
+                
+                alert(`[데이터 구조 변환 가이드]\n\nn8n 통신은 성공했으나 반환된 데이터 내부에 'nodes' 배열이 없습니다.\n\n수신된 데이터 샘플:\n${rawString.substring(0, 150)}...\n\n*조치: n8n 최종 노드의 출력 키 명칭을 'nodes'와 'relationships'로 맞춰주세요.`);
+                return;
+            }
+
+            resultSection.classList.remove('hidden');
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> DB 싱크 완료';
             
             let visNodes = []; let visEdges = []; let nodesMap = new Map();
             const colorPalette = { 'Document': '#059669', 'Asset': '#2563eb', 'Alarm': '#dc2626', 'FailureMode': '#d97706', 'CauseStep': '#7c3aed', 'Action': '#db2777', 'Lesson': '#4b5563' };
-
-            let targetData = resultData;
-            if (targetData.json) targetData = targetData.json;
-
-            const rawNodes = targetData.nodes || [];
-            const rawEdges = targetData.relationships || [];
 
             rawNodes.forEach(node => {
                 if (node && node.id) {
@@ -325,17 +332,18 @@
             });
             visNodes = Array.from(nodesMap.values());
 
-            rawEdges.forEach(edge => {
-                if (edge && edge.from && edge.to) {
-                    visEdges.push({ 
-                        from: edge.from, to: edge.to, label: edge.label,
-                        color: { color: '#cbd5e1', highlight: '#3b82f6' },
-                        font: { size: 8, color: '#64748b', background: '#ffffff', strokeWidth: 1, align: 'top' }
-                    });
-                }
-            });
+            if (Array.isArray(rawEdges)) {
+                rawEdges.forEach(edge => {
+                    if (edge && edge.from && edge.to) {
+                        visEdges.push({ 
+                            from: edge.from, to: edge.to, label: edge.label || '',
+                            color: { color: '#cbd5e1', highlight: '#3b82f6' },
+                            font: { size: 8, color: '#64748b', background: '#ffffff', strokeWidth: 1, align: 'top' }
+                        });
+                    }
+                });
+            }
 
-            // UI 업데이트 명세 리스트 빌드
             const nl = document.getElementById('live-nodes-list'); const el = document.getElementById('live-edges-list');
             nl.innerHTML = ''; el.innerHTML = '';
             visNodes.forEach(n => { nl.innerHTML += `<li class="border-b border-slate-50 pb-0.5">• <b style="color:${n.color.background}">[${n.type}]</b> ${n.label.substring(0,18)}</li>`; });
@@ -352,10 +360,12 @@
             networkInstance = new vis.Network(container, data, options);
         }
 
-        function showEmptyError() { 
+        function showDetailedError(reason) { 
+            if(timerInterval) clearInterval(timerInterval);
             document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-500"></i>';
-            alert("n8n 변환 데이터 수급에 실패했습니다. 백엔드 세션 타임아웃을 확인하세요."); 
+            alert(`[나래 O&M 파이프라인 에러 리포트]\n\n원인: ${reason}\n\n조치 가이드: n8n 캔버스의 'Listen for test event' 버튼이 현재 활성화되어 있는지 확인해 주세요.`); 
         }
+        
         function resetAllStepsToDefault() { 
             document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
             document.getElementById('step-2-icon').innerHTML = '<i class="fa-regular fa-circle"></i>';
