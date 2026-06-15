@@ -37,7 +37,7 @@
                 </span>
                 실시간 동기화 활성화
             </div>
-            <div class="text-[10px] text-slate-500 font-mono bg-black/30 px-2 py-1 rounded">Update: 06.15 16:50</div>
+            <div class="text-[10px] text-slate-500 font-mono bg-black/30 px-2 py-1 rounded">Update: 06.15 17:25</div>
         </div>
     </header>
 
@@ -75,7 +75,7 @@
                     <div id="step-1" class="p-4 bg-slate-50 rounded-xl transition-all duration-300 border border-transparent">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-2">
-                                <div class="step-icon text-slate-400 text-xs"><i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i></div>
+                                <div class="step-icon text-blue-600 text-xs" id="step-1-icon"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
                                 <p class="font-bold text-[11px] text-slate-700">RCA 리포트 데이터 스트리밍</p>
                             </div>
                             <span id="step-1-sub" class="text-[10px] text-blue-500 font-bold font-mono">0%</span>
@@ -85,13 +85,13 @@
                         </div>
                     </div>
                     
-                    <div id="step-2" class="flex items-center gap-3 p-3.5 bg-slate-50 rounded-xl opacity-50">
-                        <div class="step-icon text-slate-300"><i class="fa-regular fa-circle"></i></div>
+                    <div id="step-2" class="flex items-center gap-3 p-3.5 bg-slate-50 rounded-xl opacity-50" id="step-2-box">
+                        <div class="step-icon text-slate-300" id="step-2-icon"><i class="fa-regular fa-circle"></i></div>
                         <p class="font-bold text-[11px] text-slate-600">AI 엔티티 및 인과관계 추출</p>
                     </div>
                     
-                    <div id="step-3" class="flex items-center gap-3 p-3.5 bg-slate-50 rounded-xl opacity-50">
-                        <div class="step-icon text-slate-300"><i class="fa-regular fa-circle"></i></div>
+                    <div id="step-3" class="flex items-center gap-3 p-3.5 bg-slate-50 rounded-xl opacity-50" id="step-3-box">
+                        <div class="step-icon text-slate-300" id="step-3-icon"><i class="fa-regular fa-circle"></i></div>
                         <p class="font-bold text-[11px] text-slate-600">Neo4j 지식 그래프 매핑</p>
                     </div>
                 </div>
@@ -175,7 +175,7 @@
         const CLIENT_ID = '226564701904-hr1l78rknenlm0fn3gul1cvmkve0ntuc.apps.googleusercontent.com';
         const SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
         
-        // 🌟 실시간 연동 운영(Production) 웹훅 주소 유지
+        // 🌟 운영서버 다이렉트 통신선 고정
         const N8N_WEBHOOK_URL = 'https://seoneenam.app.n8n.cloud/webhook/rca-ontology-trigger';
         
         let accessToken = null; let selectedFileId = null; let selectedFileName = null; let tokenClient = null; let pickerApiLoaded = false;
@@ -221,16 +221,17 @@
 
         btnStartTransform.addEventListener('click', async () => {
             if(!selectedFileId) return;
-            processSection.classList.remove('hidden'); resultSection.classList.add('hidden'); viewPlaceholder.classList.add('hidden'); graphContainer.classList.remove('hidden'); loadingGraph.classList.add('hidden');
             
+            // UI 초기화
+            processSection.classList.remove('hidden'); resultSection.classList.add('hidden'); viewPlaceholder.classList.add('hidden'); graphContainer.classList.remove('hidden'); loadingGraph.classList.add('hidden');
             document.getElementById('live-cypher-text').innerText = `MATCH (d:Document {title: "${selectedFileName}"})-[r]-(m) RETURN d,r,m;`;
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 inline-block animate-ping"></span> 실시간 분석 가동 중';
-            resetAllStepsToDefault();
-
-            // 타이머 기동
+            
+            // 타이머 및 가짜 프로그레스 바 기동
             startLiveTimer();
+            document.getElementById('progress-bar').style.width = '0%';
+            document.getElementById('step-1-sub').innerText = '0%';
 
-            // 🌟 [다운로드 애니메이션 기동]: 0% -> 90% 모션 온
             let progress = 0;
             let fakeProgressInterval = setInterval(() => {
                 if (progress < 90) {
@@ -239,12 +240,13 @@
                     document.getElementById('progress-bar').style.width = progress + '%';
                     document.getElementById('step-1-sub').innerText = progress + '%';
                 }
-            }, 300);
+            }, 250);
 
+            // 🌟 [안전화 대혁신]: 위험한 클래스 스위칭 함수를 완전히 우회하여 n8n 웹훅 통신선 무조건 선출발!!
             try {
-                // 🚀 n8n 백엔드 다이렉트 신호탄 드디어 정상 정상 정상 발사!
                 const response = await fetch(N8N_WEBHOOK_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ fileId: selectedFileId, fileName: selectedFileName })
                 });
 
@@ -275,19 +277,25 @@
         }
 
         function runSynchronizedSteps(realData) {
-            const step1 = document.getElementById('step-1'); const step2 = document.getElementById('step-2'); const step3 = document.getElementById('step-3');
-            setStepStatus(step1, 'success'); setStepStatus(step2, 'loading');
+            // 1단계 성공 변환 및 2단계 라이브 로딩 연출
+            document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+            const step2Box = document.getElementById('step-2-box');
+            step2Box.classList.remove('opacity-50');
+            document.getElementById('step-2-icon').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
             
             setTimeout(() => { 
-                setStepStatus(step2, 'success'); setStepStatus(step3, 'loading'); 
-            }, 1000);
+                document.getElementById('step-2-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+                const step3Box = document.getElementById('step-3-box');
+                step3Box.classList.remove('opacity-50');
+                document.getElementById('step-3-icon').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
+            }, 1200);
             
             setTimeout(() => {
-                setStepStatus(step3, 'success');
+                document.getElementById('step-3-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
                 clearInterval(timerInterval);
                 loadingGraph.classList.remove('hidden');
-                setTimeout(() => render100PercentLiveGraph(realData), 500);
-            }, 2000);
+                setTimeout(() => render100PercentLiveGraph(realData), 400);
+            }, 2600);
         }
 
         function render100PercentLiveGraph(resultData) {
@@ -327,7 +335,7 @@
                 }
             });
 
-            // UI 업데이트
+            // UI 업데이트 명세 리스트 빌드
             const nl = document.getElementById('live-nodes-list'); const el = document.getElementById('live-edges-list');
             nl.innerHTML = ''; el.innerHTML = '';
             visNodes.forEach(n => { nl.innerHTML += `<li class="border-b border-slate-50 pb-0.5">• <b style="color:${n.color.background}">[${n.type}]</b> ${n.label.substring(0,18)}</li>`; });
@@ -344,22 +352,17 @@
             networkInstance = new vis.Network(container, data, options);
         }
 
-        // 🌟 [안전화 보정]: 클래스 참조 오류를 차단하기 위해 유연한 분기문으로 전면 재구성
-        function setStepStatus(stepElement, status) {
-            if (!stepElement) return;
-            const iconDiv = stepElement.querySelector('.step-icon');
-            
-            if(status === 'loading') { 
-                stepElement.className = "p-4 bg-blue-50 rounded-xl border border-blue-100 animate-pulse"; 
-                if (iconDiv) iconDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-blue-600"></i>';
-            } else if(status === 'success') {
-                stepElement.className = "p-3.5 bg-slate-50 rounded-xl border border-transparent flex items-center gap-3"; 
-                if (iconDiv) iconDiv.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
-                stepElement.style.opacity = "0.6";
-            }
+        function showEmptyError() { 
+            document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-500"></i>';
+            alert("n8n 변환 데이터 수급에 실패했습니다. 백엔드 세션 타임아웃을 확인하세요."); 
         }
-        function showEmptyError() { alert("데이터 수급 실패"); }
-        function resetAllStepsToDefault() { document.getElementById('progress-bar').style.width = '0%'; }
+        function resetAllStepsToDefault() { 
+            document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
+            document.getElementById('step-2-icon').innerHTML = '<i class="fa-regular fa-circle"></i>';
+            document.getElementById('step-3-icon').innerHTML = '<i class="fa-regular fa-circle"></i>';
+            document.getElementById('step-2-box').classList.add('opacity-50');
+            document.getElementById('step-3-box').classList.add('opacity-50');
+        }
     </script>
 </body>
 </html>
