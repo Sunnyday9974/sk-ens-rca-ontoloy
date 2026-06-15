@@ -31,7 +31,7 @@
             <p class="text-[11px] text-slate-400 mt-0.5">RCA 리포트 분석 ➔ AI 온톨로지 추출 ➔ Neo4j 매핑 실시간 파이프라인</p>
         </div>
         <div class="flex items-center gap-4">
-            <div class="bg-blue-500/10 text-blue-300 px-3 py-1.5 rounded-lg text-[11px] font-bold border border-blue-500/30 flex items-center gap-2">
+            <div class="bg-blue-500/10 text-blue-300 px-3 py-1.5 rounded-lg text-[11px] font-bold border border-slate-700 flex items-center gap-2">
                 <span class="relative flex h-2 w-2">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -39,7 +39,7 @@
                 실시간 동기화 활성화
             </div>
             <div class="text-[10px] text-slate-400 font-mono bg-black/40 px-2.5 py-1 rounded border border-slate-800">
-                소스 반영 시각: <span class="text-amber-400 font-bold">06.15 20:30</span>
+                소스 반영 시각: <span class="text-amber-400 font-bold">06.15 20:45</span>
             </div>
         </div>
     </header>
@@ -84,11 +84,11 @@
                             <span id="step-1-sub" class="text-[10px] text-blue-500 font-bold font-mono">0%</span>
                         </div>
                         <div class="w-full bg-slate-200 rounded-full h-1 overflow-hidden">
-                            <div id="progress-bar-1" class="bg-blue-500 h-full" style="width: 0%"></div>
+                            <div id="progress-bar-1" class="bg-blue-500 h-full transition-all duration-300" style="width: 0%"></div>
                         </div>
                     </div>
                     
-                    <div id="step-2-box" class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 opacity-40">
+                    <div id="step-2-box" class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 opacity-40 transition-all duration-300">
                         <div class="flex items-center justify-between mb-1">
                             <div class="flex items-center gap-2">
                                 <div class="step-icon text-slate-400 text-[11px]" id="step-2-icon"><i class="fa-regular fa-circle"></i></div>
@@ -97,11 +97,11 @@
                             <span id="step-2-sub" class="text-[10px] text-slate-400 font-bold font-mono">대기</span>
                         </div>
                         <div class="w-full bg-slate-200 rounded-full h-1 overflow-hidden hidden" id="progress-container-2">
-                            <div id="progress-bar-2" class="bg-amber-500 h-full" style="width: 0%"></div>
+                            <div id="progress-bar-2" class="bg-amber-500 h-full transition-all duration-300" style="width: 0%"></div>
                         </div>
                     </div>
                     
-                    <div id="step-3-box" class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 opacity-40">
+                    <div id="step-3-box" class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 opacity-40 transition-all duration-300">
                         <div class="flex items-center justify-between mb-1">
                             <div class="flex items-center gap-2">
                                 <div class="step-icon text-slate-400 text-[11px]" id="step-3-icon"><i class="fa-regular fa-circle"></i></div>
@@ -110,7 +110,7 @@
                             <span id="step-3-sub" class="text-[10px] text-slate-400 font-bold font-mono">대기</span>
                         </div>
                         <div class="w-full bg-slate-200 rounded-full h-1 overflow-hidden hidden" id="progress-container-3">
-                            <div id="progress-bar-3" class="bg-emerald-500 h-full" style="width: 0%"></div>
+                            <div id="progress-bar-3" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
                         </div>
                     </div>
                 </div>
@@ -150,7 +150,6 @@
                 </div>
 
                 <div id="graph-container" class="w-full h-full hidden flex flex-col flex-1 relative">
-                    
                     <div id="ontology-summary-box" class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 border-b border-slate-200">
                         <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col">
                             <p class="text-[11px] font-black text-emerald-600 mb-2 border-b border-emerald-50 pb-1.5 flex items-center justify-between">
@@ -223,7 +222,7 @@
             }
         }
         
-        // 🌟 [안전 인프라 복원]: 아이콘 유실 시 발생하던 문법 예외 트랙에 방어 코드 장착 완료
+        // 🌟 [안전 예외 강화]: drive-icon 요소를 탐색할 때 예외가 나지 않도록 온전하게 이중 방어막 가동
         function checkInfrastructureReady() { 
             if (pickerApiLoaded && tokenClient) { 
                 const driveIcon = document.getElementById('drive-icon');
@@ -264,6 +263,7 @@
             startLiveTimer();
             resetAllStepsToDefault();
 
+            // 1단계 프로그레스 바 기동 연출
             let progress1 = 0;
             fakeProgressInterval = setInterval(() => {
                 if (progress1 < 100) {
@@ -275,7 +275,7 @@
                     if(progress1 === 100) {
                         clearInterval(fakeProgressInterval);
                         document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
-                        simulateStep2Progress();
+                        simulateStep2Progress(); // ➔ 2단계 릴레이 바 토스
                     }
                 }
             }, 150);
@@ -326,6 +326,7 @@
             }, 250);
         }
 
+        // 🌟 [연쇄 동기화 개통]: n8n 처리가 완료되면 전 구간의 바를 100% 가득 채우고 타이틀 옆 모래시계 정지 박제
         function finalizeAllStepsSuccess(realData) {
             document.getElementById('progress-bar-1').style.width = '100%';
             document.getElementById('step-1-sub').innerText = '100%';
@@ -345,6 +346,7 @@
             document.getElementById('step-3-sub').className = "text-[10px] text-emerald-600 font-bold font-mono";
             document.getElementById('step-3-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
             
+            // 타이머 정지 및 타이틀 모래시계 ➔ 체크 마크 고정 교정
             clearInterval(timerInterval);
             document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
             
