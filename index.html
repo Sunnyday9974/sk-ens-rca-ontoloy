@@ -23,7 +23,7 @@
                 <i class="fa-solid fa-microchip mr-1.5 text-emerald-400 animate-pulse"></i>AI/DT TF 실시간 동기화 모드
             </div>
             <div class="text-[10px] text-blue-300 font-mono bg-blue-950/40 px-2 py-0.5 rounded border border-blue-800/30">
-                <i class="fa-solid fa-code-branch mr-1 text-amber-400"></i>소스 반영 시각: <span class="text-amber-300 font-bold">06/12 19:20</span>
+                <i class="fa-solid fa-code-branch mr-1 text-amber-400"></i>소스 반영 시각: <span class="text-amber-300 font-bold">2026/06/15 15:20</span>
             </div>
         </div>
     </header>
@@ -125,7 +125,7 @@
                     </div>
                     
                     <div class="flex-1 w-full rounded-xl border border-slate-800 overflow-hidden relative min-h-[340px] flex flex-col bg-slate-950/40">
-                        <div class="bg-slate-900/90 px-3 py-1.5 border-b border-slate-800 flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                        <div class="bg-slate-900/90 px-3 py-1.5 border-b border-slate-800 shifted-flex justify-between items-center text-[10px] text-slate-400 font-mono">
                             <div><i class="fa-solid fa-database text-amber-500 mr-1"></i> Neo4j Live Document Query View</div>
                             <div id="live-cypher-text" class="text-emerald-400 font-semibold">MATCH (d:Document {title: ...})-[r]-(m) RETURN d,r,m</div>
                         </div>
@@ -154,9 +154,14 @@
         const API_KEY = 'AIzaSyDUb9w8DUJ1z6rA3f1cWLvtK_dHML2B0Ys';
         const CLIENT_ID = '226564701904-hr1l78rknenlm0fn3gul1cvmkve0ntuc.apps.googleusercontent.com';
         const SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
-        const N8N_WEBHOOK_URL = 'https://seoneenam.app.n8n.cloud/webhook-test/rca-ontology-trigger';
+        
+        // 🌟 [운영 전환]: 실시간 동기화를 위해 webhook 운영(Production) 주소로 매핑
+        const N8N_WEBHOOK_URL = 'https://seoneenam.app.n8n.cloud/webhook/rca-ontology-trigger';
         
         let accessToken = null; let selectedFileId = null; let selectedFileName = null; let tokenClient = null; let pickerApiLoaded = false;
+        
+        // 🌟 [글로벌 변수 추가]: 기존 캔버스 누적 현상을 청소하기 위한 vis.js 네트워크 객체 박제 장치
+        let networkInstance = null;
 
         const btnSelectFile = document.getElementById('btn-select-file'); const btnStartTransform = document.getElementById('btn-start-transform');
         const fileInfo = document.getElementById('file-info'); const processSection = document.getElementById('process-section'); const resultSection = document.getElementById('result-section');
@@ -183,7 +188,7 @@
             try {
                 const view = new google.picker.View(google.picker.ViewId.DOCS); view.setMimeTypes("application/pdf");
                 const picker = new google.picker.PickerBuilder().addView(view).setOAuthToken(accessToken).setDeveloperKey(API_KEY).setCallback(pickerCallback).setTitle("나래 O&M RCA 리포트 선택 (PDF 전용)").build();
-                picker.setVisible(true);
+                const.setVisible(true);
             } catch (err) { gsiLoadCallback(); }
         }
 
@@ -200,6 +205,8 @@
             if(!selectedFileId) return;
             document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-spinner fa-spin text-blue-500"></i>';
             processSection.classList.remove('hidden'); resultSection.classList.add('hidden'); viewPlaceholder.classList.add('hidden'); graphContainer.classList.remove('hidden'); loadingGraph.classList.remove('hidden');
+            
+            // 🌟 [UI 개선]: 현재 선택한 문서 고유 ID(파일명)를 매칭 조건으로 Cypher 가이드라인 표출
             document.getElementById('live-cypher-text').innerText = `MATCH (d:Document {title: "${selectedFileName}"})-[r]-(m) RETURN d,r,m;`;
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 inline-block animate-ping"></span> 파이프라인 가동 중';
             resetAllStepsToDefault();
@@ -215,7 +222,6 @@
                 if (response.ok) {
                     let n8nRawData = await response.json();
                     
-                    // n8n 응답 아이템이 단일 원소 배열일 경우 유연하게 첫 번째 개체 수급
                     if (Array.isArray(n8nRawData) && n8nRawData.length > 0) {
                         n8nRawData = n8nRawData[0];
                     }
@@ -248,7 +254,6 @@
 
         function resetAllStepsToDefault() { setStepStatus(document.getElementById('step-1'), 'default'); setStepStatus(document.getElementById('step-2'), 'default'); setStepStatus(document.getElementById('step-3'), 'default'); }
 
-        // 💡 [초정밀 보정 엔진]: n8n 직렬 파이프라인의 통합 머지 JSON 아웃풋을 유연하게 가공하여 드로잉하는 마스터 매퍼
         function render100PercentLiveGraph(resultData) {
             loadingGraph.classList.add('hidden'); resultSection.classList.remove('hidden');
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> 실시간 데이터베이스 동기화 완료';
@@ -257,7 +262,6 @@
             let visNodes = []; let visEdges = []; let nodesMap = new Map();
             const colorPalette = { 'Document': '#10b981', 'Asset': '#3b82f6', 'Alarm': '#f43f5e', 'FailureMode': '#eab308', 'CauseStep': '#8b5cf6', 'Action': '#ec4899', 'Lesson': '#64748b' };
 
-            // 어떠한 래핑 구조(배열, json 캡슐)로 데이터가 오든 알맹이만 쏙 발라내는 필터 작동
             let targetData = resultData;
             if (Array.isArray(resultData) && resultData.length > 0) {
                 targetData = resultData[0];
@@ -289,7 +293,7 @@
                 visNodes = Array.from(nodesMap.values());
             }
 
-            // 2. 관계선(Edges) 가공 및 vis.js 전용 규격(from, to) 매핑
+            // 2. 관계선(Edges) 가공
             if (rawEdges && rawEdges.length > 0) {
                 rawEdges.forEach(edge => {
                     if (edge && edge.from && edge.to) {
@@ -327,6 +331,12 @@
                 return;
             }
 
+            // 🌟 [핵심 교정 파트]: 새로운 파일을 로드하기 전, 메모리에 남아있던 이전 vis.js 객체를 강제로 박멸(초기화)합니다.
+            if (networkInstance !== null) {
+                networkInstance.destroy();
+                networkInstance = null;
+            }
+
             // 3. vis.js 네트워크 드로잉 차트 최종 출력 
             const container = document.getElementById('network-canvas'); const data = { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) };
             const options = {
@@ -335,7 +345,9 @@
                 physics: { barnesHut: { gravitationalConstant: -2800, centralGravity: 0.25, springLength: 95 }, stabilization: { iterations: 150 } },
                 interaction: { hover: true, tooltipDelay: 100 }
             };
-            new vis.Network(container, data, options);
+            
+            // 🌟 생성된 인스턴스를 글로벌 변수에 할당하여 다음 파일 변환 시 청소 대상이 되도록 지정합니다.
+            networkInstance = new vis.Network(container, data, options);
         }
 
         function setStepStatus(stepElement, status) {
