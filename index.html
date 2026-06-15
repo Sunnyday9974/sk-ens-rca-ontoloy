@@ -37,7 +37,7 @@
                 </span>
                 실시간 동기화 활성화
             </div>
-            <div class="text-[10px] text-slate-500 font-mono bg-black/30 px-2 py-1 rounded">Update: 06.15 16:40</div>
+            <div class="text-[10px] text-slate-500 font-mono bg-black/30 px-2 py-1 rounded">Update: 06.15 16:50</div>
         </div>
     </header>
 
@@ -74,7 +74,10 @@
                 <div class="space-y-3 flex-1 overflow-y-auto">
                     <div id="step-1" class="p-4 bg-slate-50 rounded-xl transition-all duration-300 border border-transparent">
                         <div class="flex items-center justify-between mb-2">
-                            <p class="font-bold text-[11px] text-slate-700">RCA 리포트 데이터 스트리밍</p>
+                            <div class="flex items-center gap-2">
+                                <div class="step-icon text-slate-400 text-xs"><i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i></div>
+                                <p class="font-bold text-[11px] text-slate-700">RCA 리포트 데이터 스트리밍</p>
+                            </div>
                             <span id="step-1-sub" class="text-[10px] text-blue-500 font-bold font-mono">0%</span>
                         </div>
                         <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden" id="progress-bar-container">
@@ -83,12 +86,12 @@
                     </div>
                     
                     <div id="step-2" class="flex items-center gap-3 p-3.5 bg-slate-50 rounded-xl opacity-50">
-                        <div class="step-icon text-slate-300"><i class="fa-regular fa-circle-check"></i></div>
+                        <div class="step-icon text-slate-300"><i class="fa-regular fa-circle"></i></div>
                         <p class="font-bold text-[11px] text-slate-600">AI 엔티티 및 인과관계 추출</p>
                     </div>
                     
                     <div id="step-3" class="flex items-center gap-3 p-3.5 bg-slate-50 rounded-xl opacity-50">
-                        <div class="step-icon text-slate-300"><i class="fa-regular fa-circle-check"></i></div>
+                        <div class="step-icon text-slate-300"><i class="fa-regular fa-circle"></i></div>
                         <p class="font-bold text-[11px] text-slate-600">Neo4j 지식 그래프 매핑</p>
                     </div>
                 </div>
@@ -171,7 +174,9 @@
         const API_KEY = 'AIzaSyDUb9w8DUJ1z6rA3f1cWLvtK_dHML2B0Ys';
         const CLIENT_ID = '226564701904-hr1l78rknenlm0fn3gul1cvmkve0ntuc.apps.googleusercontent.com';
         const SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
-        const N8N_WEBHOOK_URL = 'https://seoneenam.app.n8n.cloud/webhook-test/rca-ontology-trigger';
+        
+        // 🌟 실시간 연동 운영(Production) 웹훅 주소 유지
+        const N8N_WEBHOOK_URL = 'https://seoneenam.app.n8n.cloud/webhook/rca-ontology-trigger';
         
         let accessToken = null; let selectedFileId = null; let selectedFileName = null; let tokenClient = null; let pickerApiLoaded = false;
         let networkInstance = null; let timerInterval = null;
@@ -201,8 +206,6 @@
             try {
                 const view = new google.picker.View(google.picker.ViewId.DOCS); view.setMimeTypes("application/pdf");
                 const picker = new google.picker.PickerBuilder().addView(view).setOAuthToken(accessToken).setDeveloperKey(API_KEY).setCallback(pickerCallback).setTitle("RCA 리포트 PDF 선택").build();
-                
-                // 🌟 [오타 수정]: const.setVisible 이 아니라 picker.setVisible 로 완벽 교정!
                 picker.setVisible(true);
             } catch (err) { gsiLoadCallback(); }
         }
@@ -227,10 +230,7 @@
             // 타이머 기동
             startLiveTimer();
 
-            // 🌟 [액티브 프로그레스 연출]: 다운로드 스텝을 더 액티브하게 보이게 함
-            const step1 = document.getElementById('step-1'); 
-            setStepStatus(step1, 'loading');
-            
+            // 🌟 [다운로드 애니메이션 기동]: 0% -> 90% 모션 온
             let progress = 0;
             let fakeProgressInterval = setInterval(() => {
                 if (progress < 90) {
@@ -242,6 +242,7 @@
             }, 300);
 
             try {
+                // 🚀 n8n 백엔드 다이렉트 신호탄 드디어 정상 정상 정상 발사!
                 const response = await fetch(N8N_WEBHOOK_URL, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ fileId: selectedFileId, fileName: selectedFileName })
@@ -343,14 +344,17 @@
             networkInstance = new vis.Network(container, data, options);
         }
 
+        // 🌟 [안전화 보정]: 클래스 참조 오류를 차단하기 위해 유연한 분기문으로 전면 재구성
         function setStepStatus(stepElement, status) {
+            if (!stepElement) return;
             const iconDiv = stepElement.querySelector('.step-icon');
+            
             if(status === 'loading') { 
                 stepElement.className = "p-4 bg-blue-50 rounded-xl border border-blue-100 animate-pulse"; 
-                iconDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-blue-600"></i>';
+                if (iconDiv) iconDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-blue-600"></i>';
             } else if(status === 'success') {
                 stepElement.className = "p-3.5 bg-slate-50 rounded-xl border border-transparent flex items-center gap-3"; 
-                iconDiv.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+                if (iconDiv) iconDiv.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
                 stepElement.style.opacity = "0.6";
             }
         }
