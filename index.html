@@ -8,11 +8,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
+        /* 🌟 [가독성 혁신]: 눈이 편안한 밝은 격자 스타일로 캔버스 변경 */
         #network-canvas { 
             width: 100%; height: 100%; background-color: #f8fafc; 
             background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
             background-size: 24px 24px;
         }
+        /* 스크롤바 없는 컴팩트 레이아웃 */
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -42,6 +44,7 @@
     <main class="w-full max-w-[1700px] mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 max-h-[calc(100vh-80px)]">
         
         <div class="lg:col-span-3 flex flex-col gap-5 h-full overflow-hidden">
+            
             <section class="p-5 bg-white shadow-sm rounded-2xl border border-slate-200">
                 <h2 class="text-xs font-bold mb-4 text-slate-500 uppercase tracking-widest flex items-center gap-2">
                     <i class="fa-solid fa-file-pdf text-rose-500"></i> Step 1. 파일 지정
@@ -270,45 +273,47 @@
         function runSynchronizedSteps(realData) {
             document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
             const step2Box = document.getElementById('step-2-box');
-            step2Box.classList.remove('opacity-50');
-            document.getElementById('step-2-icon').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
+            if (step2Box) step2Box.classList.remove('opacity-50');
+            
+            const step2Icon = document.getElementById('step-2-icon');
+            if (step2Icon) step2Icon.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
             
             setTimeout(() => { 
-                document.getElementById('step-2-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+                if (step2Icon) step2Icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
                 const step3Box = document.getElementById('step-3-box');
-                step3Box.classList.remove('opacity-50');
-                document.getElementById('step-3-icon').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
+                if (step3Box) step3Box.classList.remove('opacity-50');
+                
+                const step3Icon = document.getElementById('step-3-icon');
+                if (step3Icon) step3Icon.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
             }, 1200);
             
             setTimeout(() => {
-                document.getElementById('step-3-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+                const step3Icon = document.getElementById('step-3-icon');
+                if (step3Icon) step3Icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
                 clearInterval(timerInterval);
                 loadingGraph.classList.remove('hidden');
                 setTimeout(() => render100PercentLiveGraph(realData), 400);
             }, 2600);
         }
 
-        // 🌟 [구조 방어 자동 디버깅 매핑 엔진]: 데이터가 리스트이건, 내부 객체이건 끝까지 추적
+        // 🌟 [안전 가동 매핑 엔진]: 어떤 형태의 데이터 객체든 튕기지 않고 드로잉 처리
         function render100PercentLiveGraph(resultData) {
             loadingGraph.classList.add('hidden');
             
-            // 1단계: n8n이 가끔 데이터를 중첩 리스트 [[ ... ]] 형태로 줄 때를 대비한 전처리
             let targetData = resultData;
             if (Array.isArray(targetData) && targetData.length > 0) targetData = targetData[0];
             if (targetData && targetData.json) targetData = targetData.json;
 
-            // 2단계: 최상위에 nodes가 없을 경우 전체 객체를 뒤져서 배열을 강제 탐색하는 방어 코드
             let rawNodes = targetData?.nodes;
             let rawEdges = targetData?.relationships || targetData?.edges;
 
             if (!rawNodes || !Array.isArray(rawNodes)) {
-                // 구조가 어긋난 경우 사용자에게 n8n 반환 포맷을 콘솔과 화면으로 가이드
                 const rawString = JSON.stringify(targetData, null, 2);
                 console.error("수신 데이터 구조 오류:", targetData);
                 if(timerInterval) clearInterval(timerInterval);
                 document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-500"></i>';
                 
-                alert(`[데이터 구조 변환 가이드]\n\nn8n 통신은 성공했으나 반환된 데이터 내부에 'nodes' 배열이 없습니다.\n\n수신된 데이터 샘플:\n${rawString.substring(0, 150)}...\n\n*조치: n8n 최종 노드의 출력 키 명칭을 'nodes'와 'relationships'로 맞춰주세요.`);
+                alert(`[데이터 구조 변환 가이드]\n\nn8n 통신은 성공했으나 반환된 데이터 내부에 'nodes' 배열이 없습니다.\n\n*조치: n8n 최종 노드의 출력 키 명칭을 'nodes'와 'relationships'로 맞춰주세요.`);
                 return;
             }
 
@@ -345,10 +350,15 @@
             }
 
             const nl = document.getElementById('live-nodes-list'); const el = document.getElementById('live-edges-list');
-            nl.innerHTML = ''; el.innerHTML = '';
-            visNodes.forEach(n => { nl.innerHTML += `<li class="border-b border-slate-50 pb-0.5">• <b style="color:${n.color.background}">[${n.type}]</b> ${n.label.substring(0,18)}</li>`; });
-            visEdges.forEach(e => { el.innerHTML += `<li class="border-b border-slate-50 pb-0.5">• <b>[:${e.label}]</b> ${e.label}</li>`; });
-            document.getElementById('node-count').innerText = visNodes.length; document.getElementById('edge-count').innerText = visEdges.length;
+            if (nl) nl.innerHTML = ''; 
+            if (el) el.innerHTML = '';
+            
+            visNodes.forEach(n => { if (nl) nl.innerHTML += `<li class="border-b border-slate-50 pb-0.5">• <b style="color:${n.color.background}">[${n.type}]</b> ${n.label.substring(0,18)}</li>`; });
+            visEdges.forEach(e => { if (el) el.innerHTML += `<li class="border-b border-slate-50 pb-0.5">• <b>[:${e.label}]</b> ${e.label}</li>`; });
+            
+            const nc = document.getElementById('node-count'); const ec = document.getElementById('edge-count');
+            if (nc) nc.innerText = visNodes.length; 
+            if (ec) ec.innerText = visEdges.length;
 
             if(networkInstance !== null) networkInstance.destroy();
             const container = document.getElementById('network-canvas');
@@ -360,18 +370,23 @@
             networkInstance = new vis.Network(container, data, options);
         }
 
+        // 🌟 [CORS 및 오토 가이드 라인 탑재 디버깅 피드백]
         function showDetailedError(reason) { 
             if(timerInterval) clearInterval(timerInterval);
-            document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-500"></i>';
+            const titleIcon = document.getElementById('engine-log-title-icon');
+            if (titleIcon) titleIcon.innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-500"></i>';
             alert(`[나래 O&M 파이프라인 에러 리포트]\n\n원인: ${reason}\n\n조치 가이드: n8n 캔버스의 'Listen for test event' 버튼이 현재 활성화되어 있는지 확인해 주세요.`); 
         }
         
         function resetAllStepsToDefault() { 
-            document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
-            document.getElementById('step-2-icon').innerHTML = '<i class="fa-regular fa-circle"></i>';
-            document.getElementById('step-3-icon').innerHTML = '<i class="fa-regular fa-circle"></i>';
-            document.getElementById('step-2-box').classList.add('opacity-50');
-            document.getElementById('step-3-box').classList.add('opacity-50');
+            const s1i = document.getElementById('step-1-icon');
+            if (s1i) s1i.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
+            
+            const s2i = document.getElementById('step-2-icon'); if (s2i) s2i.innerHTML = '<i class="fa-regular fa-circle"></i>';
+            const s3i = document.getElementById('step-3-icon'); if (s3i) s3i.innerHTML = '<i class="fa-regular fa-circle"></i>';
+            
+            const s2b = document.getElementById('step-2-box'); if (s2b) s2b.classList.add('opacity-50');
+            const s3b = document.getElementById('step-3-box'); if (s3b) s3b.classList.add('opacity-50');
         }
     </script>
 </body>
