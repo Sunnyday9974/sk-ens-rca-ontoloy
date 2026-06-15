@@ -39,34 +39,34 @@
                 실시간 동기화 활성화
             </div>
             <div class="text-[10px] text-slate-400 font-mono bg-black/40 px-2.5 py-1 rounded border border-slate-800">
-                소스 반영 시각: <span class="text-amber-400 font-bold">06.15 19:20</span>
+                소스 반영 시각: <span class="text-amber-400 font-bold">06.15 19:40</span>
             </div>
         </div>
     </header>
 
     <main class="w-full max-w-[1700px] mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
         
-        <div class="lg:col-span-3 flex flex-col gap-5">
+        <div class="lg:col-span-3 flex flex-col gap-4">
             
-            <section class="p-5 bg-white shadow-sm rounded-2xl border border-slate-200">
-                <h2 class="text-xs font-bold mb-4 text-slate-500 uppercase tracking-widest flex items-center gap-2">
+            <section class="p-4 bg-white shadow-sm rounded-2xl border border-slate-200">
+                <h2 class="text-xs font-bold mb-3 text-slate-500 uppercase tracking-widest flex items-center gap-2">
                     <i class="fa-solid fa-file-pdf text-rose-500"></i> Step 1. 파일 지정
                 </h2>
-                <div class="flex flex-col gap-3">
-                    <button id="btn-select-file" class="w-full bg-slate-900 hover:bg-black text-white font-bold text-xs py-3 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2 cursor-pointer">
+                <div class="flex flex-col gap-2">
+                    <button id="btn-select-file" class="w-full bg-slate-900 hover:bg-black text-white font-bold text-xs py-2.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2 cursor-pointer">
                         <i id="drive-icon" class="fa-brands fa-google-drive text-emerald-400"></i> 구글 드라이브 리포트 선택
                     </button>
-                    <div id="file-info" class="text-slate-400 italic text-[11px] text-center border border-dashed border-slate-200 rounded-xl py-3 bg-slate-50 px-2 truncate">
+                    <div id="file-info" class="text-slate-400 italic text-[11px] text-center border border-dashed border-slate-200 rounded-xl py-2 bg-slate-50 px-2 truncate">
                         파일을 선택해 주세요.
                     </div>
-                    <button id="btn-start-transform" disabled class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3.5 px-4 rounded-xl transition shadow-blue-200/50 shadow-lg disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer">
+                    <button id="btn-start-transform" disabled class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 px-4 rounded-xl transition shadow-blue-200/50 shadow-lg disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer">
                         <i class="fa-solid fa-bolt-lightning"></i> 변환 프로세스 시작
                     </button>
                 </div>
             </section>
 
-            <section id="process-section" class="p-5 bg-white shadow-sm rounded-2xl border border-slate-200 flex flex-col hidden">
-                <h2 class="text-xs font-bold mb-3.5 text-slate-500 uppercase tracking-widest flex items-center justify-between">
+            <section id="process-section" class="p-4 bg-white shadow-sm rounded-2xl border border-slate-200 flex flex-col hidden">
+                <h2 class="text-xs font-bold mb-3 text-slate-500 uppercase tracking-widest flex items-center justify-between">
                     <span class="flex items-center gap-2">
                         <span id="engine-log-title-icon"><i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i></span> 
                         Step 2. 실시간 엔진 로그
@@ -83,31 +83,47 @@
                             </div>
                             <span id="step-1-sub" class="text-[10px] text-blue-500 font-bold font-mono">0%</span>
                         </div>
-                        <div class="w-full bg-slate-200 rounded-full h-1 overflow-hidden" id="progress-bar-container">
-                            <div id="progress-bar" class="bg-blue-500 h-full transition-all duration-300" style="width: 0%"></div>
+                        <div class="w-full bg-slate-200 rounded-full h-1 overflow-hidden">
+                            <div id="progress-bar-1" class="bg-blue-500 h-full transition-all duration-300" style="width: 0%"></div>
                         </div>
                     </div>
                     
-                    <div id="step-2" class="flex items-center gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-100 opacity-50 transition-all duration-300" id="step-2-box">
-                        <div class="step-icon text-slate-300 text-[11px]" id="step-2-icon"><i class="fa-regular fa-circle"></i></div>
-                        <p class="font-bold text-[11px] text-slate-600">AI 엔티티 및 인과관계 추출</p>
+                    <div id="step-2" class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 opacity-40 transition-all duration-300" id="step-2-box">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="flex items-center gap-2">
+                                <div class="step-icon text-slate-400 text-[11px]" id="step-2-icon"><i class="fa-regular fa-circle"></i></div>
+                                <p class="font-bold text-[11px] text-slate-700">AI 엔티티 및 인과관계 추출</p>
+                            </div>
+                            <span id="step-2-sub" class="text-[10px] text-slate-400 font-bold font-mono">대기</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-1 overflow-hidden hidden" id="progress-container-2">
+                            <div id="progress-bar-2" class="bg-amber-500 h-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
                     </div>
                     
-                    <div id="step-3" class="flex items-center gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-100 opacity-50 transition-all duration-300" id="step-3-box">
-                        <div class="step-icon text-slate-300 text-[11px]" id="step-3-icon"><i class="fa-regular fa-circle"></i></div>
-                        <p class="font-bold text-[11px] text-slate-600">Neo4j 지식 그래프 매핑</p>
+                    <div id="step-3" class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 opacity-40 transition-all duration-300" id="step-3-box">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="flex items-center gap-2">
+                                <div class="step-icon text-slate-400 text-[11px]" id="step-3-icon"><i class="fa-regular fa-circle"></i></div>
+                                <p class="font-bold text-[11px] text-slate-700">Neo4j 지식 그래프 매핑</p>
+                            </div>
+                            <span id="step-3-sub" class="text-[10px] text-slate-400 font-bold font-mono">대기</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-1 overflow-hidden hidden" id="progress-container-3">
+                            <div id="progress-bar-3" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
                     </div>
                 </div>
 
                 <div id="result-section" class="mt-3 pt-3 border-t border-slate-100 hidden">
                     <div class="grid grid-cols-2 gap-3">
                         <div class="bg-emerald-500 p-2.5 rounded-xl text-center shadow-md shadow-emerald-100">
-                            <span class="block text-[9px] text-emerald-100 font-medium">추출 노드</span>
-                            <span id="node-count" class="text-lg font-black text-white font-mono leading-none">0</span>
+                            <span class="block text-[10px] text-emerald-100 font-medium tracking-tight">추출 노드</span>
+                            <span id="node-count" class="text-xl font-black text-white font-mono leading-none">0</span>
                         </div>
                         <div class="bg-sky-500 p-2.5 rounded-xl text-center shadow-md shadow-sky-100">
-                            <span class="block text-[9px] text-sky-100 font-medium">인과관계</span>
-                            <span id="edge-count" class="text-lg font-black text-white font-mono leading-none">0</span>
+                            <span class="block text-[10px] text-sky-100 font-medium tracking-tight">인과관계</span>
+                            <span id="edge-count" class="text-xl font-black text-white font-mono leading-none">0</span>
                         </div>
                     </div>
                 </div>
@@ -183,26 +199,19 @@
         const N8N_WEBHOOK_URL = 'https://seoneenam.app.n8n.cloud/webhook-test/rca-ontology-trigger';
         
         let accessToken = null; let selectedFileId = null; let selectedFileName = null; let tokenClient = null; let pickerApiLoaded = false;
-        let networkInstance = null; let timerInterval = null;
+        let networkInstance = null; let timerInterval = null; let fakeProgressInterval = null;
 
         const btnSelectFile = document.getElementById('btn-select-file'); const btnStartTransform = document.getElementById('btn-start-transform');
         const fileInfo = document.getElementById('file-info'); const processSection = document.getElementById('process-section'); const resultSection = document.getElementById('result-section');
         const monitorStatus = document.getElementById('monitor-status'); const viewPlaceholder = document.getElementById('view-placeholder');
         const graphContainer = document.getElementById('graph-container'); const loadingGraph = document.getElementById('loading-graph');
 
-        // 🌟 [자동 줄바꿈 엔진]: 가로 가독성 확보를 위해 15자마다 한 번씩 강제 개행(\n) 처리
         function wrapTextByLength(text, maxLength = 15) {
             if (!text) return '';
-            let result = '';
-            let currentLine = '';
-            
-            // 공백 기준으로 단어가 찢어지는 현상을 우아하게 래핑하기 위한 문자 쪼개기
+            let result = ''; let currentLine = '';
             for (let i = 0; i < text.length; i++) {
                 currentLine += text[i];
-                if (currentLine.length >= maxLength) {
-                    result += currentLine + '\n';
-                    currentLine = '';
-                }
+                if (currentLine.length >= maxLength) { result += currentLine + '\n'; currentLine = ''; }
             }
             result += currentLine;
             return result.trim();
@@ -249,18 +258,25 @@
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 inline-block animate-ping"></span> 실시간 분석 가동 중';
             
             startLiveTimer();
-            document.getElementById('progress-bar').style.width = '0%';
-            document.getElementById('step-1-sub').innerText = '0%';
+            resetAllStepsToDefault();
 
-            let progress = 0;
-            let fakeProgressInterval = setInterval(() => {
-                if (progress < 90) {
-                    progress += Math.floor(Math.random() * 8) + 2;
-                    if (progress > 90) progress = 90;
-                    document.getElementById('progress-bar').style.width = progress + '%';
-                    document.getElementById('step-1-sub').innerText = progress + '%';
+            // 🌟 [1단계 다이내믹 시뮬레이션 기동]
+            let progress1 = 0;
+            fakeProgressInterval = setInterval(() => {
+                if (progress1 < 100) {
+                    progress1 += Math.floor(Math.random() * 12) + 5;
+                    if (progress1 > 100) progress1 = 100;
+                    document.getElementById('progress-bar-1').style.width = progress1 + '%';
+                    document.getElementById('step-1-sub').innerText = progress1 + '%';
+                    
+                    // 100%가 완료되면 백엔드 대기 모드로 기동 유지
+                    if(progress1 === 100) {
+                        clearInterval(fakeProgressInterval);
+                        document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+                        simulateStep2Progress(); // ➔ 2단계 바 기동 연계
+                    }
                 }
-            }, 250);
+            }, 180);
 
             try {
                 const response = await fetch(N8N_WEBHOOK_URL, {
@@ -269,15 +285,12 @@
                     body: JSON.stringify({ fileId: selectedFileId, fileName: selectedFileName })
                 });
 
-                clearInterval(fakeProgressInterval);
-
                 if (response.ok) {
-                    document.getElementById('progress-bar').style.width = '100%';
-                    document.getElementById('step-1-sub').innerText = '100%';
                     let n8nRawData = await response.json();
                     
-                    // 🌟 통신 연동에 성공했으므로 애니메이션 상태 처리 단계를 깨우기 위해 트리거 전송
-                    runSynchronizedSteps(n8nRawData);
+                    // 🌟 [분배 로직 통합 교정]: 가짜 애니메이션 타임라인을 깨끗하게 종결하고 최종 실제 데이터 패키징 연동
+                    clearInterval(fakeProgressInterval);
+                    finalizeAllStepsSuccess(n8nRawData);
                 } else {
                     showDetailedError(`네트워크 상태 코드 에러: ${response.status} (${response.statusText})`);
                 }
@@ -287,43 +300,59 @@
             }
         });
 
-        function startLiveTimer() {
-            let startTime = Date.now();
-            if(timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                let elapsedTime = ((Date.now() - startTime) / 1000).toFixed(1);
-                document.getElementById('mini-timer').innerText = elapsedTime + 's';
-            }, 100);
+        // 🌟 [2단계 진행 상태 분배 바 연출]
+        function simulateStep2Progress() {
+            const step2Box = document.getElementById('step-2');
+            if(step2Box) step2Box.classList.remove('opacity-40');
+            document.getElementById('step-2-icon').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
+            document.getElementById('progress-container-2').classList.remove('hidden');
+            
+            let progress2 = 0;
+            fakeProgressInterval = setInterval(() => {
+                if (progress2 < 90) {
+                    progress2 += Math.floor(Math.random() * 6) + 2;
+                    if (progress2 > 90) progress2 = 90;
+                    document.getElementById('progress-bar-2').style.width = progress2 + '%';
+                    document.getElementById('step-2-sub').innerText = progress2 + '%';
+                }
+            }, 300);
         }
 
-        // 🌟 [체크마크 완전 복원]: 멈춰있던 2단계 및 3단계 컴포넌트 마크를 순차적으로 활성화 시켜주는 제어 장치 개통
-        function runSynchronizedSteps(realData) {
+        // 🌟 [종결 피드백]: n8n 분석 완료 시 모든 선로의 마크를 즉각 녹색 체크로 박제하고 타이머와 모래시계를 단정히 종료
+        function finalizeAllStepsSuccess(realData) {
+            // 1단계 무조건 완료
+            document.getElementById('progress-bar-1').style.width = '100%';
+            document.getElementById('step-1-sub').innerText = '100%';
             document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
             
-            const step2Box = document.getElementById('step-2-box');
-            if (step2Box) step2Box.classList.remove('opacity-50');
-            const step2Icon = document.getElementById('step-2-icon');
-            if (step2Icon) step2Icon.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
+            // 2단계 무조건 완료 
+            const step2Box = document.getElementById('step-2'); if(step2Box) step2Box.classList.remove('opacity-40');
+            document.getElementById('progress-container-2').classList.remove('hidden');
+            document.getElementById('progress-bar-2').style.width = '100%';
+            document.getElementById('step-2-sub').innerText = '100%';
+            document.getElementById('step-2-sub').className = "text-[10px] text-emerald-600 font-bold font-mono";
+            document.getElementById('step-2-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
             
-            // 비동기 파이프라인 정합 마크 순차 점등
-            setTimeout(() => { 
-                if (step2Icon) step2Icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
-                const step3Box = document.getElementById('step-3-box');
-                if (step3Box) step3Box.classList.remove('opacity-50');
-                const step3Icon = document.getElementById('step-3-icon');
-                if (step3Icon) step3Icon.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
+            // 3단계 즉시 로딩 후 완료 마크 마이그레이션
+            const step3Box = document.getElementById('step-3'); if(step3Box) step3Box.classList.remove('opacity-40');
+            document.getElementById('progress-container-3').classList.remove('hidden');
+            document.getElementById('progress-bar-3').style.width = '60%';
+            document.getElementById('step-3-sub').innerText = '매핑 중';
+            document.getElementById('step-3-icon').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
+            
+            setTimeout(() => {
+                document.getElementById('progress-bar-3').style.width = '100%';
+                document.getElementById('step-3-sub').innerText = '100%';
+                document.getElementById('step-3-sub').className = "text-[10px] text-emerald-600 font-bold font-mono";
+                document.getElementById('step-3-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
                 
-                setTimeout(() => {
-                    if (step3Icon) step3Icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
-                    
-                    // 🌟 [타이머 종결 장치]: 타이머 멈추고 타이틀 바의 모래시계를 완벽한 성공 마크로 종결 교체!!
-                    clearInterval(timerInterval);
-                    document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
-                    
-                    loadingGraph.classList.remove('hidden');
-                    render100PercentLiveGraph(realData);
-                }, 1000);
-            }, 1000);
+                // 🌟 [모래시계 정지 픽스]: Step 2 옆의 회전 아이콘을 영구적인 정적 녹색 체크 마크로 전격 변경!!
+                clearInterval(timerInterval);
+                document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+                
+                loadingGraph.classList.remove('hidden');
+                render100PercentLiveGraph(realData);
+            }, 900);
         }
 
         function render100PercentLiveGraph(resultData) {
@@ -352,22 +381,15 @@
             rawNodes.forEach(node => {
                 if (node && node.id) {
                     const typeLabel = node.label || 'Nodes';
-                    
-                    // 🌟 [문서 식별 조건 강화]: Document 인덱스일 때 긴 제목을 빼버리고 'RCA-2026-009' 같은 고유 문서 번호를 다이렉트로 캡션 삼음!!
                     let textBody = node.title || node.name || node.id_attr || '개체';
                     if (typeLabel === 'Document' && node.docNo) {
                         textBody = node.docNo;
                     }
-                    
-                    // 🌟 [텍스트 가독성 슬라이싱]: 원형 노드 가로 터짐을 방지하기 위해 15자 기준 \n 처리 감행
                     const formattedLabel = wrapTextByLength(textBody, 15);
 
                     nodesMap.set(node.id, {
-                        id: node.id, 
-                        label: formattedLabel, 
-                        type: typeLabel, 
-                        shape: 'dot',
-                        size: typeLabel === 'Document' ? 24 : 14,
+                        id: node.id, label: formattedLabel, type: typeLabel, shape: 'dot',
+                        size: typeLabel === 'Document' ? 22 : 12,
                         color: { background: colorPalette[typeLabel] || '#94a3b8', border: '#ffffff' },
                         font: { color: '#334155', size: 10, face: 'sans-serif', strokeWidth: 2, strokeColor: '#ffffff' }
                     });
@@ -388,8 +410,7 @@
             }
 
             const nl = document.getElementById('live-nodes-list'); const el = document.getElementById('live-edges-list');
-            if (nl) nl.innerHTML = ''; 
-            if (el) el.innerHTML = '';
+            if (nl) nl.innerHTML = ''; if (el) el.innerHTML = '';
             
             visNodes.forEach(n => { 
                 const inlineLabel = n.label.replace(/\n/g, ' ');
@@ -405,10 +426,8 @@
                 }
             });
             
-            // 🌟 [실시간 카운팅 정합 매핑]: 0으로 고정되어 안 바뀌던 뱃지 수치를 수급된 리얼 개수로 강제 치환
             const nc = document.getElementById('node-count'); const ec = document.getElementById('edge-count');
-            if (nc) nc.innerText = visNodes.length; 
-            if (ec) ec.innerText = visEdges.length;
+            if (nc) nc.innerText = visNodes.length; if (ec) ec.innerText = visEdges.length;
             
             document.getElementById('summary-node-badge').innerText = `${visNodes.length} Nodes`;
             document.getElementById('summary-edge-badge').innerText = `${visEdges.length} Edges`;
@@ -418,7 +437,7 @@
             const data = { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) };
             const options = {
                 edges: { arrows: { to: { enabled: true, scaleFactor: 0.5 } }, width: 1.2, smooth: { type: 'continuous' } },
-                physics: { barnesHut: { gravitationalConstant: -3500, springLength: 140 }, stabilization: { iterations: 100 } }
+                physics: { barnesHut: { gravitationalConstant: -3000, springLength: 120 }, stabilization: { iterations: 100 } }
             };
             networkInstance = new vis.Network(container, data, options);
         }
@@ -428,6 +447,27 @@
             const titleIcon = document.getElementById('engine-log-title-icon');
             if (titleIcon) titleIcon.innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-500"></i>';
             alert(`[나래 O&M 파이프라인 에러 리포트]\n\n원인: ${reason}`); 
+        }
+
+        function resetAllStepsToDefault() { 
+            document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i>';
+            document.getElementById('progress-bar-1').style.width = '0%';
+            document.getElementById('step-1-sub').innerText = '0%';
+            document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
+            
+            document.getElementById('step-2-icon').innerHTML = '<i class="fa-regular fa-circle"></i>';
+            document.getElementById('step-2-sub').innerText = '대기';
+            document.getElementById('step-2-sub').className = "text-[10px] text-slate-400 font-bold font-mono";
+            document.getElementById('progress-container-2').classList.add('hidden');
+            document.getElementById('progress-bar-2').style.width = '0%';
+            document.getElementById('step-2').classList.add('opacity-40');
+            
+            document.getElementById('step-3-icon').innerHTML = '<i class="fa-regular fa-circle"></i>';
+            document.getElementById('step-3-sub').innerText = '대기';
+            document.getElementById('step-3-sub').className = "text-[10px] text-slate-400 font-bold font-mono";
+            document.getElementById('progress-container-3').classList.add('hidden');
+            document.getElementById('progress-bar-3').style.width = '0%';
+            document.getElementById('step-3').classList.add('opacity-40');
         }
     </script>
 </body>
