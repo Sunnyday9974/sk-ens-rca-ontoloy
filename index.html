@@ -39,7 +39,7 @@
                 실시간 동기화 활성화
             </div>
             <div class="text-[10px] text-slate-400 font-mono bg-black/40 px-2.5 py-1 rounded border border-slate-800">
-                소스 반영 시각: <span class="text-amber-400 font-bold">06.15 19:40</span>
+                소스 반영 시각: <span class="text-amber-400 font-bold">06.15 20:10</span>
             </div>
         </div>
     </header>
@@ -74,8 +74,8 @@
                     <span id="mini-timer" class="text-[10px] font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">0.0s</span>
                 </h2>
                 
-                <div class="space-y-2">
-                    <div id="step-1" class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 transition-all duration-300">
+                <div class="space-y-1.5">
+                    <div id="step-1-box" class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
                         <div class="flex items-center justify-between mb-1">
                             <div class="flex items-center gap-2">
                                 <div class="step-icon text-blue-600 text-[11px]" id="step-1-icon"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
@@ -84,11 +84,11 @@
                             <span id="step-1-sub" class="text-[10px] text-blue-500 font-bold font-mono">0%</span>
                         </div>
                         <div class="w-full bg-slate-200 rounded-full h-1 overflow-hidden">
-                            <div id="progress-bar-1" class="bg-blue-500 h-full transition-all duration-300" style="width: 0%"></div>
+                            <div id="progress-bar-1" class="bg-blue-500 h-full" style="width: 0%"></div>
                         </div>
                     </div>
                     
-                    <div id="step-2" class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 opacity-40 transition-all duration-300" id="step-2-box">
+                    <div id="step-2-box" class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 opacity-40">
                         <div class="flex items-center justify-between mb-1">
                             <div class="flex items-center gap-2">
                                 <div class="step-icon text-slate-400 text-[11px]" id="step-2-icon"><i class="fa-regular fa-circle"></i></div>
@@ -97,11 +97,11 @@
                             <span id="step-2-sub" class="text-[10px] text-slate-400 font-bold font-mono">대기</span>
                         </div>
                         <div class="w-full bg-slate-200 rounded-full h-1 overflow-hidden hidden" id="progress-container-2">
-                            <div id="progress-bar-2" class="bg-amber-500 h-full transition-all duration-300" style="width: 0%"></div>
+                            <div id="progress-bar-2" class="bg-amber-500 h-full" style="width: 0%"></div>
                         </div>
                     </div>
                     
-                    <div id="step-3" class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 opacity-40 transition-all duration-300" id="step-3-box">
+                    <div id="step-3-box" class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 opacity-40">
                         <div class="flex items-center justify-between mb-1">
                             <div class="flex items-center gap-2">
                                 <div class="step-icon text-slate-400 text-[11px]" id="step-3-icon"><i class="fa-regular fa-circle"></i></div>
@@ -110,7 +110,7 @@
                             <span id="step-3-sub" class="text-[10px] text-slate-400 font-bold font-mono">대기</span>
                         </div>
                         <div class="w-full bg-slate-200 rounded-full h-1 overflow-hidden hidden" id="progress-container-3">
-                            <div id="progress-bar-3" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
+                            <div id="progress-bar-3" class="bg-emerald-500 h-full" style="width: 0%"></div>
                         </div>
                     </div>
                 </div>
@@ -201,11 +201,6 @@
         let accessToken = null; let selectedFileId = null; let selectedFileName = null; let tokenClient = null; let pickerApiLoaded = false;
         let networkInstance = null; let timerInterval = null; let fakeProgressInterval = null;
 
-        const btnSelectFile = document.getElementById('btn-select-file'); const btnStartTransform = document.getElementById('btn-start-transform');
-        const fileInfo = document.getElementById('file-info'); const processSection = document.getElementById('process-section'); const resultSection = document.getElementById('result-section');
-        const monitorStatus = document.getElementById('monitor-status'); const viewPlaceholder = document.getElementById('view-placeholder');
-        const graphContainer = document.getElementById('graph-container'); const loadingGraph = document.getElementById('loading-graph');
-
         function wrapTextByLength(text, maxLength = 15) {
             if (!text) return '';
             let result = ''; let currentLine = '';
@@ -253,6 +248,7 @@
         btnStartTransform.addEventListener('click', async () => {
             if(!selectedFileId) return;
             
+            // 1. UI 뼈대부터 무조건 선개통 및 활성화
             processSection.classList.remove('hidden'); resultSection.classList.add('hidden'); viewPlaceholder.classList.add('hidden'); graphContainer.classList.remove('hidden'); loadingGraph.classList.add('hidden');
             document.getElementById('live-cypher-text').innerText = `MATCH (d:Document {title: "${selectedFileName}"})-[r]-(m) RETURN d,r,m;`;
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 inline-block animate-ping"></span> 실시간 분석 가동 중';
@@ -260,24 +256,24 @@
             startLiveTimer();
             resetAllStepsToDefault();
 
-            // 🌟 [1단계 다이내믹 시뮬레이션 기동]
+            // 2. 1단계 분배 타이머 시뮬레이션 즉시 스타트
             let progress1 = 0;
             fakeProgressInterval = setInterval(() => {
                 if (progress1 < 100) {
-                    progress1 += Math.floor(Math.random() * 12) + 5;
+                    progress1 += Math.floor(Math.random() * 12) + 6;
                     if (progress1 > 100) progress1 = 100;
                     document.getElementById('progress-bar-1').style.width = progress1 + '%';
                     document.getElementById('step-1-sub').innerText = progress1 + '%';
                     
-                    // 100%가 완료되면 백엔드 대기 모드로 기동 유지
                     if(progress1 === 100) {
                         clearInterval(fakeProgressInterval);
                         document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
-                        simulateStep2Progress(); // ➔ 2단계 바 기동 연계
+                        simulateStep2Progress(); // ➔ 안전하게 2단계 바 토스
                     }
                 }
-            }, 180);
+            }, 150);
 
+            // 🌟 [CORS/문법 크래시 철벽 완화]: 자바스크립트 간섭 없이 n8n 웹훅 통신선 다이렉트 긴급 발사!!
             try {
                 const response = await fetch(N8N_WEBHOOK_URL, {
                     method: 'POST', 
@@ -287,9 +283,9 @@
 
                 if (response.ok) {
                     let n8nRawData = await response.json();
-                    
-                    // 🌟 [분배 로직 통합 교정]: 가짜 애니메이션 타임라인을 깨끗하게 종결하고 최종 실제 데이터 패키징 연동
                     clearInterval(fakeProgressInterval);
+                    
+                    // 성공 수급 완료 ➔ 전 구간 올 체크 패치 기동
                     finalizeAllStepsSuccess(n8nRawData);
                 } else {
                     showDetailedError(`네트워크 상태 코드 에러: ${response.status} (${response.statusText})`);
@@ -300,9 +296,18 @@
             }
         });
 
-        // 🌟 [2단계 진행 상태 분배 바 연출]
+        function startLiveTimer() {
+            let startTime = Date.now();
+            if(timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                let elapsedTime = ((Date.now() - startTime) / 1000).toFixed(1);
+                document.getElementById('mini-timer').innerText = elapsedTime + 's';
+            }, 100);
+        }
+
+        // 2단계 가짜 프로그레스 바 동적 구동
         function simulateStep2Progress() {
-            const step2Box = document.getElementById('step-2');
+            const step2Box = document.getElementById('step-2-box');
             if(step2Box) step2Box.classList.remove('opacity-40');
             document.getElementById('step-2-icon').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
             document.getElementById('progress-container-2').classList.remove('hidden');
@@ -310,49 +315,43 @@
             let progress2 = 0;
             fakeProgressInterval = setInterval(() => {
                 if (progress2 < 90) {
-                    progress2 += Math.floor(Math.random() * 6) + 2;
+                    progress2 += Math.floor(Math.random() * 5) + 2;
                     if (progress2 > 90) progress2 = 90;
                     document.getElementById('progress-bar-2').style.width = progress2 + '%';
                     document.getElementById('step-2-sub').innerText = progress2 + '%';
                 }
-            }, 300);
+            }, 250);
         }
 
-        // 🌟 [종결 피드백]: n8n 분석 완료 시 모든 선로의 마크를 즉각 녹색 체크로 박제하고 타이머와 모래시계를 단정히 종료
+        // 🌟 [동기화 마크 최종 보정]: n8n 분석이 마치는 순간 전 구간 프로그레스 바를 100%로 가득 채우고 모래시계 물리적 완전 정지!
         function finalizeAllStepsSuccess(realData) {
-            // 1단계 무조건 완료
+            // 1단계 클리어
             document.getElementById('progress-bar-1').style.width = '100%';
             document.getElementById('step-1-sub').innerText = '100%';
             document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
             
-            // 2단계 무조건 완료 
-            const step2Box = document.getElementById('step-2'); if(step2Box) step2Box.classList.remove('opacity-40');
+            // 2단계 클리어
+            const step2Box = document.getElementById('step-2-box'); if(step2Box) step2Box.classList.remove('opacity-40');
             document.getElementById('progress-container-2').classList.remove('hidden');
             document.getElementById('progress-bar-2').style.width = '100%';
             document.getElementById('step-2-sub').innerText = '100%';
             document.getElementById('step-2-sub').className = "text-[10px] text-emerald-600 font-bold font-mono";
             document.getElementById('step-2-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
             
-            // 3단계 즉시 로딩 후 완료 마크 마이그레이션
-            const step3Box = document.getElementById('step-3'); if(step3Box) step3Box.classList.remove('opacity-40');
+            // 3단계 클리어
+            const step3Box = document.getElementById('step-3-box'); if(step3Box) step3Box.classList.remove('opacity-40');
             document.getElementById('progress-container-3').classList.remove('hidden');
-            document.getElementById('progress-bar-3').style.width = '60%';
-            document.getElementById('step-3-sub').innerText = '매핑 중';
-            document.getElementById('step-3-icon').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
+            document.getElementById('progress-bar-3').style.width = '100%';
+            document.getElementById('step-3-sub').innerText = '100%';
+            document.getElementById('step-3-sub').className = "text-[10px] text-emerald-600 font-bold font-mono";
+            document.getElementById('step-3-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
             
-            setTimeout(() => {
-                document.getElementById('progress-bar-3').style.width = '100%';
-                document.getElementById('step-3-sub').innerText = '100%';
-                document.getElementById('step-3-sub').className = "text-[10px] text-emerald-600 font-bold font-mono";
-                document.getElementById('step-3-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
-                
-                // 🌟 [모래시계 정지 픽스]: Step 2 옆의 회전 아이콘을 영구적인 정적 녹색 체크 마크로 전격 변경!!
-                clearInterval(timerInterval);
-                document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
-                
-                loadingGraph.classList.remove('hidden');
-                render100PercentLiveGraph(realData);
-            }, 900);
+            // 🌟 [모래시계 무력화]: 실시간 로그 타이틀 옆의 모래시계 회전 아이콘을 완전 정적인 녹색 완수 마크로 치환!
+            clearInterval(timerInterval);
+            document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+            
+            loadingGraph.classList.remove('hidden');
+            render100PercentLiveGraph(realData);
         }
 
         function render100PercentLiveGraph(resultData) {
@@ -458,16 +457,16 @@
             document.getElementById('step-2-icon').innerHTML = '<i class="fa-regular fa-circle"></i>';
             document.getElementById('step-2-sub').innerText = '대기';
             document.getElementById('step-2-sub').className = "text-[10px] text-slate-400 font-bold font-mono";
-            document.getElementById('progress-container-2').classList.add('hidden');
-            document.getElementById('progress-bar-2').style.width = '0%';
-            document.getElementById('step-2').classList.add('opacity-40');
+            const pc2 = document.getElementById('progress-container-2'); if(pc2) pc2.classList.add('hidden');
+            const pb2 = document.getElementById('progress-bar-2'); if(pb2) pb2.style.width = '0%';
+            const s2b = document.getElementById('step-2-box'); if(s2b) s2b.classList.add('opacity-40');
             
             document.getElementById('step-3-icon').innerHTML = '<i class="fa-regular fa-circle"></i>';
             document.getElementById('step-3-sub').innerText = '대기';
             document.getElementById('step-3-sub').className = "text-[10px] text-slate-400 font-bold font-mono";
-            document.getElementById('progress-container-3').classList.add('hidden');
-            document.getElementById('progress-bar-3').style.width = '0%';
-            document.getElementById('step-3').classList.add('opacity-40');
+            const pc3 = document.getElementById('progress-container-3'); if(pc3) pc3.classList.add('hidden');
+            const pb3 = document.getElementById('progress-bar-3'); if(pb3) pb3.style.width = '0%';
+            const s3b = document.getElementById('step-3-box'); if(s3b) s3b.classList.add('opacity-40');
         }
     </script>
 </body>
