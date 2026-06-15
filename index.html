@@ -8,13 +8,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
-        /* 🌟 [가독성 혁신]: 눈이 편안한 밝은 격자 스타일로 캔버스 변경 */
+        /* 🌟 [가독성 테마]: 눈이 편안한 밝은 격자 스타일의 인텔리전트 캔버스 */
         #network-canvas { 
             width: 100%; height: 100%; background-color: #f8fafc; 
             background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
             background-size: 24px 24px;
         }
-        /* 스크롤바 없는 컴팩트 레이아웃 */
+        /* 스크롤바 없는 컴팩트 고정 레이아웃 */
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -30,14 +30,16 @@
             <p class="text-[11px] text-slate-400 mt-0.5">RCA 리포트 분석 ➔ AI 온톨로지 추출 ➔ Neo4j 매핑 실시간 파이프라인</p>
         </div>
         <div class="flex items-center gap-4">
-            <div class="bg-blue-500/10 text-blue-300 px-3 py-1.5 rounded-lg text-[11px] font-bold border border-blue-500/30 flex items-center gap-2">
+            <div class="bg-blue-500/10 text-blue-300 px-3 py-1.5 rounded-lg text-[11px] font-bold border border-blue-500/3Calculated flex items-center gap-2">
                 <span class="relative flex h-2 w-2">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
                 실시간 동기화 활성화
             </div>
-            <div class="text-[10px] text-slate-500 font-mono bg-black/30 px-2 py-1 rounded">Update: 06.15 17:45</div>
+            <div class="text-[10px] text-slate-400 font-mono bg-black/40 px-2.5 py-1 rounded border border-slate-800">
+                소스 반영 시각: <span class="text-amber-400 font-bold">06.15 17:55</span>
+            </div>
         </div>
     </header>
 
@@ -296,7 +298,6 @@
             }, 2600);
         }
 
-        // 🌟 [안전 가동 매핑 엔진]: 어떤 형태의 데이터 객체든 튕기지 않고 드로잉 처리
         function render100PercentLiveGraph(resultData) {
             loadingGraph.classList.add('hidden');
             
@@ -370,12 +371,11 @@
             networkInstance = new vis.Network(container, data, options);
         }
 
-        // 🌟 [CORS 및 오토 가이드 라인 탑재 디버깅 피드백]
         function showDetailedError(reason) { 
             if(timerInterval) clearInterval(timerInterval);
             const titleIcon = document.getElementById('engine-log-title-icon');
             if (titleIcon) titleIcon.innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-500"></i>';
-            alert(`[나래 O&M 파이프라인 에러 리포트]\n\n원인: ${reason}\n\n조치 가이드: n8n 캔버스의 'Listen for test event' 버튼이 현재 활성화되어 있는지 확인해 주세요.`); 
+            alert(`[나래 O&M 파이프라인 에러 리포트]\n\n원인: ${reason}\n\n조치 가이드: n8n 캔버스의 'Listen for test event' - 수동 테스트 모드가 잘 켜져있는지 확인해 보세요.`); 
         }
         
         function resetAllStepsToDefault() { 
