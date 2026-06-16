@@ -39,7 +39,7 @@
                 실시간 동기화 활성화
             </div>
             <div class="text-[10px] text-slate-400 font-mono bg-black/40 px-2.5 py-1 rounded border border-slate-800">
-                소스 반영 시각: <span class="text-amber-400 font-bold">06.15 20:55</span>
+                소스 반영 시각: <span class="text-amber-400 font-bold">06.16 11:00</span>
             </div>
         </div>
     </header>
@@ -150,20 +150,21 @@
                 </div>
 
                 <div id="graph-container" class="w-full h-full hidden flex flex-col flex-1 relative">
+                    
                     <div id="ontology-summary-box" class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 border-b border-slate-200">
                         <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col">
                             <p class="text-[11px] font-black text-emerald-600 mb-2 border-b border-emerald-50 pb-1.5 flex items-center justify-between">
                                 <span><i class="fa-solid fa-tags mr-1"></i> 도출된 노드 명세 (Nodes)</span>
                                 <span id="summary-node-badge" class="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full text-[9px] font-bold font-mono">0 Nodes</span>
                             </p>
-                            <ul id="live-nodes-list" class="text-[11px] text-slate-600 space-y-1 max-h-[110px] overflow-y-auto pr-1"></ul>
+                            <ul id="live-nodes-list" class="text-[11px] text-slate-600 space-y-1.5 max-h-[125px] overflow-y-auto pr-1 font-medium leading-relaxed"></ul>
                         </div>
                         <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col">
                             <p class="text-[11px] font-black text-blue-600 mb-2 border-b border-blue-50 pb-1.5 flex items-center justify-between">
                                 <span><i class="fa-solid fa-circle-nodes mr-1"></i> 인과관계 매핑 (Relationships)</span>
                                 <span id="summary-edge-badge" class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full text-[9px] font-bold font-mono">0 Edges</span>
                             </p>
-                            <ul id="live-edges-list" class="text-[11px] text-slate-600 space-y-1 max-h-[110px] overflow-y-auto pr-1"></ul>
+                            <ul id="live-edges-list" class="text-[11px] text-slate-600 space-y-1.5 max-h-[125px] overflow-y-auto pr-1 font-medium leading-relaxed"></ul>
                         </div>
                     </div>
                     
@@ -200,11 +201,6 @@
         let accessToken = null; let selectedFileId = null; let selectedFileName = null; let tokenClient = null; let pickerApiLoaded = false;
         let networkInstance = null; let timerInterval = null; let fakeProgressInterval = null;
 
-        const btnSelectFile = document.getElementById('btn-select-file'); const btnStartTransform = document.getElementById('btn-start-transform');
-        const fileInfo = document.getElementById('file-info'); const processSection = document.getElementById('process-section'); const resultSection = document.getElementById('result-section');
-        const monitorStatus = document.getElementById('monitor-status'); const viewPlaceholder = document.getElementById('view-placeholder');
-        const graphContainer = document.getElementById('graph-container'); const loadingGraph = document.getElementById('loading-graph');
-
         function wrapTextByLength(text, maxLength = 15) {
             if (!text) return '';
             let result = ''; let currentLine = '';
@@ -216,7 +212,6 @@
             return result.trim();
         }
 
-        // 🌟 [안전 연동 개통]: 구글 토큰 초기화 완료 직후 이벤트 리스너를 바인딩하여 무조건 클릭이 먹히도록 조치
         function gapiLoadCallback() { gapi.load('picker', () => { pickerApiLoaded = true; checkInfrastructureReady(); }); }
         function gsiLoadCallback() {
             if (typeof google !== 'undefined') {
@@ -234,22 +229,9 @@
                 if (driveIcon) driveIcon.className = "fa-brands fa-google-drive text-emerald-400 animate-bounce"; 
             } 
         }
+        window.onload = () => { if (typeof gapi !== 'undefined') gapiLoadCallback(); setTimeout(gsiLoadCallback, 400); };
 
-        // 🌟 [안전장치 2번]: 혹시 모를 로딩 유실을 막기 위해 윈도우 로드 즉시 다이렉트 이벤트 수동 장착
-        window.addEventListener('DOMContentLoaded', () => {
-            if (typeof gapi !== 'undefined') gapiLoadCallback();
-            setTimeout(gsiLoadCallback, 200);
-            
-            // 🚀 [마스터 스위치 클릭 보정]: 어떤 상황이든 버튼을 누르면 구글 인증 프로세스를 즉시 강제 기동!
-            btnSelectFile.onclick = () => {
-                if (!tokenClient) {
-                    gsiLoadCallback();
-                    setTimeout(() => { tokenClient.requestAccessToken(); }, 300);
-                } else {
-                    tokenClient.requestAccessToken();
-                }
-            };
-        });
+        btnSelectFile.addEventListener('click', () => { if (!tokenClient || typeof google === 'undefined') { gsiLoadCallback(); setTimeout(() => { tokenClient.requestAccessToken(); }, 300); return; } tokenClient.requestAccessToken(); });
 
         function createPicker() {
             if (!accessToken) { tokenClient.requestAccessToken(); return; }
@@ -257,7 +239,7 @@
                 const view = new google.picker.View(google.picker.ViewId.DOCS); view.setMimeTypes("application/pdf");
                 const picker = new google.picker.PickerBuilder().addView(view).setOAuthToken(accessToken).setDeveloperKey(API_KEY).setCallback(pickerCallback).setTitle("RCA 리포트 PDF 선택").build();
                 picker.setVisible(true);
-            } catch (err) { alert("구글 팝업 차단을 해제해 주세요."); }
+            } catch (err) { gsiLoadCallback(); }
         }
 
         function pickerCallback(data) {
@@ -279,7 +261,6 @@
             startLiveTimer();
             resetAllStepsToDefault();
 
-            // 1단계 타임라인 가동
             let progress1 = 0;
             fakeProgressInterval = setInterval(() => {
                 if (progress1 < 100) {
@@ -424,15 +405,17 @@
             
             visNodes.forEach(n => { 
                 const inlineLabel = n.label.replace(/\n/g, ' ');
-                if (nl) nl.innerHTML += `<li class="border-b border-slate-100 pb-1 text-slate-700 truncate">• <b style="color:${n.color.background}">[${n.type}]</b> ${inlineLabel}</li>`; 
+                // 🌟 [명세 뷰 패치]: truncate 클래스를 제거하여 글자가 생략되지 않고 가로 전체 폭을 넓게 쓰도록 수정
+                if (nl) nl.innerHTML += `<li class="border-b border-slate-100 pb-1 text-slate-700 whitespace-normal text-left">• <b style="color:${n.color.background}">[${n.type}]</b> ${inlineLabel}</li>`; 
             });
             
             visEdges.forEach(e => { 
                 const fromNode = nodesMap.get(e.from); const toNode = nodesMap.get(e.to);
                 if(fromNode && toNode) {
-                    const cleanFrom = fromNode.label.replace(/\n/g, ' ').substring(0,10);
-                    const cleanTo = toNode.label.replace(/\n/g, ' ').substring(0,10);
-                    if (el) el.innerHTML += `<li class="border-b border-slate-100 pb-1 text-slate-700 truncate">• <b class="text-blue-500">[:${e.label}]</b> ${cleanFrom}.. ➔ ${cleanTo}..</li>`; 
+                    const cleanFrom = fromNode.label.replace(/\n/g, ' ');
+                    const cleanTo = toNode.label.replace(/\n/g, ' ');
+                    // 🌟 [인과관계 매핑 패치]: 서브 스트링 자르기와 truncate를 완전히 없애 와이드 뷰 형태로 전개
+                    if (el) el.innerHTML += `<li class="border-b border-slate-100 pb-1 text-slate-700 whitespace-normal text-left">• <b class="text-blue-500">[:${e.label}]</b> ${cleanFrom} ➔ <span class="text-slate-500">${cleanTo}</span></li>`; 
                 }
             });
             
