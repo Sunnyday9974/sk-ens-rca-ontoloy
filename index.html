@@ -39,7 +39,7 @@
                 실시간 동기화 활성화
             </div>
             <div class="text-[10px] text-slate-400 font-mono bg-black/40 px-2.5 py-1 rounded border border-slate-800">
-                소스 반영 시각: <span class="text-amber-400 font-bold">06.16 11:10</span>
+                소스 반영 시각: <span class="text-amber-400 font-bold">06.16 11:15</span>
             </div>
         </div>
     </header>
@@ -53,7 +53,7 @@
                     <i class="fa-solid fa-file-pdf text-rose-500"></i> Step 1. 파일 지정
                 </h2>
                 <div class="flex flex-col gap-2">
-                    <button id="btn-select-file" class="w-full bg-slate-900 hover:bg-black text-white font-bold text-xs py-2.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2 cursor-pointer">
+                    <button id="btn-select-file" onclick="btnSelectFileClick(event)" class="w-full bg-slate-900 hover:bg-black text-white font-bold text-xs py-2.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2 cursor-pointer">
                         <i id="drive-icon" class="fa-brands fa-google-drive text-amber-400"></i> 구글 드라이브 리포트 선택
                     </button>
                     <div id="file-info" class="text-slate-400 italic text-[11px] text-center border border-dashed border-slate-200 rounded-xl py-2 bg-slate-50 px-2 truncate">
@@ -211,7 +211,6 @@
             return result.trim();
         }
 
-        // 🌟 [안전 인프라 부팅]: 최초 호출 메커니즘 정밀 락
         function gapiLoadCallback() { gapi.load('picker', () => { pickerApiLoaded = true; checkInfrastructureReady(); }); }
         function gsiLoadCallback() {
             if (typeof google !== 'undefined') {
@@ -230,17 +229,15 @@
             } 
         }
 
-        // 🌟 [핵심 마스터 락 패치]: 버튼 클릭 순간 라이브러리가 미처 준비되지 않았다면 즉각 실시간 강제 로드를 발생시켜 팝업 차단을 원천 분쇄!!
         window.onload = () => {
             gapiLoadCallback();
             setTimeout(gsiLoadCallback, 150);
         };
 
-        // 🚀 버튼의 다이렉트 이벤트 리스너 리빌딩 (타이머 경쟁 전면 배제)
-        btnSelectFile.onclick = (e) => {
-            e.preventDefault();
+        // 🌟 [핵심 불사 서브 체인 패치]: 인라인 onclick 속성에서 다이렉트로 이 함수를 저격 호출하므로 무조건 창이 뜹니다.
+        function btnSelectFileClick(event) {
+            if (event) event.preventDefault();
             
-            // 만약 구글 API 로드 상태가 덜 무르익었다면, 그 순간 즉시 강제 갱신 바인딩 작동
             if (typeof google === 'undefined' || !tokenClient) {
                 gapiLoadCallback();
                 gsiLoadCallback();
@@ -250,7 +247,7 @@
             } else {
                 tokenClient.requestAccessToken();
             }
-        };
+        }
 
         function createPicker() {
             if (!accessToken) { tokenClient.requestAccessToken(); return; }
@@ -258,7 +255,7 @@
                 const view = new google.picker.View(google.picker.ViewId.DOCS); view.setMimeTypes("application/pdf");
                 const picker = new google.picker.PickerBuilder().addView(view).setOAuthToken(accessToken).setDeveloperKey(API_KEY).setCallback(pickerCallback).setTitle("RCA 리포트 PDF 선택").build();
                 picker.setVisible(true);
-            } catch (err) { alert("구글 드라이브 연동에 일시적 장애가 발생했습니다. 잠시 후 다시 시도해 주세요."); }
+            } catch (err) { alert("구글 드라이브 연동에 리소스를 준비하는 중입니다. 잠시 후 다시 시도해 주세요."); }
         }
 
         function pickerCallback(data) {
