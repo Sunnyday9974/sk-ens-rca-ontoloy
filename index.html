@@ -39,7 +39,7 @@
                 실시간 동기화 활성화
             </div>
             <div class="text-[10px] text-slate-400 font-mono bg-black/40 px-2.5 py-1 rounded border border-slate-800">
-                소스 반영 시각: <span class="text-amber-400 font-bold">06.16 11:00</span>
+                소스 반영 시각: <span class="text-amber-400 font-bold">06.16 11:10</span>
             </div>
         </div>
     </header>
@@ -150,21 +150,20 @@
                 </div>
 
                 <div id="graph-container" class="w-full h-full hidden flex flex-col flex-1 relative">
-                    
                     <div id="ontology-summary-box" class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 border-b border-slate-200">
                         <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col">
                             <p class="text-[11px] font-black text-emerald-600 mb-2 border-b border-emerald-50 pb-1.5 flex items-center justify-between">
                                 <span><i class="fa-solid fa-tags mr-1"></i> 도출된 노드 명세 (Nodes)</span>
                                 <span id="summary-node-badge" class="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full text-[9px] font-bold font-mono">0 Nodes</span>
                             </p>
-                            <ul id="live-nodes-list" class="text-[11px] text-slate-600 space-y-1.5 max-h-[125px] overflow-y-auto pr-1 font-medium leading-relaxed"></ul>
+                            <ul id="live-nodes-list" class="text-[11px] text-slate-700 space-y-1.5 max-h-[125px] overflow-y-auto pr-1 font-medium leading-relaxed whitespace-normal text-left"></ul>
                         </div>
                         <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col">
                             <p class="text-[11px] font-black text-blue-600 mb-2 border-b border-blue-50 pb-1.5 flex items-center justify-between">
                                 <span><i class="fa-solid fa-circle-nodes mr-1"></i> 인과관계 매핑 (Relationships)</span>
                                 <span id="summary-edge-badge" class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full text-[9px] font-bold font-mono">0 Edges</span>
                             </p>
-                            <ul id="live-edges-list" class="text-[11px] text-slate-600 space-y-1.5 max-h-[125px] overflow-y-auto pr-1 font-medium leading-relaxed"></ul>
+                            <ul id="live-edges-list" class="text-[11px] text-slate-700 space-y-1.5 max-h-[125px] overflow-y-auto pr-1 font-medium leading-relaxed whitespace-normal text-left"></ul>
                         </div>
                     </div>
                     
@@ -212,6 +211,7 @@
             return result.trim();
         }
 
+        // 🌟 [안전 인프라 부팅]: 최초 호출 메커니즘 정밀 락
         function gapiLoadCallback() { gapi.load('picker', () => { pickerApiLoaded = true; checkInfrastructureReady(); }); }
         function gsiLoadCallback() {
             if (typeof google !== 'undefined') {
@@ -229,9 +229,28 @@
                 if (driveIcon) driveIcon.className = "fa-brands fa-google-drive text-emerald-400 animate-bounce"; 
             } 
         }
-        window.onload = () => { if (typeof gapi !== 'undefined') gapiLoadCallback(); setTimeout(gsiLoadCallback, 400); };
 
-        btnSelectFile.addEventListener('click', () => { if (!tokenClient || typeof google === 'undefined') { gsiLoadCallback(); setTimeout(() => { tokenClient.requestAccessToken(); }, 300); return; } tokenClient.requestAccessToken(); });
+        // 🌟 [핵심 마스터 락 패치]: 버튼 클릭 순간 라이브러리가 미처 준비되지 않았다면 즉각 실시간 강제 로드를 발생시켜 팝업 차단을 원천 분쇄!!
+        window.onload = () => {
+            gapiLoadCallback();
+            setTimeout(gsiLoadCallback, 150);
+        };
+
+        // 🚀 버튼의 다이렉트 이벤트 리스너 리빌딩 (타이머 경쟁 전면 배제)
+        btnSelectFile.onclick = (e) => {
+            e.preventDefault();
+            
+            // 만약 구글 API 로드 상태가 덜 무르익었다면, 그 순간 즉시 강제 갱신 바인딩 작동
+            if (typeof google === 'undefined' || !tokenClient) {
+                gapiLoadCallback();
+                gsiLoadCallback();
+                setTimeout(() => {
+                    if(tokenClient) tokenClient.requestAccessToken();
+                }, 300);
+            } else {
+                tokenClient.requestAccessToken();
+            }
+        };
 
         function createPicker() {
             if (!accessToken) { tokenClient.requestAccessToken(); return; }
@@ -239,7 +258,7 @@
                 const view = new google.picker.View(google.picker.ViewId.DOCS); view.setMimeTypes("application/pdf");
                 const picker = new google.picker.PickerBuilder().addView(view).setOAuthToken(accessToken).setDeveloperKey(API_KEY).setCallback(pickerCallback).setTitle("RCA 리포트 PDF 선택").build();
                 picker.setVisible(true);
-            } catch (err) { gsiLoadCallback(); }
+            } catch (err) { alert("구글 드라이브 연동에 일시적 장애가 발생했습니다. 잠시 후 다시 시도해 주세요."); }
         }
 
         function pickerCallback(data) {
@@ -405,7 +424,6 @@
             
             visNodes.forEach(n => { 
                 const inlineLabel = n.label.replace(/\n/g, ' ');
-                // 🌟 [명세 뷰 패치]: truncate 클래스를 제거하여 글자가 생략되지 않고 가로 전체 폭을 넓게 쓰도록 수정
                 if (nl) nl.innerHTML += `<li class="border-b border-slate-100 pb-1 text-slate-700 whitespace-normal text-left">• <b style="color:${n.color.background}">[${n.type}]</b> ${inlineLabel}</li>`; 
             });
             
@@ -414,7 +432,6 @@
                 if(fromNode && toNode) {
                     const cleanFrom = fromNode.label.replace(/\n/g, ' ');
                     const cleanTo = toNode.label.replace(/\n/g, ' ');
-                    // 🌟 [인과관계 매핑 패치]: 서브 스트링 자르기와 truncate를 완전히 없애 와이드 뷰 형태로 전개
                     if (el) el.innerHTML += `<li class="border-b border-slate-100 pb-1 text-slate-700 whitespace-normal text-left">• <b class="text-blue-500">[:${e.label}]</b> ${cleanFrom} ➔ <span class="text-slate-500">${cleanTo}</span></li>`; 
                 }
             });
