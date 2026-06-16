@@ -1,1 +1,498 @@
-//
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나래 O&M RCA 온톨로지 지식 그래프</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        /* 🌟 [가독성 테마]: 눈이 편안한 밝은 격자 스타일의 인텔리전트 캔버스 */
+        #network-canvas { 
+            width: 100%; 
+            height: 100%; 
+            background-color: #f8fafc; 
+            background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-gray-800 min-h-screen flex flex-col font-sans">
+
+    <header class="bg-slate-900 text-white py-4 px-8 shadow-md flex justify-between items-center z-50">
+        <div>
+            <h1 class="text-xl font-bold tracking-tight flex items-center gap-2">
+                <i class="fa-solid fa-brain text-blue-400 animate-pulse"></i>나래 O&M RCA 지식 그래프 오케스트레이터
+            </h1>
+            <p class="text-[11px] text-slate-400 mt-0.5">RCA 리포트 분석 ➔ AI 온톨로지 추출 ➔ Neo4j 매핑 실시간 파이프라인</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-blue-500/10 text-blue-300 px-3 py-1.5 rounded-lg text-[11px] font-bold border border-slate-700 flex items-center gap-2">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                실시간 동기화 활성화
+            </div>
+            <div class="text-[10px] text-slate-400 font-mono bg-black/40 px-2.5 py-1 rounded border border-slate-800">
+                소스 반영 시각: <span class="text-amber-400 font-bold">06.16 11:30</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="w-full max-w-[1700px] mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
+        
+        <div class="lg:col-span-3 flex flex-col gap-4">
+            
+            <section class="p-4 bg-white shadow-sm rounded-2xl border border-slate-200">
+                <h2 class="text-xs font-bold mb-3 text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fa-solid fa-file-pdf text-rose-500"></i> Step 1. 파일 지정
+                </h2>
+                <div class="flex flex-col gap-2">
+                    <button id="btn-select-file" onclick="btnSelectFileClick(event)" class="w-full bg-slate-900 hover:bg-black text-white font-bold text-xs py-2.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2 cursor-pointer">
+                        <i id="drive-icon" class="fa-brands fa-google-drive text-amber-400"></i> 구글 드라이브 리포트 선택
+                    </button>
+                    <div id="file-info" class="text-slate-400 italic text-[11px] text-center border border-dashed border-slate-200 rounded-xl py-2 bg-slate-50 px-2 truncate">
+                        파일을 선택해 주세요.
+                    </div>
+                    <button id="btn-start-transform" disabled class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 px-4 rounded-xl transition shadow-blue-200/50 shadow-lg disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-bolt-lightning"></i> 변환 프로세스 시작
+                    </button>
+                </div>
+            </section>
+
+            <section id="process-section" class="p-4 bg-white shadow-sm rounded-2xl border border-slate-200 flex flex-col hidden">
+                <h2 class="text-xs font-bold mb-3 text-slate-500 uppercase tracking-widest flex items-center justify-between">
+                    <span class="flex items-center gap-2">
+                        <span id="engine-log-title-icon"><i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i></span> 
+                        Step 2. 실시간 엔진 로그
+                    </span>
+                    <span id="mini-timer" class="text-[10px] font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">0.0s</span>
+                </h2>
+                
+                <div class="space-y-1.5">
+                    <div id="step-1-box" class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="flex items-center gap-2">
+                                <div class="step-icon text-blue-600 text-[11px]" id="step-1-icon"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+                                <p class="font-bold text-[11px] text-slate-700">RCA 리포트 데이터 스트리밍</p>
+                            </div>
+                            <span id="step-1-sub" class="text-[10px] text-blue-500 font-bold font-mono">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-1 overflow-hidden">
+                            <div id="progress-bar-1" class="bg-blue-500 h-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="step-2-box" class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 opacity-40 transition-all duration-300">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="flex items-center gap-2">
+                                <div class="step-icon text-slate-400 text-[11px]" id="step-2-icon"><i class="fa-regular fa-circle"></i></div>
+                                <p class="font-bold text-[11px] text-slate-700">AI 엔티티 및 인과관계 추출</p>
+                            </div>
+                            <span id="step-2-sub" class="text-[10px] text-slate-400 font-bold font-mono">대기</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-1 overflow-hidden hidden" id="progress-container-2">
+                            <div id="progress-bar-2" class="bg-amber-500 h-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="step-3-box" class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 opacity-40 transition-all duration-300">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="flex items-center gap-2">
+                                <div class="step-icon text-slate-400 text-[11px]" id="step-3-icon"><i class="fa-regular fa-circle"></i></div>
+                                <p class="font-bold text-[11px] text-slate-700">Neo4j 지식 그래프 매핑</p>
+                            </div>
+                            <span id="step-3-sub" class="text-[10px] text-slate-400 font-bold font-mono">대기</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-1 overflow-hidden hidden" id="progress-container-3">
+                            <div id="progress-bar-3" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="result-section" class="mt-3 pt-3 border-t border-slate-100 hidden">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-emerald-500 p-2.5 rounded-xl text-center shadow-md shadow-emerald-100">
+                            <span class="block text-[10px] text-emerald-100 font-medium tracking-tight">추출 노드</span>
+                            <span id="node-count" class="text-xl font-black text-white font-mono leading-none">0</span>
+                        </div>
+                        <div class="bg-sky-500 p-2.5 rounded-xl text-center shadow-md shadow-sky-100">
+                            <span class="block text-[10px] text-sky-100 font-medium tracking-tight">인과관계</span>
+                            <span id="edge-count" class="text-xl font-black text-white font-mono leading-none">0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="lg:col-span-9 bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden flex flex-col">
+            <div class="bg-slate-900 text-slate-300 px-5 py-3 flex justify-between items-center border-b border-slate-800">
+                <div class="flex items-center gap-3 text-[10px] font-bold tracking-widest uppercase font-mono">
+                    <i class="fa-solid fa-chart-line text-blue-400"></i> Neo4j Knowledge Graph Engine View
+                </div>
+                <div id="monitor-status" class="flex items-center gap-2 text-[10px] text-slate-500">
+                    <span class="w-2 h-2 rounded-full bg-slate-700 inline-block"></span> 엔진 대기 중
+                </div>
+            </div>
+            
+            <div class="relative flex flex-col flex-1 min-h-[750px]" id="monitor-body">
+                <div id="view-placeholder" class="absolute inset-0 flex flex-col justify-center items-center text-center p-6 space-y-4 z-20 bg-slate-50/50">
+                    <div class="text-5xl text-slate-200"><i class="fa-solid fa-diagram-project"></i></div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">분석 대기</p>
+                        <p class="text-[11px] text-slate-500 mt-1">리포트를 선택하고 변환을 시작하면 지식 그래프가 여기에 그려집니다.</p>
+                    </div>
+                </div>
+
+                <div id="graph-container" class="w-full h-full hidden flex flex-col flex-1 relative">
+                    <div id="ontology-summary-box" class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 border-b border-slate-200">
+                        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col">
+                            <p class="text-[11px] font-black text-emerald-600 mb-2 border-b border-emerald-50 pb-1.5 flex items-center justify-between">
+                                <span><i class="fa-solid fa-tags mr-1"></i> 도출된 노드 명세 (Nodes)</span>
+                                <span id="summary-node-badge" class="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full text-[9px] font-bold font-mono">0 Nodes</span>
+                            </p>
+                            <ul id="live-nodes-list" class="text-[11px] text-slate-700 space-y-1.5 max-h-[125px] overflow-y-auto pr-1 font-medium leading-relaxed whitespace-normal text-left"></ul>
+                        </div>
+                        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col">
+                            <p class="text-[11px] font-black text-blue-600 mb-2 border-b border-blue-50 pb-1.5 flex items-center justify-between">
+                                <span><i class="fa-solid fa-circle-nodes mr-1"></i> 인과관계 매핑 (Relationships)</span>
+                                <span id="summary-edge-badge" class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full text-[9px] font-bold font-mono">0 Edges</span>
+                            </p>
+                            <ul id="live-edges-list" class="text-[11px] text-slate-700 space-y-1.5 max-h-[125px] overflow-y-auto pr-1 font-medium leading-relaxed whitespace-normal text-left"></ul>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 w-full relative min-h-[480px]">
+                        <div id="network-canvas"></div>
+                        <div id="loading-graph" class="absolute inset-0 bg-white/90 flex flex-col items-center justify-center text-xs text-blue-600 gap-3 z-30 hidden">
+                            <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
+                            <span class="font-bold">Neo4j 클라우드와 지식 토폴로지 동기화 중...</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 px-4 py-2.5 flex justify-between items-center text-[9px] text-slate-500 font-mono border-t border-slate-800">
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-terminal text-amber-500"></i> NEO4J LIVE TARGET CYAN VIEW</div>
+                        <div id="live-cypher-text" class="text-blue-400">MATCH (d:Document)-[r]-(m) RETURN d,r,m</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white py-3 text-slate-400 text-[10px] text-center border-t border-slate-200 mt-auto">
+        © 2026 나래 O&M AI/DT TF. Intellectual Asset Management System v2.0
+    </footer>
+
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
+
+    <script>
+        const API_KEY = 'AIzaSyDUb9w8DUJ1z6rA3f1cWLvtK_dHML2B0Ys';
+        const CLIENT_ID = '226564701904-hr1l78rknenlm0fn3gul1cvmkve0ntuc.apps.googleusercontent.com';
+        const SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
+        const N8N_WEBHOOK_URL = 'https://seoneenam.app.n8n.cloud/webhook-test/rca-ontology-trigger';
+        
+        let accessToken = null; let selectedFileId = null; let selectedFileName = null; let tokenClient = null; let pickerApiLoaded = false;
+        let networkInstance = null; let timerInterval = null; let fakeProgressInterval = null;
+
+        // 🌟 [변수 매핑 복원]: 상단 본문의 요소들을 자바스크립트가 무조건 낚아챌 수 있도록 동기화 스코프 고정
+        const btnSelectFile = document.getElementById('btn-select-file'); 
+        const btnStartTransform = document.getElementById('btn-start-transform');
+        const fileInfo = document.getElementById('file-info'); 
+        const processSection = document.getElementById('process-section'); 
+        const resultSection = document.getElementById('result-section');
+        const monitorStatus = document.getElementById('monitor-status'); 
+        const viewPlaceholder = document.getElementById('view-placeholder');
+        const graphContainer = document.getElementById('graph-container'); 
+        const loadingGraph = document.getElementById('loading-graph');
+
+        function wrapTextByLength(text, maxLength = 15) {
+            if (!text) return '';
+            let result = ''; let currentLine = '';
+            for (let i = 0; i < text.length; i++) {
+                currentLine += text[i];
+                if (currentLine.length >= maxLength) { result += currentLine + '\n'; currentLine = ''; }
+            }
+            result += currentLine;
+            return result.trim();
+        }
+
+        function gapiLoadCallback() { gapi.load('picker', () => { pickerApiLoaded = true; checkInfrastructureReady(); }); }
+        function gsiLoadCallback() {
+            if (typeof google !== 'undefined') {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID, scope: SCOPE,
+                    callback: (response) => { if (response.error !== undefined) return; accessToken = response.access_token; if (accessToken) createPicker(); },
+                });
+                checkInfrastructureReady();
+            }
+        }
+        
+        function checkInfrastructureReady() { 
+            if (pickerApiLoaded && tokenClient) { 
+                const driveIcon = document.getElementById('drive-icon');
+                if (driveIcon) driveIcon.className = "fa-brands fa-google-drive text-emerald-400 animate-bounce"; 
+            } 
+        }
+
+        window.onload = () => {
+            gapiLoadCallback();
+            setTimeout(gsiLoadCallback, 150);
+        };
+
+        // 🚀 구글 팝업 다이렉트 인터셉트 함수 
+        function btnSelectFileClick(event) {
+            if (event) event.preventDefault();
+            if (typeof google === 'undefined' || !tokenClient) {
+                gapiLoadCallback(); gsiLoadCallback();
+                setTimeout(() => { if(tokenClient) tokenClient.requestAccessToken(); }, 300);
+            } else {
+                tokenClient.requestAccessToken();
+            }
+        }
+
+        function createPicker() {
+            if (!accessToken) { tokenClient.requestAccessToken(); return; }
+            try {
+                const view = new google.picker.View(google.picker.ViewId.DOCS); view.setMimeTypes("application/pdf");
+                const picker = new google.picker.PickerBuilder().addView(view).setOAuthToken(accessToken).setDeveloperKey(API_KEY).setCallback(pickerCallback).setTitle("RCA 리포트 PDF 선택").build();
+                picker.setVisible(true);
+            } catch (err) { alert("인프라 부팅 중입니다. 다시 시도해 주세요."); }
+        }
+
+        // 🚀 [링크 바인딩 정상화]: 파일 선택이 끝나는 순간 껍데기가 아닌 진짜 요소를 찾아 값을 꽂도록 패치
+        function pickerCallback(data) {
+            if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
+                const doc = data[google.picker.Response.DOCUMENTS][0]; 
+                selectedFileId = doc[google.picker.Document.ID]; 
+                selectedFileName = doc[google.picker.Document.NAME];
+                
+                // 전역 DOM 변수를 재탐색하여 안전하게 파일명 주입 및 잠금 해제 실행
+                const targetInfo = document.getElementById('file-info');
+                const targetBtn = document.getElementById('btn-start-transform');
+                
+                if (targetInfo) {
+                    targetInfo.innerText = `📄 ${selectedFileName}`;
+                    targetInfo.className = "text-blue-600 font-bold text-[11px] text-center border border-blue-200 rounded-xl py-2.5 bg-blue-50 px-2 truncate shadow-inner animate-fade-in";
+                }
+                if (targetBtn) {
+                    targetBtn.removeAttribute('disabled');
+                }
+            }
+        }
+
+        btnStartTransform.addEventListener('click', async () => {
+            if(!selectedFileId) return;
+            
+            processSection.classList.remove('hidden'); resultSection.classList.add('hidden'); viewPlaceholder.classList.add('hidden'); graphContainer.classList.remove('hidden'); loadingGraph.classList.add('hidden');
+            document.getElementById('live-cypher-text').innerText = `MATCH (d:Document {title: "${selectedFileName}"})-[r]-(m) RETURN d,r,m;`;
+            monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 inline-block animate-ping"></span> 실시간 분석 가동 중';
+            
+            startLiveTimer();
+            resetAllStepsToDefault();
+
+            let progress1 = 0;
+            fakeProgressInterval = setInterval(() => {
+                if (progress1 < 100) {
+                    progress1 += Math.floor(Math.random() * 12) + 6;
+                    if (progress1 > 100) progress1 = 100;
+                    document.getElementById('progress-bar-1').style.width = progress1 + '%';
+                    document.getElementById('step-1-sub').innerText = progress1 + '%';
+                    
+                    if(progress1 === 100) {
+                        clearInterval(fakeProgressInterval);
+                        document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+                        simulateStep2Progress();
+                    }
+                }
+            }, 150);
+
+            try {
+                const response = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileId: selectedFileId, fileName: selectedFileName })
+                });
+
+                if (response.ok) {
+                    let n8nRawData = await response.json();
+                    clearInterval(fakeProgressInterval);
+                    finalizeAllStepsSuccess(n8nRawData);
+                } else {
+                    showDetailedError(`네트워크 상태 코드 에러: ${response.status} (${response.statusText})`);
+                }
+            } catch (e) {
+                clearInterval(fakeProgressInterval);
+                showDetailedError(`브라우저 fetch 예외 발생: ${e.message}`);
+            }
+        });
+
+        function startLiveTimer() {
+            let startTime = Date.now();
+            if(timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                let elapsedTime = ((Date.now() - startTime) / 1000).toFixed(1);
+                document.getElementById('mini-timer').innerText = elapsedTime + 's';
+            }, 100);
+        }
+
+        function simulateStep2Progress() {
+            const step2Box = document.getElementById('step-2-box');
+            if(step2Box) step2Box.classList.remove('opacity-40');
+            document.getElementById('step-2-icon').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
+            document.getElementById('progress-container-2').classList.remove('hidden');
+            
+            let progress2 = 0;
+            fakeProgressInterval = setInterval(() => {
+                if (progress2 < 90) {
+                    progress2 += Math.floor(Math.random() * 5) + 2;
+                    if (progress2 > 90) progress2 = 90;
+                    document.getElementById('progress-bar-2').style.width = progress2 + '%';
+                    document.getElementById('step-2-sub').innerText = progress2 + '%';
+                }
+            }, 250);
+        }
+
+        function finalizeAllStepsSuccess(realData) {
+            document.getElementById('progress-bar-1').style.width = '100%';
+            document.getElementById('step-1-sub').innerText = '100%';
+            document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+            
+            const step2Box = document.getElementById('step-2-box'); if(step2Box) step2Box.classList.remove('opacity-40');
+            document.getElementById('progress-container-2').classList.remove('hidden');
+            document.getElementById('progress-bar-2').style.width = '100%';
+            document.getElementById('step-2-sub').innerText = '100%';
+            document.getElementById('step-2-sub').className = "text-[10px] text-emerald-600 font-bold font-mono";
+            document.getElementById('step-2-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+            
+            const step3Box = document.getElementById('step-3-box'); if(step3Box) step3Box.classList.remove('opacity-40');
+            document.getElementById('progress-container-3').classList.remove('hidden');
+            document.getElementById('progress-bar-3').style.width = '100%';
+            document.getElementById('step-3-sub').innerText = '100%';
+            document.getElementById('step-3-sub').className = "text-[10px] text-emerald-600 font-bold font-mono";
+            document.getElementById('step-3-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+            
+            clearInterval(timerInterval);
+            document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+            
+            loadingGraph.classList.remove('hidden');
+            render100PercentLiveGraph(realData);
+        }
+
+        function render100PercentLiveGraph(resultData) {
+            loadingGraph.classList.add('hidden');
+            let targetData = resultData;
+            if (Array.isArray(targetData) && targetData.length > 0) targetData = targetData[0];
+            if (targetData && targetData.json) targetData = targetData.json;
+
+            let rawNodes = targetData?.nodes;
+            let rawEdges = targetData?.relationships || targetData?.edges;
+
+            if (!rawNodes || !Array.isArray(rawNodes)) {
+                document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-500"></i>';
+                alert(`[데이터 구조 가이드]\nn8n 반환 바디에 'nodes' 배열이 보이지 않습니다.`);
+                return;
+            }
+
+            resultSection.classList.remove('hidden');
+            monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span> 실시간 데이터베이스 동기화 완료';
+            monitorStatus.className = "flex items-center gap-2 text-[10px] text-emerald-600 font-bold font-mono";
+            
+            let visNodes = []; let visEdges = []; let nodesMap = new Map();
+            const colorPalette = { 'Document': '#059669', 'Asset': '#2563eb', 'Alarm': '#dc2626', 'FailureMode': '#d97706', 'CauseStep': '#7c3aed', 'Action': '#db2777', 'Lesson': '#4b5563' };
+
+            rawNodes.forEach(node => {
+                if (node && node.id) {
+                    const typeLabel = node.label || 'Nodes';
+                    let textBody = node.title || node.name || node.id_attr || '개체';
+                    if (typeLabel === 'Document' && node.docNo) { textBody = node.docNo; }
+                    const formattedLabel = wrapTextByLength(textBody, 15);
+
+                    nodesMap.set(node.id, {
+                        id: node.id, label: formattedLabel, type: typeLabel, shape: 'dot',
+                        size: typeLabel === 'Document' ? 22 : 12,
+                        color: { background: colorPalette[typeLabel] || '#94a3b8', border: '#ffffff' },
+                        font: { color: '#334155', size: 10, face: 'sans-serif', strokeWidth: 2, strokeColor: '#ffffff' }
+                    });
+                }
+            });
+            visNodes = Array.from(nodesMap.values());
+
+            if (Array.isArray(rawEdges)) {
+                rawEdges.forEach(edge => {
+                    if (edge && edge.from && edge.to) {
+                        visEdges.push({ 
+                            from: edge.from, to: edge.to, label: edge.label || '',
+                            color: { color: '#cbd5e1', highlight: '#3b82f6' },
+                            font: { size: 8, color: '#64748b', background: '#ffffff', strokeWidth: 1, align: 'top' }
+                        });
+                    }
+                });
+            }
+
+            const nl = document.getElementById('live-nodes-list'); const el = document.getElementById('live-edges-list');
+            if (nl) nl.innerHTML = ''; if (el) el.innerHTML = '';
+            
+            visNodes.forEach(n => { 
+                const inlineLabel = n.label.replace(/\n/g, ' ');
+                if (nl) nl.innerHTML += `<li class="border-b border-slate-100 pb-1 text-slate-700 whitespace-normal text-left">• <b style="color:${n.color.background}">[${n.type}]</b> ${inlineLabel}</li>`; 
+            });
+            
+            visEdges.forEach(e => { 
+                const fromNode = nodesMap.get(e.from); const toNode = nodesMap.get(e.to);
+                if(fromNode && toNode) {
+                    const cleanFrom = fromNode.label.replace(/\n/g, ' ');
+                    const cleanTo = toNode.label.replace(/\n/g, ' ');
+                    if (el) el.innerHTML += `<li class="border-b border-slate-100 pb-1 text-slate-700 whitespace-normal text-left">• <b class="text-blue-500">[:${e.label}]</b> ${cleanFrom} ➔ <span class="text-slate-500">${cleanTo}</span></li>`; 
+                }
+            });
+            
+            const nc = document.getElementById('node-count'); const ec = document.getElementById('edge-count');
+            if (nc) nc.innerText = visNodes.length; if (ec) ec.innerText = visEdges.length;
+            
+            document.getElementById('summary-node-badge').innerText = `${visNodes.length} Nodes`;
+            document.getElementById('summary-edge-badge').innerText = `${visEdges.length} Edges`;
+
+            if(networkInstance !== null) networkInstance.destroy();
+            const container = document.getElementById('network-canvas');
+            const data = { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) };
+            const options = {
+                edges: { arrows: { to: { enabled: true, scaleFactor: 0.5 } }, width: 1.2, smooth: { type: 'continuous' } },
+                physics: { barnesHut: { gravitationalConstant: -3000, springLength: 120 }, stabilization: { iterations: 100 } }
+            };
+            networkInstance = new vis.Network(container, data, options);
+        }
+
+        function showDetailedError(reason) { 
+            if(timerInterval) clearInterval(timerInterval);
+            const titleIcon = document.getElementById('engine-log-title-icon');
+            if (titleIcon) titleIcon.innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-500"></i>';
+            alert(`[나래 O&M 파이프라인 에러 리포트]\n\n원인: ${reason}`); 
+        }
+
+        function resetAllStepsToDefault() { 
+            document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i>';
+            document.getElementById('progress-bar-1').style.width = '0%';
+            document.getElementById('step-1-sub').innerText = '0%';
+            document.getElementById('step-1-icon').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>';
+            
+            document.getElementById('step-2-icon').innerHTML = '<i class="fa-regular fa-circle"></i>';
+            document.getElementById('step-2-sub').innerText = '대기';
+            document.getElementById('step-2-sub').className = "text-[10px] text-slate-400 font-bold font-mono";
+            const pc2 = document.getElementById('progress-container-2'); if(pc2) pc2.classList.add('hidden');
+            const pb2 = document.getElementById('progress-bar-2'); if(pb2) pb2.style.width = '0%';
+            
+            document.getElementById('step-3-icon').innerHTML = '<i class="fa-regular fa-circle"></i>';
+            document.getElementById('step-3-sub').innerText = '대기';
+            document.getElementById('step-3-sub').className = "text-[10px] text-slate-400 font-bold font-mono";
+            const pc3 = document.getElementById('progress-container-3'); if(pc3) pc3.classList.add('hidden');
+            const pb3 = document.getElementById('progress-bar-3'); if(pb3) pb3.style.width = '0%';
+        }
+    </script>
+</body>
+</html>
