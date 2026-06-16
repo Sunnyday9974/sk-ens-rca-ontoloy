@@ -39,7 +39,7 @@
                 실시간 동기화 활성화
             </div>
             <div class="text-[10px] text-slate-400 font-mono bg-black/40 px-2.5 py-1 rounded border border-slate-800">
-                소스 반영 시각: <span class="text-amber-400 font-bold">06.16 11:15</span>
+                소스 반영 시각: <span class="text-amber-400 font-bold">06.16 11:30</span>
             </div>
         </div>
     </header>
@@ -200,6 +200,17 @@
         let accessToken = null; let selectedFileId = null; let selectedFileName = null; let tokenClient = null; let pickerApiLoaded = false;
         let networkInstance = null; let timerInterval = null; let fakeProgressInterval = null;
 
+        // 🌟 [변수 매핑 복원]: 상단 본문의 요소들을 자바스크립트가 무조건 낚아챌 수 있도록 동기화 스코프 고정
+        const btnSelectFile = document.getElementById('btn-select-file'); 
+        const btnStartTransform = document.getElementById('btn-start-transform');
+        const fileInfo = document.getElementById('file-info'); 
+        const processSection = document.getElementById('process-section'); 
+        const resultSection = document.getElementById('result-section');
+        const monitorStatus = document.getElementById('monitor-status'); 
+        const viewPlaceholder = document.getElementById('view-placeholder');
+        const graphContainer = document.getElementById('graph-container'); 
+        const loadingGraph = document.getElementById('loading-graph');
+
         function wrapTextByLength(text, maxLength = 15) {
             if (!text) return '';
             let result = ''; let currentLine = '';
@@ -234,16 +245,12 @@
             setTimeout(gsiLoadCallback, 150);
         };
 
-        // 🌟 [핵심 불사 서브 체인 패치]: 인라인 onclick 속성에서 다이렉트로 이 함수를 저격 호출하므로 무조건 창이 뜹니다.
+        // 🚀 구글 팝업 다이렉트 인터셉트 함수 
         function btnSelectFileClick(event) {
             if (event) event.preventDefault();
-            
             if (typeof google === 'undefined' || !tokenClient) {
-                gapiLoadCallback();
-                gsiLoadCallback();
-                setTimeout(() => {
-                    if(tokenClient) tokenClient.requestAccessToken();
-                }, 300);
+                gapiLoadCallback(); gsiLoadCallback();
+                setTimeout(() => { if(tokenClient) tokenClient.requestAccessToken(); }, 300);
             } else {
                 tokenClient.requestAccessToken();
             }
@@ -255,15 +262,27 @@
                 const view = new google.picker.View(google.picker.ViewId.DOCS); view.setMimeTypes("application/pdf");
                 const picker = new google.picker.PickerBuilder().addView(view).setOAuthToken(accessToken).setDeveloperKey(API_KEY).setCallback(pickerCallback).setTitle("RCA 리포트 PDF 선택").build();
                 picker.setVisible(true);
-            } catch (err) { alert("구글 드라이브 연동에 리소스를 준비하는 중입니다. 잠시 후 다시 시도해 주세요."); }
+            } catch (err) { alert("인프라 부팅 중입니다. 다시 시도해 주세요."); }
         }
 
+        // 🚀 [링크 바인딩 정상화]: 파일 선택이 끝나는 순간 껍데기가 아닌 진짜 요소를 찾아 값을 꽂도록 패치
         function pickerCallback(data) {
             if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
-                const doc = data[google.picker.Response.DOCUMENTS][0]; selectedFileId = doc[google.picker.Document.ID]; selectedFileName = doc[google.picker.Document.NAME];
-                fileInfo.innerText = `📄 ${selectedFileName}`;
-                fileInfo.className = "text-blue-600 font-bold text-[11px] text-center border border-blue-200 rounded-xl py-3 bg-blue-50 px-2 truncate shadow-inner";
-                btnStartTransform.removeAttribute('disabled');
+                const doc = data[google.picker.Response.DOCUMENTS][0]; 
+                selectedFileId = doc[google.picker.Document.ID]; 
+                selectedFileName = doc[google.picker.Document.NAME];
+                
+                // 전역 DOM 변수를 재탐색하여 안전하게 파일명 주입 및 잠금 해제 실행
+                const targetInfo = document.getElementById('file-info');
+                const targetBtn = document.getElementById('btn-start-transform');
+                
+                if (targetInfo) {
+                    targetInfo.innerText = `📄 ${selectedFileName}`;
+                    targetInfo.className = "text-blue-600 font-bold text-[11px] text-center border border-blue-200 rounded-xl py-2.5 bg-blue-50 px-2 truncate shadow-inner animate-fade-in";
+                }
+                if (targetBtn) {
+                    targetBtn.removeAttribute('disabled');
+                }
             }
         }
 
