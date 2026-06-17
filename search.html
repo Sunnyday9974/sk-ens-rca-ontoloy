@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SK Group AI/DT - RCA 지식 그래프 탐색기 [v2026.06.17.1430]</title>
+    <title>SK Group AI/DT - RCA 지식 그래프 탐색기 [v2026.06.17.1500]</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
@@ -13,16 +13,18 @@
     <style>
         :root {
             --primary: #1e293b; --secondary: #f8fafc; --accent: #e02020; --text: #334155; --border: #e2e8f0;
+            /* 🎯 index.html과 100% 동기화된 정밀 헥사 컬러 팔레트 */
             --color-doc: #059669; --color-asset: #2563eb; --color-alarm: #dc2626; --color-fm: #d97706; --color-step: #7c3aed; --color-act: #db2777; --color-lsn: #4b5563;
         }
         body { background-color: #e2e8f0; font-family: 'Inter', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--text); }
         .slide-container { width: 1280px; height: 720px; background-color: var(--secondary); border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; position: relative; }
         
-        /* 헤더 스타일 깔끔하게 정리 */
-        header { padding: 40px 60px 20px 60px; background: linear-gradient(to right, #ffffff, #f1f5f9); }
-        .slide-title { font-family: 'Poppins', sans-serif; font-size: 32px; font-weight: 700; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 15px; }
+        /* 헤더 섹션 */
+        header { padding: 35px 60px 15px 60px; background: linear-gradient(to right, #ffffff, #f1f5f9); display: flex; justify-content: space-between; align-items: flex-end; }
+        .title-area { display: flex; flex-direction: column; }
+        .slide-title { font-family: 'Poppins', sans-serif; font-size: 30px; font-weight: 700; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 12px; }
         .slide-title i { color: var(--accent); }
-        .subtitle { font-size: 16px; color: #64748b; margin-top: 5px; }
+        .subtitle { font-size: 14px; color: #64748b; margin-top: 5px; }
         
         .search-panel { display: flex; gap: 12px; padding: 0 60px 25px 60px; background: white; border-bottom: 1px solid var(--border); flex-wrap: wrap; align-items: flex-end; }
         .control-group { display: flex; flex-direction: column; gap: 5px; }
@@ -32,14 +34,13 @@
         .btn-search { background-color: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; transition: background 0.2s; height: 40px; margin-left: 10px; }
         .btn-search:hover { background-color: #b01818; }
         
-        /* 메인 영역 및 플로팅 컨테이너 셋업 */
+        /* 메인 레이아웃 및 격자 캔버스 */
         .main-content { display: flex; flex: 1; padding: 25px 60px; gap: 25px; overflow: hidden; }
         .canvas-container { flex: 2.5; position: relative; display: flex; }
         
-        /* 인텔리전트 격자 캔버스 */
         #network-canvas { flex: 1; background-color: #f8fafc; border-radius: 12px; border: 1px solid var(--border); background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px); background-size: 24px 24px; }
         
-        /* 🎯 [v1430 패치 1] 범례(Legend)를 그래프 화면 우측 상단 내부 안쪽으로 이동 및 플로팅 고정 */
+        /* 🎯 그래프 영역 내부 플로팅 범례 패널 */
         .legend-floating-panel { 
             position: absolute; top: 15px; right: 15px; z-index: 10;
             display: flex; flex-direction: column; gap: 8px; background: rgba(255, 255, 255, 0.92); 
@@ -49,13 +50,14 @@
         .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; color: #475569; }
         .legend-circle { width: 10px; height: 10px; border-radius: 5px; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); }
         
+        /* 사이드바 및 상세카드 */
         .sidebar { flex: 1; background: white; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
         .sidebar-header { padding: 20px; background-color: #f1f5f9; border-bottom: 1px solid var(--border); font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 15px; color: var(--primary); display: flex; align-items: center; gap: 10px; }
         .sidebar-content { padding: 20px; flex: 1; overflow-y: auto; font-size: 14px; }
         .detail-card { background-color: #f8fafc; border-radius: 8px; padding: 15px; border-left: 4px solid var(--accent); margin-top: 10px; }
         .info-tag { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; }
         
-        /* 🎯 [v1430 패치 2] 구글 드라이브 연동 리포트 열기 버튼 디자인 */
+        /* 🎯 구글 드라이브 실시간 문서 연동 버튼 스타일 */
         .btn-drive-link {
             display: flex; align-items: center; justify-content: center; gap: 8px;
             width: 100%; margin-top: 15px; padding: 12px; border-radius: 6px;
@@ -65,7 +67,7 @@
         }
         .btn-drive-link:hover { background-color: #047857; box-shadow: 0 6px 14px rgba(5, 150, 105, 0.3); }
 
-        /* 뱃지 컬러 매핑 */
+        /* 사이드바 전용 뱃지 색상 규칙 */
         .tag-document { background: #d1fae5; color: #065f46; }
         .tag-asset { background: #dbeafe; color: #1e40af; }
         .tag-alarm { background: #fee2e2; color: #991b1b; }
@@ -79,8 +81,10 @@
 
 <div class="slide-container">
     <header>
-        <h1 class="slide-title"><i class="fa-solid fa-brain text-blue-500"></i> RCA Knowledge Graph Analytics</h1>
-        <div class="subtitle">vis.js 인텔리전트 물리 엔진 기반 장애 다차원 전파 탐색 플랫폼</div>
+        <div class="title-area">
+            <h1 class="slide-title"><i class="fa-solid fa-brain text-blue-500"></i> RCA Knowledge Graph Analytics</h1>
+            <div class="subtitle">vis.js 인텔리전트 물리 엔진 기반 장애 다차원 전파 탐색 플랫폼</div>
+        </div>
     </header>
 
     <div class="search-panel">
@@ -179,12 +183,12 @@
                         let textBody = n.properties.name || n.properties.id;
                         const formattedLabel = wrapTextByLength(textBody, 15);
 
-                        // 🎯 [v1430 패치 3] 클릭 이벤트를 위해 Neo4j 내부의 fileId 프로퍼티까지 안전하게 동기화 주머니에 캐싱
+                        // 🎯 [v1500 정밀 교정] Neo4j 실제 매핑 필드인 n.properties.url 값을 파일 링크 변수에 격리 캐싱
                         allNodesData[n.properties.id] = { 
                             id: n.properties.id, 
                             label: typeLabel, 
                             name: n.properties.name,
-                            fileId: n.properties.fileId || '' 
+                            fileId: n.properties.url || '' 
                         };
 
                         nodesMap.set(n.properties.id, {
@@ -236,7 +240,6 @@
                     const label = nodeData.label;
                     const tagClass = 'tag-' + label.toLowerCase();
                     
-                    // 기본 카드 템플릿 조립
                     let detailHTML = `
                         <span class="info-tag ${tagClass}">${label}</span>
                         <div class="info-item" style="font-size:15px; font-weight:700; color:var(--primary);">${nodeData.id}</div>
@@ -246,16 +249,15 @@
                         </div>
                     `;
                     
-                    // 🎯 [v1430 패치 4] 클릭한 노드가 'Document' 종류이고, 구글 드라이브 fileId가 매핑되어 있을 경우 다이렉트 직통 링크 버튼 동적 주입
+                    // 🎯 [v1500 정밀 교정] 캐싱된 완벽한 구글 드라이브 전체 URL 주소를 새 창 링크에 다이렉트로 반영
                     if (label === 'Document' && nodeData.fileId) {
-                        const driveViewerUrl = `https://drive.google.com/file/d/${nodeData.fileId}/view?usp=drivesdk`;
+                        const driveViewerUrl = nodeData.fileId; 
                         detailHTML += `
                             <a href="${driveViewerUrl}" target="_blank" class="btn-drive-link">
                                 <i class="fa-brands fa-google-drive text-amber-300"></i> 원본 RCA 리포트 PDF 열기
                             </a>
                         `;
                     } else if (label === 'Document') {
-                        // 만약 데이터베이스에 테스트용 문서 번호만 있고 아직 실제 파일이 매핑 안 되었을 때의 예외 안전 장치
                         detailHTML += `
                             <div style="margin-top:15px; font-size:11px; color:#94a3b8; text-align:center; border:1px dashed #e2e8f0; padding:10px; border-radius:6px;">
                                 <i class="fa-solid fa-link-slash"></i> 이 마스터 문서는 구글 드라이브 파일 ID가 데이터베이스에 연결되어 있지 않습니다.
