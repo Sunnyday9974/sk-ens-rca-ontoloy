@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>SK Group AI/DT - 설비 장애 지식 그래프 조회</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; margin: 20px; background-color: #f5f7fa; }
+        .container { display: flex; flex-direction: column; height: 90vh; }
+        .search-bar { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; display: flex; gap: 15px; align-items: center; }
+        select, input, button { padding: 10px; border-radius: 4px; border: 1px solid #ddd; font-size: 14px; }
+        button { background-color: #e02020; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #b01818; }
+        .content { display: flex; flex: 1; gap: 15px; }
+        #cy { flex: 2; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #eee; }
+        .sidebar { flex: 1; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow-y: auto; }
+        h3 { margin-top: 0; color: #333; border-bottom: 2px solid #e02020; padding-bottom: 5px; }
+        .info-item { margin-bottom: 10px; font-size: 14px; line-height: 1.5; }
+        .info-label { font-weight: bold; color: #555; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="search-bar">
+        <label style="font-weight: bold;">고장 모드 (Failure Mode):</label>
+        <select id="failureModeSelect">
+            <option value="">-- 고장 모드 선택 --</option>
+        </select>
+
+        <label style="font-weight: bold;">설비 자산 (Asset):</label>
+        <select id="assetSelect">
+            <option value="">-- 설비 선택 --</option>
+        </select>
+
+        <button onclick="searchNetwork()">지식 그래프 조회</button>
+    </div>
+
+    <div class="content">
+        <div id="cy"></div>
+        <div class="sidebar">
+            <h3>선택 항목 상세보기</h3>
+            <div id="detailContent">노드나 엣지를 클릭하면 상세 정보가 여기에 표시됩니다.</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ⭐ 유저님의 n8n 웹훅 기본 주소 주입 (끝에 슬래시 제외)
+    const N8N_URL = 'https://seoneenam.app.n8n.cloud'; 
+
+    let cy;
+
+    // 1. 화면 켜지자마자 마스터 코드 목록을 받아와서 드롭다운 채우기
+    window.onload = async function() {
+        try {
+            const response = await fetch(`${N8N_URL}/master-codes`);
+            const jsonResult = await response.json();
+            
+            // n8n v2 API 특유의 배열 데이터 파싱
+            const rawLists = jsonResult[0].data.values[0];
+            const failureModes = rawLists[0];
+            const assets = rawLists[1];
+
+            // 고장모드 드롭다운 채우기
+            const fmSelect = document.getElementById('failureModeSelect');
+            failureModes.forEach(id => {
+                let opt = document.createElement('option');
+                opt.value = id;
+                opt.innerText = id;
+                fmSelect.appendChild(opt);
+            });
+
+            // 설비 드롭다운 채우기
+            const assetSelect = document.getElementById('assetSelect');
+            assets.forEach(id => {
+                let opt = document.createElement('option');
+                opt.value = id;
+                opt.innerText = id;
+                assetSelect.appendChild(opt);
+            });
+
+        } catch (error) {
+            console.error('마스터 코드를 로드하는 중 에러 발생:', error);
+        }
+    };
+
+    // 2. [조회] 버튼 클릭 시 특정 코드 기준 네트워크 가져와서 그리기
+    async function searchNetwork() {
+        const fmValue = document.getElementById('failureModeSelect').value;
+        const assetValue = document.getElementById('assetSelect').value;
+        
+        // 둘 중 선택된 값을 검색 ID로 지정
+        const searchId = fmValue || assetValue;
+        
+        if (!searchId) {
+            alert('조회할 고장 모드 또는 설비를 선택해 주세요.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${N8N_URL}/search-network?id=${searchId}`);
+            const jsonResult = await response.json();
+            const rows = jsonResult[0].data.values;
+
+            // Cytoscape 포맷으로 변환할 빈 그릇들
+            const elements = [];
+            const addedNodeIds = new Set();
+
+            // 백엔드가 준 target, r, neighbor 실타래 데이터 조립
+            rows.forEach(row => {
+                const target = row[0];
+                const relationship = row[1];
+                const neighbor = row[2];
+
+                // 과역(Target) 노드 추가
+                if (!addedNodeIds.has(target.properties.id)) {
+                    elements.push({ data: { id: target.properties.id, label: target.labels[0] || 'Unknown', name: target.properties.name } });
+                    addedNodeIds.add(target.properties.id);
+                }
+
+                // 이웃(Neighbor) 노드 추가
+                if (!addedNodeIds.has(neighbor.properties.id)) {
+                    elements.push({ data: { id: neighbor.properties.id, label: neighbor.labels[0] || 'Unknown', name: neighbor.properties.name } });
+                    addedNodeIds.add(neighbor.properties.id);
+                }
+
+                // 관계선(Edge) 추가
+                elements.push({
+                    data: {
+                        id: relationship.elementId,
+                        source: relationship.startNodeElementId === target.elementId ? target.properties.id : neighbor.properties.id,
+                        target: relationship.endNodeElementId === target.elementId ? target.properties.id : neighbor.properties.id,
+                        type: relationship.type
+                    }
+                });
+            });
+
+            // Cytoscape 그래프 구동 및 그리기
+            initCytoscape(elements);
+
+        } catch (error) {
+            console.error('네트워크 조회 중 에러 발생:', error);
+        }
+    }
+
+    // 3. Cytoscape 그래프 레이아웃 및 디자인 설정 함수
+    function initCytoscape(elements) {
+        cy = cytoscape({
+            container: document.getElementById('cy'),
+            elements: elements,
+            style: [
+                {
+                    selector: 'node',
+                    style: {
+                        'background-color': '#0074D9',
+                        'label': 'data(id)',
+                        'color': '#333',
+                        'font-size': '11px',
+                        'text-valign': 'bottom',
+                        'text-margin-y': '6px',
+                        'width': '30px',
+                        'height': '30px'
+                    }
+                },
+                {
+                    selector: 'node[label="FailureMode"]',
+                    style: { 'background-color': '#FF4136', 'width': '40px', 'height': '40px' } // 고장모드는 빨간색 대형 구슬
+                },
+                {
+                    selector: 'node[label="Asset"]',
+                    style: { 'background-color': '#2ECC40', 'width': '35px', 'height': '35px' } // 설비는 초록색 구슬
+                },
+                {
+                    selector: 'edge',
+                    style: {
+                        'width': 2,
+                        'line-color': '#aaa',
+                        'target-arrow-color': '#aaa',
+                        'target-arrow-shape': 'triangle',
+                        'curve-style': 'bezier',
+                        'label': 'data(type)',
+                        'font-size': '9px',
+                        'color': '#777',
+                        'text-rotation': 'autorotate'
+                    }
+                }
+            ],
+            layout: {
+                name: 'cose', // 사방으로 이쁘게 펼쳐지는 물리 엔진 기반 레이아웃
+                animate: true
+            }
+        });
+
+        // 4. 노드 클릭 시 우측 사이드바에 상세 정보 출력 이벤트
+        cy.on('tap', 'node', function(evt){
+            const node = evt.target;
+            const name = node.data('name') || '정보 없음';
+            const label = node.data('label');
+            const id = node.data('id');
+
+            document.getElementById('detailContent').innerHTML = `
+                <div class="info-item"><span class="info-label">종류 (Label):</span> [${label}]</div>
+                <div class="info-item"><span class="info-label">식별 코드 (ID):</span> ${id}</div>
+                <div class="info-item"><span class="info-label">상세 명칭 / 본문:</span><br><p style="background:#f9f9f9; padding:8px; border-left:3px solid #e02020;">${name}</p></div>
+            `;
+        });
+    }
+</script>
+</body>
+</html>
