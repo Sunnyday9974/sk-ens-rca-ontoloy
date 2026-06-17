@@ -2,17 +2,19 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SK Group AI/DT - RCA 지식 그래프 탐색기 [v2026.06.17.1300]</title>
+    <title>SK Group AI/DT - RCA 지식 그래프 탐색기 [v2026.06.17.1330]</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+    
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    
     <style>
         :root {
             --primary: #1e293b; --secondary: #f8fafc; --accent: #e02020; --text: #334155; --border: #e2e8f0;
-            /* 🎯 노드 종류별 색상 상수 정의 (v1300 패치 핵심) */
-            --node-doc: #FFDC00; --node-asset: #2ECC40; --node-alarm: #FF851B; --node-fm: #FF4136;
+            /* 🎯 [v1330 패치 2] index.html의 정밀 헥사 컬러 스펙트럼 그대로 복제 */
+            --color-doc: #059669; --color-asset: #2563eb; --color-alarm: #dc2626; --color-fm: #d97706; --color-step: #7c3aed; --color-act: #db2777; --color-lsn: #4b5563;
         }
         body { background-color: #e2e8f0; font-family: 'Inter', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--text); }
         .slide-container { width: 1280px; height: 720px; background-color: var(--secondary); border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; position: relative; }
@@ -28,26 +30,33 @@
         .btn-search { background-color: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; transition: background 0.2s; height: 40px; margin-left: 10px; }
         .btn-search:hover { background-color: #b01818; }
         .main-content { display: flex; flex: 1; padding: 25px 60px; gap: 25px; overflow: hidden; }
-        #cy { flex: 2.5; background: white; border-radius: 12px; border: 1px solid var(--border); position: relative; }
+        
+        /* 🎯 [v1330 패치 3] 눈이 편안한 밝은 격자 스타일의 인텔리전트 캔버스 연동 */
+        #network-canvas { 
+            flex: 2.5; background-color: #f8fafc; border-radius: 12px; border: 1px solid var(--border);
+            background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px); background-size: 24px 24px;
+        }
+        
         .sidebar { flex: 1; background: white; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
         .sidebar-header { padding: 20px; background-color: #f1f5f9; border-bottom: 1px solid var(--border); font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 15px; color: var(--primary); display: flex; align-items: center; gap: 10px; }
         .sidebar-content { padding: 20px; flex: 1; overflow-y: auto; font-size: 14px; }
         .detail-card { background-color: #f8fafc; border-radius: 8px; padding: 15px; border-left: 4px solid var(--accent); margin-top: 10px; }
         .info-tag { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; }
         
-        /* 🎯 사이드바 상세 정보창 전용 태그 색상 (v1300 패치 핵심) */
-        .tag-doc { background: #fff9db; color: #856404; }
-        .tag-asset { background: #d4edda; color: #155724; }
-        .tag-alarm { background: #fff3e0; color: #e65100; }
-        .tag-fm { background: #f8d7da; color: #721c24; }
+        /* 사이드바 전용 컬러 뱃지 매핑 */
+        .tag-document { background: #d1fae5; color: #065f46; }
+        .tag-asset { background: #dbeafe; color: #1e40af; }
+        .tag-alarm { background: #fee2e2; color: #991b1b; }
+        .tag-failuremode { background: #fef3c7; color: #92400e; }
+        .tag-causestep { background: #ede9fe; color: #5b21b6; }
     </style>
 </head>
 <body>
 
 <div class="slide-container">
     <header>
-        <h1 class="slide-title"><i class="fa-solid fa-circle-nodes"></i> RCA Knowledge Graph Analytics Header</h1>
-        <div class="subtitle">다차원 교차 조건(AND) 분석을 통한 장애 인과관계 추적 시스템</div>
+        <h1 class="slide-title"><i class="fa-solid fa-brain text-blue-500"></i> RCA Knowledge Graph Analytics</h1>
+        <div class="subtitle">vis.js 인텔리전트 물리 엔진 기반 장애 다차원 전파 탐색 플랫폼</div>
     </header>
 
     <div class="search-panel">
@@ -59,7 +68,8 @@
     </div>
 
     <div class="main-content">
-        <div id="cy"></div>
+        <div id="network-canvas"></div>
+        
         <div class="sidebar">
             <div class="sidebar-header"><i class="fa-solid fa-magnifying-glass-chart"></i> 상세 정보 상세보기</div>
             <div class="sidebar-content" id="detailContent">
@@ -71,7 +81,20 @@
 
 <script>
     const N8N_PRODUCTION_URL = 'https://seoneenam.app.n8n.cloud/webhook'; 
-    let cy;
+    let networkInstance = null;
+    let allNodesData = {}; // 상세조회용 데이터 캐시 주머니
+
+    // 🎯 [v1330 패치 4] index.html의 자동 줄바꿈 함수 완벽 이식
+    function wrapTextByLength(text, maxLength = 15) {
+        if (!text) return '';
+        let result = ''; let currentLine = '';
+        for (let i = 0; i < text.length; i++) {
+            currentLine += text[i];
+            if (currentLine.length >= maxLength) { result += currentLine + '\n'; currentLine = ''; }
+        }
+        result += currentLine;
+        return result.trim();
+    }
 
     window.onload = async function() {
         try {
@@ -105,70 +128,95 @@
             const jsonResult = await response.json();
             let rows = jsonResult[0]?.data?.values || jsonResult[0]?.body?.data?.values || jsonResult.data?.values;
 
-            if (!rows || rows.length === 0) { alert('일치하는 인과관계 선로가 없습니다.'); if(cy) cy.destroy(); return; }
+            if (!rows || rows.length === 0) { alert('일치하는 인과관계 선로가 없습니다.'); if(networkInstance) networkInstance.destroy(); return; }
 
-            const elements = [];
-            const addedNodeIds = new Set();
+            let visNodes = []; let visEdges = []; let nodesMap = new Map();
+            allNodesData = {}; // 초기화
+
+            // 🎯 [v1330 패치 5] index.html 전용 컬러 팔레트 오브젝트 정의
+            const colorPalette = { 'Document': '#059669', 'Asset': '#2563eb', 'Alarm': '#dc2626', 'FailureMode': '#d97706', 'CauseStep': '#7c3aed', 'Action': '#db2777', 'Lesson': '#4b5563' };
 
             rows.forEach(row => {
                 const target = row[0]; const relationship = row[1]; const neighbor = row[2];
+
                 [target, neighbor].forEach(n => {
-                    if (n?.properties && !addedNodeIds.has(n.properties.id)) {
-                        elements.push({ data: { id: n.properties.id, label: n.labels[0] || 'Unknown', name: n.properties.name } });
-                        addedNodeIds.add(n.properties.id);
+                    if (n && n.properties && !nodesMap.has(n.properties.id)) {
+                        const typeLabel = n.labels[0] || 'Nodes';
+                        // 🎯 [v1330 패치 6] ID가 아닌 실제 텍스트 내용(name)이 구슬 밑에 출력되도록 핵심 매핑 개정
+                        let textBody = n.properties.name || n.properties.id;
+                        const formattedLabel = wrapTextByLength(textBody, 15);
+
+                        // 클릭 이벤트를 위한 원본 데이터 캐싱
+                        allNodesData[n.properties.id] = { id: n.properties.id, label: typeLabel, name: n.properties.name };
+
+                        nodesMap.set(n.properties.id, {
+                            id: n.properties.id, 
+                            label: formattedLabel, 
+                            type: typeLabel, 
+                            shape: 'dot',
+                            size: chosenCenterIds.includes(n.properties.id) ? 22 : 12, // 사용자가 고른 타깃 노드는 왕구슬로 시각화
+                            color: { background: colorPalette[typeLabel] || '#94a3b8', border: '#ffffff' },
+                            font: { color: '#334155', size: 10, face: 'sans-serif', strokeWidth: 2, strokeColor: '#ffffff' }
+                        });
                     }
                 });
-                if (relationship) {
-                    elements.push({ data: { id: relationship.elementId, source: relationship.startNodeElementId === target.elementId ? target.properties.id : neighbor.properties.id, target: relationship.endNodeElementId === target.elementId ? target.properties.id : neighbor.properties.id, type: relationship.type } });
+
+                if (relationship && target && neighbor) {
+                    visEdges.push({
+                        from: relationship.startNodeElementId === target.elementId ? target.properties.id : neighbor.properties.id,
+                        to: relationship.endNodeElementId === target.elementId ? target.properties.id : neighbor.properties.id,
+                        label: relationship.type || '',
+                        color: { color: '#cbd5e1', highlight: '#3b82f6' },
+                        font: { size: 8, color: '#64748b', background: '#ffffff', strokeWidth: 1, align: 'top' }
+                    });
                 }
             });
-            initCytoscape(elements, chosenCenterIds);
+
+            renderVisGraph(Array.from(nodesMap.values()), visEdges);
         } catch (error) { console.error('조회 실패:', error); }
     }
 
-    // ⭐ 🎯 [v1300 패치 2] Cytoscape 그래프 노드 색상 스타일 정의 ⭐
-    function initCytoscape(elements, chosenCenterIds) {
-        if (cy) cy.destroy();
+    // 🎯 [v1330 패치 7] vis.js 전용 그래프 드로잉 및 복합 곡선 옵션 빌드
+    function renderVisGraph(nodes, edges) {
+        if (networkInstance !== null) networkInstance.destroy();
 
-        cy = cytoscape({
-            container: document.getElementById('cy'),
-            elements: elements,
-            style: [
-                { selector: 'node', style: { 'background-color': '#7FDBFF', 'label': 'data(id)', 'color': '#333', 'font-size': '10px', 'font-family': 'Inter', 'text-valign': 'top', 'text-margin-y': '-5px', 'width': '22px', 'height': '22px' } },
-                
-                // 🎯 [v1300 패치] 종류(Label)별 노드 색상 차별화 🎯
-                { selector: 'node[label="Document"]', style: { 'background-color': '#FFDC00', 'width': '30px', 'height': '30px' } }, // 문서는 노란색
-                { selector: 'node[label="Asset"]', style: { 'background-color': '#2ECC40', 'width': '30px', 'height': '30px' } },    // 설비는 초록색
-                { selector: 'node[label="Alarm"]', style: { 'background-color': '#FF851B', 'width': '30px', 'height': '30px' } },    // 알람은 주황색
-                { selector: 'node[label="FailureMode"]', style: { 'background-color': '#FF4136', 'width': '35px', 'height': '35px', 'border-width': '2px', 'border-color': '#fff' } }, // 고장모드는 빨간색 대형
-
-                { selector: 'edge', style: { 'width': 1.5, 'line-color': '#cbd5e1', 'target-arrow-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'label': 'data(type)', 'font-size': '8px', 'color': '#94a3b8', 'text-rotation': 'autorotate' } }
-            ],
-            layout: { 
-                name: 'concentric', 
-                animate: true,
-                startAngle: Math.PI * 1.5, 
-                minNodeSpacing: 65,
-                concentric: function(node){ return chosenCenterIds.includes(node.id()) ? 100 : node.degree() * 10; },
-                levelWidth: function(nodes){ return 5; }
+        const container = document.getElementById('network-canvas');
+        const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+        
+        const options = {
+            edges: { 
+                arrows: { to: { enabled: true, scaleFactor: 0.5 } }, 
+                width: 1.2, 
+                smooth: { type: 'continuous' } // 🎯 완전한 곡선 형태로 엣지 출력 고정
+            },
+            physics: { 
+                barnesHut: { gravitationalConstant: -4000, springLength: 130, centralGravity: 0.3 }, 
+                stabilization: { iterations: 120 } 
             }
-        });
+        };
 
-        cy.on('tap', 'node', function(evt){
-            const node = evt.target;
-            const label = node.data('label');
-            
-            // 🎯 [v1300 패치] 사이드바 상세 정보창 전용 태그 색상 매핑 로직 🎯
-            const tagClass = 'tag-' + label.toLowerCase().replace('mode', '');
-            
-            document.getElementById('detailContent').innerHTML = `
-                <span class="info-tag ${tagClass}">${label}</span>
-                <div class="info-item" style="font-size:16px; font-weight:700; color:var(--primary);">${node.data('id')}</div>
-                <div class="detail-card">
-                    <div style="font-weight:600; margin-bottom:5px; color:#64748b; font-size:12px;">DESCRIPTION / CONTENT</div>
-                    ${node.data('name') || '정보 없음'}
-                </div>
-            `;
+        networkInstance = new vis.Network(container, data, options);
+
+        // 🎯 [v1330 패치 8] vis.js 전용 클릭 이벤트 핸들러 이식
+        networkInstance.on("click", function (params) {
+            if (params.nodes.length > 0) {
+                const clickedNodeId = params.nodes[0];
+                const nodeData = allNodesData[clickedNodeId];
+                
+                if (nodeData) {
+                    const label = nodeData.label;
+                    const tagClass = 'tag-' + label.toLowerCase();
+                    
+                    document.getElementById('detailContent').innerHTML = `
+                        <span class="info-tag ${tagClass}">${label}</span>
+                        <div class="info-item" style="font-size:15px; font-weight:700; color:var(--primary);">${nodeData.id}</div>
+                        <div class="detail-card">
+                            <div style="font-weight:600; margin-bottom:5px; color:#64748b; font-size:12px;">DESCRIPTION / CONTENT</div>
+                            ${nodeData.name || '상세 본문 정보가 없습니다.'}
+                        </div>
+                    `;
+                }
+            }
         });
     }
 </script>
