@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SK Group AI/DT - 설비 장애 지식 그래프 조회</title>
+    <title>SK Group AI/DT - 설비 장애 지식 그래프 조회 [v2026.06.17.1010]</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <style>
         body { font-family: 'Malgun Gothic', sans-serif; margin: 20px; background-color: #f5f7fa; }
@@ -46,57 +46,46 @@
 </div>
 
 <script>
-    // ⭐ 유저님의 n8n 웹훅 기본 주소 (끝에 슬래시 제외)
-    const N8N_URL = 'https://seoneenam.app.n8n.cloud'; 
+    // 🎯 [수정시각 2026-06-17 10:10] 유저님 지적 반영: Production 정식 웹훅 엔드포인트(/webhook) 경로 고정
+    const N8N_PRODUCTION_URL = 'https://seoneenam.app.n8n.cloud/webhook'; 
 
     let cy;
 
-    // 1. 화면 켜지자마자 마스터 코드 목록을 받아와서 드롭다운 채우기
+    // 1. 화면 초기 로딩 시 마스터 코드 동적 로드
     window.onload = async function() {
         try {
-            const response = await fetch(`${N8N_URL}/master-codes`);
+            // 정식 상시 활성화 주소 호출 (https://seoneenam.app.n8n.cloud/webhook/master-codes)
+            const response = await fetch(`${N8N_PRODUCTION_URL}/master-codes`);
             const jsonResult = await response.json();
             
-            // 🎯 네오포지 v2 데이터 구조 깊이 정밀 매핑
-            let rawData;
-            if (Array.isArray(jsonResult)) {
-                rawData = jsonResult[0]?.data || jsonResult[0]?.body?.data;
-            } else {
-                rawData = jsonResult.data;
-            }
-
+            let rawData = jsonResult[0]?.data || jsonResult[0]?.body?.data || jsonResult.data;
             const values = rawData.values[0];
-            const failureModes = values[0]; // 고장 모드 리스트 배열
-            const assets = values[1];       // 설비 자산 리스트 배열
+            const failureModes = values[0]; 
+            const assets = values[1];       
 
-            // 고장모드 드롭다운 바인딩
             const fmSelect = document.getElementById('failureModeSelect');
             failureModes.forEach(id => {
                 let opt = document.createElement('option');
-                opt.value = id;
-                opt.innerText = id;
+                opt.value = id; opt.innerText = id;
                 fmSelect.appendChild(opt);
             });
 
-            // 설비 드롭다운 바인딩
             const assetSelect = document.getElementById('assetSelect');
             assets.forEach(id => {
                 let opt = document.createElement('option');
-                opt.value = id;
-                opt.innerText = id;
+                opt.value = id; opt.innerText = id;
                 assetSelect.appendChild(opt);
             });
 
         } catch (error) {
-            console.error('마스터 코드를 로드하는 중 에러 발생:', error);
+            console.error('[10:10 Production 버전] 마스터 코드 로드 실패:', error);
         }
     };
 
-    // 2. [조회] 버튼 클릭 시 특정 코드 기준 네트워크 가져와서 그리기
+    // 2. 검색 버튼 클릭 시 상세 인과관계 그물망 추적
     async function searchNetwork() {
         const fmValue = document.getElementById('failureModeSelect').value;
         const assetValue = document.getElementById('assetSelect').value;
-        
         const searchId = fmValue || assetValue;
         
         if (!searchId) {
@@ -105,15 +94,11 @@
         }
 
         try {
-            const response = await fetch(`${N8N_URL}/search-network?id=${searchId}`);
+            // 정식 상시 활성화 주소 호출 (https://seoneenam.app.n8n.cloud/webhook/search-network?id=...)
+            const response = await fetch(`${N8N_PRODUCTION_URL}/search-network?id=${searchId}`);
             const jsonResult = await response.json();
             
-            let rows;
-            if (Array.isArray(jsonResult)) {
-                rows = jsonResult[0]?.data?.values || jsonResult[0]?.body?.data?.values;
-            } else {
-                rows = jsonResult.data?.values;
-            }
+            let rows = jsonResult[0]?.data?.values || jsonResult[0]?.body?.data?.values || jsonResult.data?.values;
 
             if (!rows || rows.length === 0) {
                 alert('해당 코드와 연계된 그래프 데이터가 데이터베이스에 존재하지 않습니다.');
@@ -123,25 +108,21 @@
             const elements = [];
             const addedNodeIds = new Set();
 
-            // 백엔드가 준 target, r, neighbor 실타래 데이터 조립
             rows.forEach(row => {
                 const target = row[0];
                 const relationship = row[1];
                 const neighbor = row[2];
 
-                // 과녁(Target) 노드 세팅
-                if (target && target.properties && !addedNodeIds.has(target.properties.id)) {
+                if (target?.properties && !addedNodeIds.has(target.properties.id)) {
                     elements.push({ data: { id: target.properties.id, label: target.labels[0] || 'Unknown', name: target.properties.name } });
                     addedNodeIds.add(target.properties.id);
                 }
 
-                // 이웃(Neighbor) 노드 세팅
-                if (neighbor && neighbor.properties && !addedNodeIds.has(neighbor.properties.id)) {
+                if (neighbor?.properties && !addedNodeIds.has(neighbor.properties.id)) {
                     elements.push({ data: { id: neighbor.properties.id, label: neighbor.labels[0] || 'Unknown', name: neighbor.properties.name } });
                     addedNodeIds.add(neighbor.properties.id);
                 }
 
-                // 관계선(Edge) 세팅
                 if (relationship && target && neighbor) {
                     elements.push({
                         data: {
@@ -154,15 +135,14 @@
                 }
             });
 
-            // 시각화 엔진 기동
             initCytoscape(elements);
 
         } catch (error) {
-            console.error('네트워크 조회 중 에러 발생:', error);
+            console.error('[10:10 Production 버전] 네트워크 조회 실패:', error);
         }
     }
 
-    // 3. Cytoscape 그래프 모양 정의
+    // 3. 그래프 시각화 엔진 빌드
     function initCytoscape(elements) {
         cy = cytoscape({
             container: document.getElementById('cy'),
@@ -210,7 +190,6 @@
             }
         });
 
-        // 4. 노드 클릭 핸들러
         cy.on('tap', 'node', function(evt){
             const node = evt.target;
             const name = node.data('name') || '정보 없음';
