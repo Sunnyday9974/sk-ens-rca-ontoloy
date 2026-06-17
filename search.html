@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SK Group AI/DT - RCA 지식 그래프 탐색기 [v2026.06.17.1120]</title>
+    <title>SK Group AI/DT - RCA 지식 그래프 탐색기 [v2026.06.17.1300]</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
@@ -11,32 +11,21 @@
     <style>
         :root {
             --primary: #1e293b; --secondary: #f8fafc; --accent: #e02020; --text: #334155; --border: #e2e8f0;
+            /* 🎯 노드 종류별 색상 상수 정의 (v1300 패치 핵심) */
             --node-doc: #FFDC00; --node-asset: #2ECC40; --node-alarm: #FF851B; --node-fm: #FF4136;
         }
         body { background-color: #e2e8f0; font-family: 'Inter', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--text); }
-        .slide-container {
-            width: 1280px; height: 720px; background-color: var(--secondary); border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-            display: flex; flex-direction: column; overflow: hidden; position: relative;
-        }
+        .slide-container { width: 1280px; height: 720px; background-color: var(--secondary); border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; position: relative; }
         header { padding: 40px 60px 20px 60px; background: linear-gradient(to right, #ffffff, #f1f5f9); }
         .slide-title { font-family: 'Poppins', sans-serif; font-size: 32px; font-weight: 700; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 15px; }
         .slide-title i { color: var(--accent); }
         .subtitle { font-size: 16px; color: #64748b; margin-top: 5px; }
-        .search-panel { 
-            display: flex; gap: 12px; padding: 0 60px 25px 60px; background: white; border-bottom: 1px solid var(--border);
-            flex-wrap: wrap; align-items: flex-end;
-        }
+        .search-panel { display: flex; gap: 12px; padding: 0 60px 25px 60px; background: white; border-bottom: 1px solid var(--border); flex-wrap: wrap; align-items: flex-end; }
         .control-group { display: flex; flex-direction: column; gap: 5px; }
         .control-group label { font-size: 12px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
-        select { 
-            padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); background-color: #fff; font-size: 13px; 
-            min-width: 180px; transition: all 0.2s; outline: none; cursor: pointer;
-        }
+        select { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); background-color: #fff; font-size: 13px; min-width: 180px; transition: all 0.2s; outline: none; cursor: pointer; }
         select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(224, 32, 32, 0.1); }
-        .btn-search { 
-            background-color: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 6px; 
-            font-weight: 700; font-size: 13px; cursor: pointer; transition: background 0.2s; height: 40px; margin-left: 10px;
-        }
+        .btn-search { background-color: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; transition: background 0.2s; height: 40px; margin-left: 10px; }
         .btn-search:hover { background-color: #b01818; }
         .main-content { display: flex; flex: 1; padding: 25px 60px; gap: 25px; overflow: hidden; }
         #cy { flex: 2.5; background: white; border-radius: 12px; border: 1px solid var(--border); position: relative; }
@@ -45,6 +34,8 @@
         .sidebar-content { padding: 20px; flex: 1; overflow-y: auto; font-size: 14px; }
         .detail-card { background-color: #f8fafc; border-radius: 8px; padding: 15px; border-left: 4px solid var(--accent); margin-top: 10px; }
         .info-tag { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; }
+        
+        /* 🎯 사이드바 상세 정보창 전용 태그 색상 (v1300 패치 핵심) */
         .tag-doc { background: #fff9db; color: #856404; }
         .tag-asset { background: #d4edda; color: #155724; }
         .tag-alarm { background: #fff3e0; color: #e65100; }
@@ -55,7 +46,7 @@
 
 <div class="slide-container">
     <header>
-        <h1 class="slide-title"><i class="fa-solid fa-chart-network"></i> RCA Knowledge Graph Analytics</h1>
+        <h1 class="slide-title"><i class="fa-solid fa-circle-nodes"></i> RCA Knowledge Graph Analytics Header</h1>
         <div class="subtitle">다차원 교차 조건(AND) 분석을 통한 장애 인과관계 추적 시스템</div>
     </header>
 
@@ -70,7 +61,7 @@
     <div class="main-content">
         <div id="cy"></div>
         <div class="sidebar">
-            <div class="sidebar-header"><i class="fa-solid fa-info-circle"></i> 상세 정보 상세 보기</div>
+            <div class="sidebar-header"><i class="fa-solid fa-magnifying-glass-chart"></i> 상세 정보 상세보기</div>
             <div class="sidebar-content" id="detailContent">
                 <p style="color:#94a3b8; text-align:center; margin-top:100px;">노드나 연결선을 클릭하면<br>데이터베이스의 상세 본문이 표시됩니다.</p>
             </div>
@@ -105,11 +96,9 @@
         const assetId = document.getElementById('assetSelect').value;
         const alarmId = document.getElementById('alarmSelect').value;
         const fmId = document.getElementById('failureModeSelect').value;
+        const chosenCenterIds = [docId, assetId, alarmId, fmId].filter(id => id !== '');
         
-        // 🎯 [11:20 보정] 사용자가 드롭다운에서 실시간으로 선택한 과녁 ID를 명확히 판별
-        const chosenCenterId = docId || assetId || alarmId || fmId;
-        
-        if (!chosenCenterId) { alert('검색 조건을 선택해 주세요.'); return; }
+        if (chosenCenterIds.length === 0) { alert('검색 조건을 최소 하나 이상 선택해 주세요.'); return; }
 
         try {
             const response = await fetch(`${N8N_PRODUCTION_URL}/search-network?docId=${docId}&assetId=${assetId}&alarmId=${alarmId}&fmId=${fmId}`);
@@ -123,7 +112,6 @@
 
             rows.forEach(row => {
                 const target = row[0]; const relationship = row[1]; const neighbor = row[2];
-
                 [target, neighbor].forEach(n => {
                     if (n?.properties && !addedNodeIds.has(n.properties.id)) {
                         elements.push({ data: { id: n.properties.id, label: n.labels[0] || 'Unknown', name: n.properties.name } });
@@ -134,64 +122,51 @@
                     elements.push({ data: { id: relationship.elementId, source: relationship.startNodeElementId === target.elementId ? target.properties.id : neighbor.properties.id, target: relationship.endNodeElementId === target.elementId ? target.properties.id : neighbor.properties.id, type: relationship.type } });
                 }
             });
-            
-            // 🎯 명확해진 유저의 선택 ID를 시각화 엔진으로 직통 배달
-            initCytoscape(elements, chosenCenterId);
+            initCytoscape(elements, chosenCenterIds);
         } catch (error) { console.error('조회 실패:', error); }
     }
 
-    function initCytoscape(elements, chosenCenterId) {
+    // ⭐ 🎯 [v1300 패치 2] Cytoscape 그래프 노드 색상 스타일 정의 ⭐
+    function initCytoscape(elements, chosenCenterIds) {
         if (cy) cy.destroy();
 
         cy = cytoscape({
             container: document.getElementById('cy'),
             elements: elements,
             style: [
-                { 
-                    selector: 'node', 
-                    style: { 
-                        'background-color': '#94a3b8', 'label': 'data(id)', 'color': '#334155', 'font-size': '10px', 'font-family': 'Inter', 
-                        'text-valign': 'top', 'text-margin-y': '-6px', 
-                        'width': '22px', 'height': '22px', 'border-width': '2px', 'border-color': '#fff'
-                    } 
-                },
-                { selector: 'node[label="Document"]', style: { 'background-color': '#FFDC00', 'width': '32px', 'height': '32px' } },
-                { selector: 'node[label="Asset"]', style: { 'background-color': '#2ECC40', 'width': '30px', 'height': '30px' } },
-                { selector: 'node[label="Alarm"]', style: { 'background-color': '#FF851B', 'width': '30px', 'height': '30px' } },
-                { selector: 'node[label="FailureMode"]', style: { 'background-color': '#FF4136', 'width': '35px', 'height': '35px', 'border-color': '#ffebee' } },
-                { 
-                    selector: 'edge', 
-                    style: { 
-                        'width': 2, 'line-color': '#cbd5e1', 'target-arrow-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 
-                        'curve-style': 'unbundled-bezier', 
-                        'label': 'data(type)', 'font-size': '8px', 'color': '#94a3b8', 'text-margin-y': '6px', 
-                        'text-rotation': 'autorotate' 
-                    } 
-                }
+                { selector: 'node', style: { 'background-color': '#7FDBFF', 'label': 'data(id)', 'color': '#333', 'font-size': '10px', 'font-family': 'Inter', 'text-valign': 'top', 'text-margin-y': '-5px', 'width': '22px', 'height': '22px' } },
+                
+                // 🎯 [v1300 패치] 종류(Label)별 노드 색상 차별화 🎯
+                { selector: 'node[label="Document"]', style: { 'background-color': '#FFDC00', 'width': '30px', 'height': '30px' } }, // 문서는 노란색
+                { selector: 'node[label="Asset"]', style: { 'background-color': '#2ECC40', 'width': '30px', 'height': '30px' } },    // 설비는 초록색
+                { selector: 'node[label="Alarm"]', style: { 'background-color': '#FF851B', 'width': '30px', 'height': '30px' } },    // 알람은 주황색
+                { selector: 'node[label="FailureMode"]', style: { 'background-color': '#FF4136', 'width': '35px', 'height': '35px', 'border-width': '2px', 'border-color': '#fff' } }, // 고장모드는 빨간색 대형
+
+                { selector: 'edge', style: { 'width': 1.5, 'line-color': '#cbd5e1', 'target-arrow-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'label': 'data(type)', 'font-size': '8px', 'color': '#94a3b8', 'text-rotation': 'autorotate' } }
             ],
             layout: { 
                 name: 'concentric', 
                 animate: true,
                 startAngle: Math.PI * 1.5, 
-                minNodeSpacing: 60,
-                // 🎯 강제 센터링 마법: 사용자가 고른 ID만 최중앙 레이어(Concentric 가중치 100)에 고정 배치!
-                concentric: function(node){ 
-                    return node.id() === chosenCenterId ? 100 : 10;
-                },
-                levelWidth: function(nodes){ return 1; }
+                minNodeSpacing: 65,
+                concentric: function(node){ return chosenCenterIds.includes(node.id()) ? 100 : node.degree() * 10; },
+                levelWidth: function(nodes){ return 5; }
             }
         });
 
         cy.on('tap', 'node', function(evt){
             const node = evt.target;
             const label = node.data('label');
+            
+            // 🎯 [v1300 패치] 사이드바 상세 정보창 전용 태그 색상 매핑 로직 🎯
             const tagClass = 'tag-' + label.toLowerCase().replace('mode', '');
+            
             document.getElementById('detailContent').innerHTML = `
                 <span class="info-tag ${tagClass}">${label}</span>
                 <div class="info-item" style="font-size:16px; font-weight:700; color:var(--primary);">${node.data('id')}</div>
                 <div class="detail-card">
                     <div style="font-weight:600; margin-bottom:5px; color:#64748b; font-size:12px;">DESCRIPTION / CONTENT</div>
-                    ${node.data('name') || '내용 정보가 없습니다.'}
+                    ${node.data('name') || '정보 없음'}
                 </div>
             `;
         });
