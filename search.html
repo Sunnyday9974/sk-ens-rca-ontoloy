@@ -2,14 +2,16 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SK Group AI/DT - 설비 장애 지식 그래프 조회 [v2026.06.17.1010]</title>
+    <title>SK Group AI/DT - 다차원 장애 인과관계 AND 탐색기 [v2026.06.17.1018]</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <style>
         body { font-family: 'Malgun Gothic', sans-serif; margin: 20px; background-color: #f5f7fa; }
         .container { display: flex; flex-direction: column; height: 90vh; }
-        .search-bar { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; display: flex; gap: 15px; align-items: center; }
-        select, input, button { padding: 10px; border-radius: 4px; border: 1px solid #ddd; font-size: 14px; }
-        button { background-color: #e02020; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .search-bar { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
+        .search-group { display: flex; align-items: center; gap: 5px; }
+        select, button { padding: 10px; border-radius: 4px; border: 1px solid #ddd; font-size: 13px; }
+        label { font-weight: bold; font-size: 13px; color: #333; }
+        button { background-color: #e02020; color: white; border: none; cursor: pointer; font-weight: bold; padding: 10px 20px; }
         button:hover { background-color: #b01818; }
         .content { display: flex; flex: 1; gap: 15px; }
         #cy { flex: 2; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #eee; }
@@ -23,17 +25,27 @@
 
 <div class="container">
     <div class="search-bar">
-        <label style="font-weight: bold;">고장 모드 (Failure Mode):</label>
-        <select id="failureModeSelect">
-            <option value="">-- 고장 모드 선택 --</option>
-        </select>
+        <div class="search-group">
+            <label>1. 문서 (Document):</label>
+            <select id="docSelect"><option value="">-- 전체 --</option></select>
+        </div>
+        
+        <div class="search-group">
+            <label>2. 설비 (Asset):</label>
+            <select id="assetSelect"><option value="">-- 전체 --</option></select>
+        </div>
 
-        <label style="font-weight: bold;">설비 자산 (Asset):</label>
-        <select id="assetSelect">
-            <option value="">-- 설비 선택 --</option>
-        </select>
+        <div class="search-group">
+            <label>3. 알람 (Alarm):</label>
+            <select id="alarmSelect"><option value="">-- 전체 --</option></select>
+        </div>
 
-        <button onclick="searchNetwork()">지식 그래프 조회</button>
+        <div class="search-group">
+            <label>4. 고장 모드 (Failure Mode):</label>
+            <select id="failureModeSelect"><option value="">-- 전체 --</option></select>
+        </div>
+
+        <button onclick="searchNetworkAND()">교차 조건(AND) 조회</button>
     </div>
 
     <div class="content">
@@ -46,62 +58,69 @@
 </div>
 
 <script>
-    // 🎯 [수정시각 2026-06-17 10:10] 유저님 지적 반영: Production 정식 웹훅 엔드포인트(/webhook) 경로 고정
     const N8N_PRODUCTION_URL = 'https://seoneenam.app.n8n.cloud/webhook'; 
-
     let cy;
 
-    // 1. 화면 초기 로딩 시 마스터 코드 동적 로드
+    // 1. 화면 초기 로딩 시 4대 마스터 리스트 동적 로드 및 바인딩
     window.onload = async function() {
         try {
-            // 정식 상시 활성화 주소 호출 (https://seoneenam.app.n8n.cloud/webhook/master-codes)
             const response = await fetch(`${N8N_PRODUCTION_URL}/master-codes`);
             const jsonResult = await response.json();
             
             let rawData = jsonResult[0]?.data || jsonResult[0]?.body?.data || jsonResult.data;
             const values = rawData.values[0];
-            const failureModes = values[0]; 
-            const assets = values[1];       
+            
+            // 4대 배열 격리 파싱
+            const docsList = values[0] || [];
+            const assetsList = values[1] || [];
+            const alarmsList = values[2] || [];
+            const fmsList = values[3] || [];
 
-            const fmSelect = document.getElementById('failureModeSelect');
-            failureModes.forEach(id => {
-                let opt = document.createElement('option');
-                opt.value = id; opt.innerText = id;
-                fmSelect.appendChild(opt);
-            });
-
-            const assetSelect = document.getElementById('assetSelect');
-            assets.forEach(id => {
-                let opt = document.createElement('option');
-                opt.value = id; opt.innerText = id;
-                assetSelect.appendChild(opt);
-            });
+            // 각 드롭다운 컴포넌트에 바인딩 함수 실행
+            bindDropdown('docSelect', docsList);
+            bindDropdown('assetSelect', assetsList);
+            bindDropdown('alarmSelect', alarmsList);
+            bindDropdown('failureModeSelect', fmsList);
 
         } catch (error) {
-            console.error('[10:10 Production 버전] 마스터 코드 로드 실패:', error);
+            console.error('[10:18 버전] 4대 마스터 로드 실패:', error);
         }
     };
 
-    // 2. 검색 버튼 클릭 시 상세 인과관계 그물망 추적
-    async function searchNetwork() {
-        const fmValue = document.getElementById('failureModeSelect').value;
-        const assetValue = document.getElementById('assetSelect').value;
-        const searchId = fmValue || assetValue;
+    function bindDropdown(elementId, dataList) {
+        const select = document.getElementById(elementId);
+        dataList.forEach(id => {
+            if(id) {
+                let opt = document.createElement('option');
+                opt.value = id; opt.innerText = id;
+                select.appendChild(opt);
+            }
+        });
+    }
+
+    // 2. 다중 조건(AND) 그래프 연동 검색 함수
+    async function searchNetworkAND() {
+        const docId = document.getElementById('docSelect').value;
+        const assetId = document.getElementById('assetSelect').value;
+        const alarmId = document.getElementById('alarmSelect').value;
+        const fmId = document.getElementById('failureModeSelect').value;
         
-        if (!searchId) {
-            alert('조회할 고장 모드 또는 설비를 선택해 주세요.');
+        // 최소 하나는 선택했는지 검증
+        if (!docId && !assetId && !alarmId && !fmId) {
+            alert('최소 한 개 이상의 검색 조건을 선택해 주세요.');
             return;
         }
 
         try {
-            // 정식 상시 활성화 주소 호출 (https://seoneenam.app.n8n.cloud/webhook/search-network?id=...)
-            const response = await fetch(`${N8N_PRODUCTION_URL}/search-network?id=${searchId}`);
+            // 4개 파라미터를 n8n 프로duction 쿼리 스트링으로 동시에 전송
+            const response = await fetch(`${N8N_PRODUCTION_URL}/search-network?docId=${docId}&assetId=${assetId}&alarmId=${alarmId}&fmId=${fmId}`);
             const jsonResult = await response.json();
             
             let rows = jsonResult[0]?.data?.values || jsonResult[0]?.body?.data?.values || jsonResult.data?.values;
 
             if (!rows || rows.length === 0) {
-                alert('해당 코드와 연계된 그래프 데이터가 데이터베이스에 존재하지 않습니다.');
+                alert('선택하신 복합 조건(AND)에 일치하는 인과관계 데이터 선로가 DB에 존재하지 않습니다.');
+                if(cy) cy.destroy();
                 return;
             }
 
@@ -109,20 +128,16 @@
             const addedNodeIds = new Set();
 
             rows.forEach(row => {
-                const target = row[0];
-                const relationship = row[1];
-                const neighbor = row[2];
+                const target = row[0]; const relationship = row[1]; const neighbor = row[2];
 
                 if (target?.properties && !addedNodeIds.has(target.properties.id)) {
                     elements.push({ data: { id: target.properties.id, label: target.labels[0] || 'Unknown', name: target.properties.name } });
                     addedNodeIds.add(target.properties.id);
                 }
-
                 if (neighbor?.properties && !addedNodeIds.has(neighbor.properties.id)) {
                     elements.push({ data: { id: neighbor.properties.id, label: neighbor.labels[0] || 'Unknown', name: neighbor.properties.name } });
                     addedNodeIds.add(neighbor.properties.id);
                 }
-
                 if (relationship && target && neighbor) {
                     elements.push({
                         data: {
@@ -138,11 +153,11 @@
             initCytoscape(elements);
 
         } catch (error) {
-            console.error('[10:10 Production 버전] 네트워크 조회 실패:', error);
+            console.error('[10:18 버전] 다중 검색 실패:', error);
         }
     }
 
-    // 3. 그래프 시각화 엔진 빌드
+    // 3. 알록달록한 레이블별 인프라 시각화 셋업
     function initCytoscape(elements) {
         cy = cytoscape({
             container: document.getElementById('cy'),
@@ -151,55 +166,31 @@
                 {
                     selector: 'node',
                     style: {
-                        'background-color': '#0074D9',
-                        'label': 'data(id)',
-                        'color': '#333',
-                        'font-size': '11px',
-                        'text-valign': 'bottom',
-                        'text-margin-y': '6px',
-                        'width': '30px',
-                        'height': '30px'
+                        'background-color': '#7FDBFF', 'label': 'data(id)', 'color': '#333',
+                        'font-size': '10px', 'text-valign': 'bottom', 'text-margin-y': '5px', 'width': '25px', 'height': '25px'
                     }
                 },
-                {
-                    selector: 'node[label="FailureMode"]',
-                    style: { 'background-color': '#FF4136', 'width': '40px', 'height': '40px' }
-                },
-                {
-                    selector: 'node[label="Asset"]',
-                    style: { 'background-color': '#2ECC40', 'width': '35px', 'height': '35px' }
-                },
+                { selector: 'node[label="Document"]', style: { 'background-color': '#FFDC00', 'width': '35px', 'height': '35px' } }, // 문서는 노란색
+                { selector: 'node[label="Asset"]', style: { 'background-color': '#2ECC40', 'width': '35px', 'height': '35px' } },    // 설비는 초록색
+                { selector: 'node[label="Alarm"]', style: { 'background-color': '#FF851B', 'width': '35px', 'height': '35px' } },    // 알람은 주황색
+                { selector: 'node[label="FailureMode"]', style: { 'background-color': '#FF4136', 'width': '40px', 'height': '40px' } }, // 고장모드는 빨간색
                 {
                     selector: 'edge',
                     style: {
-                        'width': 2,
-                        'line-color': '#aaa',
-                        'target-arrow-color': '#aaa',
-                        'target-arrow-shape': 'triangle',
-                        'curve-style': 'bezier',
-                        'label': 'data(type)',
-                        'font-size': '9px',
-                        'color': '#777',
-                        'text-rotation': 'autorotate'
+                        'width': 2, 'line-color': '#bbb', 'target-arrow-color': '#bbb', 'target-arrow-shape': 'triangle',
+                        'curve-style': 'bezier', 'label': 'data(type)', 'font-size': '8px', 'color': '#555', 'text-rotation': 'autorotate'
                     }
                 }
             ],
-            layout: {
-                name: 'cose',
-                animate: true
-            }
+            layout: { name: 'cose', animate: true }
         });
 
         cy.on('tap', 'node', function(evt){
             const node = evt.target;
-            const name = node.data('name') || '정보 없음';
-            const label = node.data('label');
-            const id = node.data('id');
-
             document.getElementById('detailContent').innerHTML = `
-                <div class="info-item"><span class="info-label">종류 (Label):</span> [${label}]</div>
-                <div class="info-item"><span class="info-label">식별 코드 (ID):</span> ${id}</div>
-                <div class="info-item"><span class="info-label">상세 명칭 / 본문:</span><br><p style="background:#f9f9f9; padding:8px; border-left:3px solid #e02020;">${name}</p></div>
+                <div class="info-item"><span class="info-label">종류 (Label):</span> [${node.data('label')}]</div>
+                <div class="info-item"><span class="info-label">식별 코드 (ID):</span> ${node.data('id')}</div>
+                <div class="info-item"><span class="info-label">상세 내용:</span><br><p style="background:#f9f9f9; padding:8px; border-left:3px solid #e02020; font-size:13px;">${node.data('name') || '정보 없음'}</p></div>
             `;
         });
     }
