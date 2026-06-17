@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SK Group AI/DT - RCA 지식 그래프 탐색기 [v2026.06.17.1100]</title>
+    <title>SK Group AI/DT - RCA 지식 그래프 탐색기 [v2026.06.17.1120]</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
@@ -82,7 +82,6 @@
     const N8N_PRODUCTION_URL = 'https://seoneenam.app.n8n.cloud/webhook'; 
     let cy;
 
-    // 1. 초기 로딩 시 데이터 바인딩
     window.onload = async function() {
         try {
             const response = await fetch(`${N8N_PRODUCTION_URL}/master-codes`);
@@ -101,14 +100,16 @@
         dataList.forEach(id => { if(id) { let opt = document.createElement('option'); opt.value = id; opt.innerText = id; select.appendChild(opt); } });
     }
 
-    // 2. 검색 및 시각화 구동
     async function searchNetworkAND() {
         const docId = document.getElementById('docSelect').value;
         const assetId = document.getElementById('assetSelect').value;
         const alarmId = document.getElementById('alarmSelect').value;
         const fmId = document.getElementById('failureModeSelect').value;
         
-        if (!docId && !assetId && !alarmId && !fmId) { alert('검색 조건을 선택해 주세요.'); return; }
+        // 🎯 [11:20 보정] 사용자가 드롭다운에서 실시간으로 선택한 과녁 ID를 명확히 판별
+        const chosenCenterId = docId || assetId || alarmId || fmId;
+        
+        if (!chosenCenterId) { alert('검색 조건을 선택해 주세요.'); return; }
 
         try {
             const response = await fetch(`${N8N_PRODUCTION_URL}/search-network?docId=${docId}&assetId=${assetId}&alarmId=${alarmId}&fmId=${fmId}`);
@@ -119,11 +120,9 @@
 
             const elements = [];
             const addedNodeIds = new Set();
-            let rootNodeId = '';
 
             rows.forEach(row => {
                 const target = row[0]; const relationship = row[1]; const neighbor = row[2];
-                if (!rootNodeId) rootNodeId = target.properties.id; // 첫 번째 검색 대상 중심 노드 지정
 
                 [target, neighbor].forEach(n => {
                     if (n?.properties && !addedNodeIds.has(n.properties.id)) {
@@ -135,58 +134,54 @@
                     elements.push({ data: { id: relationship.elementId, source: relationship.startNodeElementId === target.elementId ? target.properties.id : neighbor.properties.id, target: relationship.endNodeElementId === target.elementId ? target.properties.id : neighbor.properties.id, type: relationship.type } });
                 }
             });
-            initCytoscape(elements, rootNodeId);
+            
+            // 🎯 명확해진 유저의 선택 ID를 시각화 엔진으로 직통 배달
+            initCytoscape(elements, chosenCenterId);
         } catch (error) { console.error('조회 실패:', error); }
     }
 
-    // ⭐ 3. Cytoscape.js 스타일 및 레이아웃을 index.html처럼 전면 개정 ⭐
-    function initCytoscape(elements, rootNodeId) {
-        if (cy) cy.destroy(); // 기존 그래프 파괴
+    function initCytoscape(elements, chosenCenterId) {
+        if (cy) cy.destroy();
 
         cy = cytoscape({
             container: document.getElementById('cy'),
             elements: elements,
             style: [
-                // ⭐ 노드 기본 스타일 ⭐
                 { 
                     selector: 'node', 
                     style: { 
-                        'background-color': '#0074D9', 'label': 'data(id)', 'color': '#334155', 'font-size': '10px', 'font-family': 'Inter', 
-                        'text-valign': 'top', 'text-margin-y': '-6px', // ID 라벨을 구슬 위로 올림
+                        'background-color': '#94a3b8', 'label': 'data(id)', 'color': '#334155', 'font-size': '10px', 'font-family': 'Inter', 
+                        'text-valign': 'top', 'text-margin-y': '-6px', 
                         'width': '22px', 'height': '22px', 'border-width': '2px', 'border-color': '#fff'
                     } 
                 },
-                // ⭐ 종류별 색상 및 크기 차별화 ⭐
-                { selector: 'node[label="Document"]', style: { 'background-color': '#FFDC00', 'width': '32px', 'height': '32px' } }, // 노란색
-                { selector: 'node[label="Asset"]', style: { 'background-color': '#2ECC40', 'width': '30px', 'height': '30px' } },    // 초록색
-                { selector: 'node[label="Alarm"]', style: { 'background-color': '#FF851B', 'width': '30px', 'height': '30px' } },    // 주황색
-                { selector: 'node[label="FailureMode"]', style: { 'background-color': '#FF4136', 'width': '35px', 'height': '35px', 'border-color': '#ffebee' } }, // 빨간색 대형
-                
-                // ⭐ 관계선(Edge) 스타일 개정 (index.html과 비슷하게) ⭐
+                { selector: 'node[label="Document"]', style: { 'background-color': '#FFDC00', 'width': '32px', 'height': '32px' } },
+                { selector: 'node[label="Asset"]', style: { 'background-color': '#2ECC40', 'width': '30px', 'height': '30px' } },
+                { selector: 'node[label="Alarm"]', style: { 'background-color': '#FF851B', 'width': '30px', 'height': '30px' } },
+                { selector: 'node[label="FailureMode"]', style: { 'background-color': '#FF4136', 'width': '35px', 'height': '35px', 'border-color': '#ffebee' } },
                 { 
                     selector: 'edge', 
                     style: { 
                         'width': 2, 'line-color': '#cbd5e1', 'target-arrow-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 
-                        'curve-style': 'unbundled-bezier', // 관계 설명이 잘 보이게 부드러운 곡선
-                        'label': 'data(type)', 'font-size': '8px', 'color': '#94a3b8', 'text-margin-y': '6px', // 선 밑으로 라벨 배치
+                        'curve-style': 'unbundled-bezier', 
+                        'label': 'data(type)', 'font-size': '8px', 'color': '#94a3b8', 'text-margin-y': '6px', 
                         'text-rotation': 'autorotate' 
                     } 
                 }
             ],
-            // ⭐ 핵심: 레이아웃을 'cose'(복잡)에서 'circle' 또는 'concentric'으로 변경 ⭐
             layout: { 
-                name: 'concentric', // 중심 노드를 기준으로 원형으로 배치하는 계층형 레이아웃
+                name: 'concentric', 
                 animate: true,
-                startAngle: Math.PI * 1.5, // 12시 방향부터 부채꼴로 펼침
-                minNodeSpacing: 50,
-                concentric: function(node){ // 중심 노드를 중앙에 배치하는 로직
-                    return node.id() === rootNodeId ? 100 : node.degree();
+                startAngle: Math.PI * 1.5, 
+                minNodeSpacing: 60,
+                // 🎯 강제 센터링 마법: 사용자가 고른 ID만 최중앙 레이어(Concentric 가중치 100)에 고정 배치!
+                concentric: function(node){ 
+                    return node.id() === chosenCenterId ? 100 : 10;
                 },
-                levelWidth: function(nodes){ return 5; }
+                levelWidth: function(nodes){ return 1; }
             }
         });
 
-        // 4. 노드 클릭 핸들러
         cy.on('tap', 'node', function(evt){
             const node = evt.target;
             const label = node.data('label');
