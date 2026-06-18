@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .main-title { border-bottom: 2px solid #dee2e6; padding-bottom: 15px; margin-bottom: 25px; }
+        .main-header { border-bottom: 2px solid #dee2e6; padding-bottom: 15px; margin-bottom: 25px; }
         .panel { background: #ffffff; border-radius: 8px; border: 1px solid #e3e6f0; padding: 20px; min-height: 780px; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05); }
         .step-box { padding: 12px; border-radius: 6px; margin-bottom: 12px; font-weight: 500; display: none; }
         .step-loading { background-color: #cff4fc; color: #055160; border: 1px solid #b6effb; }
@@ -29,8 +29,15 @@
 <body>
 
 <div class="container-fluid p-4">
-    <div class="main-title">
-        <h2>🏭 SKI E&S 실시간 발전 설비 이상 신호 분석 시스템</h2>
+    <div class="main-header row align-items-center">
+        <div class="col-md-8">
+            <h2 class="m-0">🏭 SKI E&S 실시간 발전 설비 이상 신호 분석 시스템</h2>
+        </div>
+        <div class="col-md-4 text-md-end text-start mt-2 mt-md-0">
+            <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.85rem;">
+                🕒 Code Updated: 2026-06-18 18:12
+            </span>
+        </div>
     </div>
 
     <div class="row g-4">
@@ -58,23 +65,12 @@
                     </select>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">알람 코드 ID (alarm_id)</label>
-                    <input type="text" id="alarm_id" class="form-select" value="ALM-2026-0042" readonly style="background-color: #e9ecef;">
-                </div>
-
                 <div class="mb-4">
-                    <label class="form-label fw-semibold">현재 측정 수치 (Telemetry Value) : <span id="slider-val" class="text-primary fw-bold">12.8</span> mm/s</label>
+                    <label class="form-label fw-semibold">현재 측정 수치 (Telemetry Value) : <span id="slider-val" class="text-primary fw-bold">12.8</span></label>
                     <input type="range" class="form-range" id="telemetry_value" min="0" max="20" step="0.1" value="12.8" oninput="document.getElementById('slider-val').innerText=this.value">
                 </div>
 
-                <div class="mb-3 text-end">
-                    <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.8rem;">
-                        🕒 Code Updated: 2026-06-18 18:08
-                    </span>
-                </div>
-
-                <hr class="mt-2">
+                <hr>
 
                 <button id="btn-submit" class="btn btn-primary w-100 py-2 fw-bold fs-5">⚡ 실시간 RCA 분석 실행</button>
             </div>
@@ -110,7 +106,6 @@
 document.getElementById('btn-submit').addEventListener('click', async function() {
     const assetId = document.getElementById('asset_id').value;
     const alarmName = document.getElementById('alarm_name').value;
-    const alarmId = document.getElementById('alarm_id').value;
     const telemetryValue = parseFloat(document.getElementById('telemetry_value').value);
     const n8nUrl = "https://seoneenam.app.n8n.cloud/webhook-test/early-warning-alarm";
 
@@ -150,11 +145,12 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     s3.innerText = "🚀 [Step 3] AI 에이전트 컨텍스트 융합 및 엔지니어링 리포트 심층 생성 중...";
     progress.classList.remove('d-none');
 
+    // UI에서는 alarm_id 인풋창을 없앴지만 백엔드 매핑 정합성을 위해 고정 코드값 내부 삽입 유지
     const payload = {
         body: {
             asset_id: assetId,
             alarm_name: alarmName,
-            alarm_id: alarmId,
+            alarm_id: "ALM-2026-0042",
             value: telemetryValue,
             timestamp: new Date().toISOString()
         }
