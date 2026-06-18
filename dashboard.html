@@ -63,7 +63,18 @@
                     <input type="text" id="alarm_id" class="form-select" value="ALM-2026-0042" readonly style="background-color: #e9ecef;">
                 </div>
 
-                <hr>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">현재 측정 수치 (Telemetry Value) : <span id="slider-val" class="text-primary fw-bold">12.8</span> mm/s</label>
+                    <input type="range" class="form-range" id="telemetry_value" min="0" max="20" step="0.1" value="12.8" oninput="document.getElementById('slider-val').innerText=this.value">
+                </div>
+
+                <div class="mb-3 text-end">
+                    <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.8rem;">
+                        🕒 Code Updated: 2026-06-18 18:08
+                    </span>
+                </div>
+
+                <hr class="mt-2">
 
                 <button id="btn-submit" class="btn btn-primary w-100 py-2 fw-bold fs-5">⚡ 실시간 RCA 분석 실행</button>
             </div>
@@ -97,10 +108,10 @@
 
 <script>
 document.getElementById('btn-submit').addEventListener('click', async function() {
-    // 1. UI 및 데이터 초기화 세팅
     const assetId = document.getElementById('asset_id').value;
     const alarmName = document.getElementById('alarm_name').value;
     const alarmId = document.getElementById('alarm_id').value;
+    const telemetryValue = parseFloat(document.getElementById('telemetry_value').value);
     const n8nUrl = "https://seoneenam.app.n8n.cloud/webhook-test/early-warning-alarm";
 
     const s1 = document.getElementById('step1');
@@ -110,7 +121,6 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     const output = document.getElementById('report-output');
     const divider = document.getElementById('divider');
 
-    // 리포트 영역 청소 및 디바이더 숨김
     output.innerHTML = "";
     divider.classList.add('d-none');
     
@@ -140,17 +150,16 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     s3.innerText = "🚀 [Step 3] AI 에이전트 컨텍스트 융합 및 엔지니어링 리포트 심층 생성 중...";
     progress.classList.remove('d-none');
 
-    // n8n Webhook 노드가 기대하는 정확한 body 구조 구성
     const payload = {
         body: {
             asset_id: assetId,
             alarm_name: alarmName,
             alarm_id: alarmId,
+            value: telemetryValue,
             timestamp: new Date().toISOString()
         }
     };
 
-    // 2. n8n API 비동기 네트워크 통신 실행
     try {
         const response = await fetch(n8nUrl, {
             method: 'POST',
@@ -168,7 +177,6 @@ document.getElementById('btn-submit').addEventListener('click', async function()
             const resJson = await response.json();
             let reportMarkdown = "";
 
-            // --- [🚨 응답 포맷 대응 방어 로직] ---
             if (resJson && resJson.output) {
                 reportMarkdown = resJson.output;
             } else if (typeof resJson === 'object') {
@@ -177,7 +185,6 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                 reportMarkdown = resJson;
             }
 
-            // marked 라이브러리를 사용해 마크다운을 깨끗한 대시보드용 HTML로 파싱하여 출력
             output.innerHTML = marked.parse(reportMarkdown);
 
         } else {
