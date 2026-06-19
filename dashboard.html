@@ -51,17 +51,22 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold">대상 설비 ID (asset_id)</label>
                     <select id="asset_id" class="form-select">
-                        <option value="PUMP-001A">보일러 급수 펌프 A (PUMP-001A)</option>
-                        <option value="PUMP-001B">보일러 급수 펌프 B (PUMP-001B)</option>
-                        <option value="VALVE-002">주증기 밸브 (VALVE-002)</option>
+                        <option value="GT-01">가스 터빈 (GT-01)</option>
+                        <option value="BFP-01A">보일러 급수 펌프 (BFP-01A)</option>
+                        <option value="COMP-02B">원심 압축기 (COMP-02B)</option>
+                        <option value="RO-02">역삼투압 시스템 (RO-02)</option>
+                        <option value="CWP-03">냉각수 순환 펌프 (CWP-03)</option>
                     </select>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label fw-semibold">발생 알람명 (alarm_name)</label>
                     <select id="alarm_name" class="form-select">
-                        <option value="Vibration High Alarm">진동 고 경보 (Vibration High Alarm)</option>
-                        <option value="Bearing Temperature High Alarm">베어링 온도 고 경보 (Bearing Temp High)</option>
+                        <option value="FM_FLAME_OUT (연료 공급 중단으로 인한 소화 트립)">연료 공급 중단으로 인한 소화 트립 (FLAME_OUT)</option>
+                        <option value="FM_CAVITATION (펌프 내부 캐비테이션 현상)">펌프 내부 캐비테이션 현상 (CAVITATION)</option>
+                        <option value="FM_SURGE_TRIP (가스 유량 저하로 인한 서지 트립)">가스 유량 저하로 인한 서지 트립 (SURGE_TRIP)</option>
+                        <option value="FM_MEMBRANE_FOULING (유기 오염물질에 의한 막 막힘)">유기 오염물질에 의한 막 막힘 (MEMBRANE_FOULING)</option>
+                        <option value="FM_BEARING_SEIZURE (베어링 윤활 불량으로 인한 고착)">베어링 윤활 불량으로 인한 고착 (BEARING_SEIZURE)</option>
                     </select>
                 </div>
 
@@ -145,7 +150,6 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     s3.innerText = "🚀 [Step 3] AI 에이전트 컨텍스트 융합 및 엔지니어링 리포트 심층 생성 중...";
     progress.classList.remove('d-none');
 
-    // UI에서는 alarm_id 인풋창을 없앴지만 백엔드 매핑 정합성을 위해 고정 코드값 내부 삽입 유지
     const payload = {
         body: {
             asset_id: assetId,
