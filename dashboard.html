@@ -35,7 +35,7 @@
         </div>
         <div class="col-md-4 text-md-end text-start mt-2 mt-md-0">
             <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.85rem;">
-                🕒 Code Updated: 2026-06-18 18:12
+                🕒 Code Updated: 2026-06-19 18:05
             </span>
         </div>
     </div>
@@ -62,11 +62,11 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold">발생 알람명 (alarm_name)</label>
                     <select id="alarm_name" class="form-select">
-                        <option value="FM_FLAME_OUT (연료 공급 중단으로 인한 소화 트립)">연료 공급 중단으로 인한 소화 트립 (FLAME_OUT)</option>
-                        <option value="FM_CAVITATION (펌프 내부 캐비테이션 현상)">펌프 내부 캐비테이션 현상 (CAVITATION)</option>
-                        <option value="FM_SURGE_TRIP (가스 유량 저하로 인한 서지 트립)">가스 유량 저하로 인한 서지 트립 (SURGE_TRIP)</option>
-                        <option value="FM_MEMBRANE_FOULING (유기 오염물질에 의한 막 막힘)">유기 오염물질에 의한 막 막힘 (MEMBRANE_FOULING)</option>
-                        <option value="FM_BEARING_SEIZURE (베어링 윤활 불량으로 인한 고착)">베어링 윤활 불량으로 인한 고착 (BEARING_SEIZURE)</option>
+                        <option value="AL_VIB_HIGH (급수 펌프 베어링 진동 고)">급수 펌프 베어링 진동 고 (AL_VIB_HIGH)</option>
+                        <option value="AL_TEMP_HIGH (베어링 온도 고)">베어링 온도 고 경보 (AL_TEMP_HIGH)</option>
+                        <option value="AL_PRESS_LOW (연료 가스 인입 압력 저하)">연료 가스 인입 압력 저하 (AL_PRESS_LOW)</option>
+                        <option value="AL_FLAME_OUT (연료 공급 중단 트리거 알람)">연료 공급 중단 트리거 알람 (AL_FLAME_OUT)</option>
+                        <option value="AL_DIFF_PRESS_HIGH (필터 전후단 차압 고)">필터 전후단 차압 고 (AL_DIFF_PRESS_HIGH)</option>
                     </select>
                 </div>
 
@@ -150,6 +150,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     s3.innerText = "🚀 [Step 3] AI 에이전트 컨텍스트 융합 및 엔지니어링 리포트 심층 생성 중...";
     progress.classList.remove('d-none');
 
+    // 웹에서 입력받은 이중 중첩 구조(body.body) 정합성을 위해 포장 형식 유지
     const payload = {
         body: {
             asset_id: assetId,
