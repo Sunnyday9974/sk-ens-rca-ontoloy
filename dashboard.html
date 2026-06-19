@@ -35,7 +35,7 @@
         </div>
         <div class="col-md-4 text-md-end text-start mt-2 mt-md-0">
             <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.85rem;">
-                🕒 Code Updated: 2026-06-19 18:05
+                🕒 Code Updated: 2026-06-19 18:34
             </span>
         </div>
     </div>
@@ -51,8 +51,8 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold">대상 설비 ID (asset_id)</label>
                     <select id="asset_id" class="form-select">
-                        <option value="GT-01">가스 터빈 (GT-01)</option>
                         <option value="BFP-01A">보일러 급수 펌프 (BFP-01A)</option>
+                        <option value="GT-01">가스 터빈 (GT-01)</option>
                         <option value="COMP-02B">원심 압축기 (COMP-02B)</option>
                         <option value="RO-02">역삼투압 시스템 (RO-02)</option>
                         <option value="CWP-03">냉각수 순환 펌프 (CWP-03)</option>
@@ -62,11 +62,11 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold">발생 알람명 (alarm_name)</label>
                     <select id="alarm_name" class="form-select">
-                        <option value="AL_VIB_HIGH (급수 펌프 베어링 진동 고)">급수 펌프 베어링 진동 고 (AL_VIB_HIGH)</option>
-                        <option value="AL_TEMP_HIGH (베어링 온도 고)">베어링 온도 고 경보 (AL_TEMP_HIGH)</option>
-                        <option value="AL_PRESS_LOW (연료 가스 인입 압력 저하)">연료 가스 인입 압력 저하 (AL_PRESS_LOW)</option>
-                        <option value="AL_FLAME_OUT (연료 공급 중단 트리거 알람)">연료 공급 중단 트리거 알람 (AL_FLAME_OUT)</option>
-                        <option value="AL_DIFF_PRESS_HIGH (필터 전후단 차압 고)">필터 전후단 차압 고 (AL_DIFF_PRESS_HIGH)</option>
+                        <option value="AL_VIB_HIGH (급수펌프 베어링 진동 고)">급수펌프 베어링 진동 고 (AL_VIB_HIGH)</option>
+                        <option value="AL_SURGE_WARN (압축기 서지 전조 알람)">압축기 서지 전조 알람 (AL_SURGE_WARN)</option>
+                        <option value="AL_FUEL_VALVE_FAIL (연료 밸브 제어 편차 알람)">연료 밸브 제어 편차 알람 (AL_FUEL_VALVE_FAIL)</option>
+                        <option value="AL_RO_DP_HIGH (RO 막 전후단 차압 고)">RO 막 전후단 차압 고 (AL_RO_DP_HIGH)</option>
+                        <option value="AL_BRG_TEMP_HIGH (베어링 온도 고온 경보)">베어링 온도 고온 경보 (AL_BRG_TEMP_HIGH)</option>
                     </select>
                 </div>
 
@@ -150,7 +150,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     s3.innerText = "🚀 [Step 3] AI 에이전트 컨텍스트 융합 및 엔지니어링 리포트 심층 생성 중...";
     progress.classList.remove('d-none');
 
-    // 웹에서 입력받은 이중 중첩 구조(body.body) 정합성을 위해 포장 형식 유지
+    // 이중 중첩 구조(body.body) 파싱 정합성 완벽 유지
     const payload = {
         body: {
             asset_id: assetId,
