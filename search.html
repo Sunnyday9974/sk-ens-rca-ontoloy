@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SK Group AI/DT - RCA 지식 그래프 탐색기 [v2026.06.17.1500]</title>
+    <title>SK Group AI/DT - RCA 지식 그래프 탐색기 [v2026.06.22.1700]</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
@@ -145,7 +145,29 @@
             bindDropdown('assetSelect', values[1] || []);
             bindDropdown('alarmSelect', values[2] || []);
             bindDropdown('failureModeSelect', values[3] || []);
-        } catch (error) { console.error('목록 로드 실패:', error); }
+
+            // 🎯 [v1700 동적 연동] 대시보드 인터페이스용 URL 쿼리 파라미터 파싱
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramAsset = urlParams.get('assetId');
+            const paramAlarm = urlParams.get('alarmId');
+
+            // 🎯 파라미터 조건 만족 시 드롭다운 사전 세팅 및 자동 지식 조회 트리거
+            if (paramAsset || paramAlarm) {
+                if (paramAsset) document.getElementById('assetSelect').value = paramAsset;
+                
+                if (paramAlarm) {
+                    const alarmSelect = document.getElementById('alarmSelect');
+                    for (let option of alarmSelect.options) {
+                        if (option.value.includes(paramAlarm)) {
+                            alarmSelect.value = option.value;
+                            break;
+                        }
+                    }
+                }
+                // 임원 원클릭 진입 시 검색 버튼 누르는 과정 없이 즉각 로드
+                searchNetworkAND();
+            }
+        } catch (error) { console.error('목록 로드 및 자동 인덱싱 실패:', error); }
     };
 
     function bindDropdown(elementId, dataList) {
