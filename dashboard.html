@@ -18,7 +18,7 @@
         .step-success { background-color: #e2f0d9; color: #385723; border: 1px solid #badbcc; }
         .step-error { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
         
-        /* 모래시계 회전 애니메이션 효과 추가 */
+        /* 모래시계 회전 애니메이션 효과 */
         @keyframes hourglass-flip {
             0% { transform: rotate(0deg); }
             50% { transform: rotate(180deg); }
@@ -26,11 +26,11 @@
         }
         .spinning-hourglass { display: inline-block; animation: hourglass-flip 1.2s infinite ease-in-out; margin-right: 5px; }
         
-        /* 마크다운 결과물 및 사이드 근거 패널 스타일 */
-        #report-output { line-height: 1.75; font-size: 1.02rem; color: #333333; padding-right: 15px; }
-        #report-output h1 { font-size: 1.7rem; margin-top: 10px; margin-bottom: 20px; font-weight: 700; }
-        #report-output h2 { font-size: 1.35rem; border-left: 5px solid #0d6efd; padding-left: 10px; margin-top: 25px; margin-bottom: 15px; font-weight: 600; color: #212529; }
-        #report-output h3 { font-size: 1.1rem; margin-top: 20px; margin-bottom: 10px; font-weight: 600; }
+        /* 마크다운 결과물 및 사이드 근거 패널 스타일 보정 */
+        #report-output { line-height: 1.75; font-size: 1.05rem; color: #333333; }
+        #report-output h1 { font-size: 1.8rem; margin-top: 10px; margin-bottom: 20px; font-weight: 700; }
+        #report-output h2 { font-size: 1.4rem; border-left: 5px solid #0d6efd; padding-left: 10px; margin-top: 25px; margin-bottom: 15px; font-weight: 600; color: #212529; }
+        #report-output h3 { font-size: 1.15rem; margin-top: 20px; margin-bottom: 10px; font-weight: 600; }
         #report-output ul, #report-output ol { padding-left: 25px; margin-bottom: 15px; }
         #report-output li { margin-bottom: 5px; }
         #report-output strong { color: #111111; }
@@ -38,11 +38,14 @@
 
         /* 실시간 추론 근거 우측 사이드 패널 전용 스타일 */
         .evidence-title { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
-        .btn-drive-link {
+        .btn-link-action {
             display: flex; align-items: center; justify-content: center; gap: 8px;
-            width: 100%; padding: 10px; border-radius: 6px; background-color: #059669; color: white;
-            text-decoration: none; font-size: 0.85rem; font-weight: 700; box-shadow: 0 3px 6px rgba(5, 150, 105, 0.15); transition: all 0.2s;
+            width: 100%; padding: 11px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; 
+            text-decoration: none; transition: all 0.2s; box-shadow: 0 3px 6px rgba(0,0,0,0.05);
         }
+        .btn-search-link { background-color: #e02020; color: white; }
+        .btn-search-link:hover { background-color: #b01818; color: white; }
+        .btn-drive-link { background-color: #059669; color: white; }
         .btn-drive-link:hover { background-color: #047857; color: white; }
     </style>
 </head>
@@ -55,7 +58,7 @@
         </div>
         <div class="col-md-4 text-md-end text-start mt-2 mt-md-0">
             <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.85rem;">
-                🕒 Code Updated: 2026-06-22 17:15
+                🕒 System Connected: 2026-06-22
             </span>
         </div>
     </div>
@@ -129,14 +132,18 @@
                     </div>
                     
                     <div class="col-lg-4 d-none" id="evidence-pane">
-                        <div class="p-2 border rounded bg-white" style="min-height: 500px;">
-                            <div class="evidence-title text-success"><i class="fa-solid fa-folder-open"></i> 1. 인용된 정비 지식 자산 (PDF)</div>
-                            <div id="evidence-docs-area"></div>
+                        <div class="p-3 border rounded bg-white" style="min-height: 520px;">
+                            
+                            <div class="evidence-title text-danger"><i class="fa-solid fa-diagram-project"></i> 1. 과거 정비 이력 온톨로지 조회</div>
+                            <div id="evidence-ontology-area" class="mb-4">
+                                </div>
                             
                             <hr class="my-3">
                             
-                            <div class="evidence-title text-primary"><i class="fa-solid fa-diagram-next"></i> 2. 온톨로지 연계 팩트 검증</div>
-                            <div id="evidence-ontology-area" class="small text-muted"></div>
+                            <div class="evidence-title text-success"><i class="fa-solid fa-folder-open"></i> 2. 인용한 정비 지식 자산 (PDF)</div>
+                            <div id="evidence-docs-area">
+                                </div>
+                            
                         </div>
                     </div>
                 </div>
@@ -165,20 +172,19 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     const docsArea = document.getElementById('evidence-docs-area');
     const ontologyArea = document.getElementById('evidence-ontology-area');
 
-    // UI 및 패널 은닉 초기화
+    // 초기화
     output.innerHTML = "";
     divider.classList.add('d-none');
     evidencePane.classList.add('d-none');
     
     const loadingHourglass = `<span class="spinning-hourglass">⏳</span>`;
 
-    // [Step 1 즉시 기동] 모래시계 애니메이션 가동
+    // [Step 1] 애니메이션 가동
     s1.className = "step-box step-loading";
     s1.style.display = "block";
     s1.innerHTML = `${loadingHourglass} [Step 1] 과거 정비 이력 온톨로지 조회 중...`;
     s2.style.display = "none";
     s3.style.display = "none";
-    progress.classList.add('d-none');
 
     const payload = {
         body: {
@@ -190,14 +196,13 @@ document.getElementById('btn-submit').addEventListener('click', async function()
         }
     };
 
-    // [백엔드 선출발] 웹훅 즉시 전송
+    // 백엔드 선출발 비동기 처리
     const apiPromise = fetch(n8nUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     });
 
-    // 균등 분배 인터벌 타이머 가동 (3.5초 주기)
     let secondsElapsed = 0;
     const uiTimer = setInterval(() => {
         secondsElapsed += 0.5;
@@ -228,7 +233,6 @@ document.getElementById('btn-submit').addEventListener('click', async function()
         const response = await apiPromise;
         clearInterval(uiTimer);
         
-        // 데이터 도달 즉시 전반부 스텝 UI 완료 마감
         s1.className = "step-box step-success";
         s1.innerText = "✔ [Step 1] 과거 정비 이력 온톨로지 조회 완료";
         s2.className = "step-box step-success";
@@ -242,47 +246,38 @@ document.getElementById('btn-submit').addEventListener('click', async function()
 
             const resJson = await response.json();
             
-            // 1. AI 마크다운 생성 리포트 출력
+            // 1. 메인 AI 마크다운 리포트 파싱 출력
             let reportMarkdown = resJson.output || (typeof resJson === 'object' ? Object.values(resJson)[0] : resJson);
             output.innerHTML = marked.parse(reportMarkdown);
 
             // ====================================================================
-            // 🎯 [v2026 다이내믹 링킹 엔진] search.html 지식 이식 및 동적 파싱 처리
+            // 🎯 [사이드바 완결] 실시간 수신 변수 기반 동적 추론 패널 연동 로직
             // ====================================================================
             evidencePane.classList.remove('d-none');
             docsArea.innerHTML = "";
             ontologyArea.innerHTML = "";
 
-            // 백엔드 n8n(Neo4j 데이터)에서 내려주는 메타데이터 유연한 타겟팅 추출
-            // 백엔드 명세에 맞춰 fileId 혹은 url 프로퍼티를 동적으로 가져옵니다.
+            // 백엔드 데이터 동적 수신 파트
             let finalFileId = resJson.fileId || (resJson.metadata ? resJson.metadata.fileId : null);
             let finalUrl = resJson.url || (resJson.metadata ? resJson.metadata.url : null);
             let docTitle = resJson.docTitle || resJson.document_name || "🔍 연계 분석 정비 엔지니어링 리포트 (PDF)";
             
             let faultModeName = resJson.faultMode || "온톨로지 탐색 데이터";
-            let actionHistory = resJson.actionHistory || "지식맵 인과관계 기반 정비 이력 추적됨";
-            let lessonLearned = resJson.lessonLearned || "사내 지침 매칭 완료";
 
-            // [Fallback 보정] 만약 n8n에서 데이터 누락 시 search.html 메커니즘용 안전 분기 결합
+            // Fallback 보정 매핑 규칙
             if (!finalFileId && !finalUrl) {
                 if(alarmNameRaw.includes("VIB_HIGH")) {
                     finalFileId = "1fc3147f1_databases_neo4j_demo_rca_report";
                     docTitle = "📄 RCA-2026-001: BFP-01A 베어링 조기 손상 인과관계 최종 기술보고서";
                     faultModeName = "FM_CAVITATION (펌프 내부 캐비테이션 현상)";
-                    actionHistory = "RCA-2026-001_ACT_01: 흡입측 스트레이너 내부 이물질 세척 및 제거";
-                    lessonLearned = "LSN_01: 계통 대정비 작업 직후 대형 회전기기 최초 기동 시 흡입측 전후단 차압 상시 모니터링 수립";
                 } else if (alarmNameRaw.includes("SURGE")) {
                     finalFileId = "1_databases_neo4j_demo_surge_report";
                     docTitle = "📄 RCA-2025-042: 원심압축기 실시간 서지 한계점 동적 추적 연구";
                     faultModeName = "FM_SURGE (원심 압축기 내부 서지 고장 모드)";
-                    actionHistory = "과거 긴급 서지 제어 밸브 개도율 조정 이력 확인";
-                    lessonLearned = "압축기 기동 초기 밸브 헌팅 전조 확인 시 풍량 강제 바이패스 운영 지침";
-                } else {
-                    finalUrl = "https://drive.google.com";
                 }
             }
 
-            // 구글 드라이브 파일 다이렉트 뷰어 URL 주소 빌드
+            // 구글 드라이브 다이렉트 PDF 뷰어 타겟 주소 완성 (search.html과 100% 매칭 구조)
             let targetViewerUrl = finalUrl;
             if (!targetViewerUrl && finalFileId) {
                 targetViewerUrl = `https://drive.google.com/file/d/${finalFileId}/view?usp=sharing`;
@@ -290,20 +285,30 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                 targetViewerUrl = "https://drive.google.com";
             }
 
-            // 1) 온톨로지 관계 구조 실시간 데이터 동적 렌더링
+            // ------------------------------------------------------------
+            // 🎯 영역 1: 과거 정비 이력 온톨로지 조회 (search.html 원클릭 기동 체인)
+            // ------------------------------------------------------------
             ontologyArea.innerHTML = `
-                <div class="mb-2"><span class="badge bg-secondary text-dark" style="font-size:10px;">고장모드</span> <strong class="text-dark d-block mt-1">${faultModeName}</strong></div>
-                <div class="mb-2"><span class="badge bg-info text-dark" style="font-size:10px;">연계조치</span> <div class="p-2 bg-light rounded mt-1 border-start border-info border-3 font-monospace" style="font-size:12px; color:#475569;">${actionHistory}</div></div>
-                <div class="mb-2"><span class="badge bg-dark text-light" style="font-size:10px;">사내지침</span> <div class="p-2 bg-light rounded mt-1 border-start border-dark border-3 font-monospace" style="font-size:12px; color:#475569;">${lessonLearned}</div></div>
+                <div class="mb-3 p-2 bg-light rounded text-muted" style="font-size: 11.5px; line-height: 1.5;">
+                    현재 감지된 고장 모드: <strong class="text-dark">${faultModeName}</strong><br>
+                    아래 버튼을 누르면 이 고장과 연계된 전사 인과관계 토폴로지 분석 맵이 새 창에 즉시 자동 로드됩니다.
+                </div>
+                <a href="search.html?assetId=${encodeURIComponent(assetId)}&alarmId=${encodeURIComponent(pureAlarmId)}" 
+                   target="_blank" 
+                   class="btn-link-action btn-search-link">
+                    <i class="fa-solid fa-diagram-project text-white"></i> 온톨로지 분석 인과관계 맵 열기
+                </a>
             `;
 
-            // 2) 구글 드라이브 URL 다이렉트 PDF 뷰어 연결 (search.html과 완벽 일치 구조)
+            // ------------------------------------------------------------
+            // 🎯 영역 2: 인용한 정비 지식 자산 (PDF 뷰어 다이렉트 연결)
+            // ------------------------------------------------------------
             docsArea.innerHTML = `
                 <div class="small fw-semibold text-muted mb-2" style="font-size:11.5px; line-height:1.4;">${docTitle}</div>
-                <a href="${targetViewerUrl}" target="_blank" class="btn-drive-link">
+                <a href="${targetViewerUrl}" target="_blank" class="btn-drive-link font-monospace">
                     <i class="fa-brands fa-google-drive text-amber-300 fs-6"></i> 구글 드라이브에서 원문 PDF 열기
                 </a>
-                <div class="text-center mt-2" style="font-size: 11px; color:#94a3b8;">
+                <div class="text-center mt-2" style="font-size: 10.5px; color:#94a3b8;">
                     <i class="fa-solid fa-user-shield"></i> 전사 지식보안 1등급 문서 실시간 바인딩 완료
                 </div>
             `;
