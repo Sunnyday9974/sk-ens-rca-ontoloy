@@ -137,6 +137,14 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     output.innerHTML = "";
     divider.classList.add('d-none');
     
+    // 초기 로딩 연출 세팅
+    s1.className = "step-box step-loading";
+    s1.style.display = "block";
+    s1.innerText = "🔍 [Step 1] 과거 정비 이력 온톨로지 조회 중...";
+    s2.style.display = "none";
+    s3.style.display = "none";
+    progress.classList.add('d-none');
+
     const payload = {
         body: {
             asset_id: assetId,
@@ -148,43 +156,51 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     };
 
     // =========================================================
-    // [초균등 밸런싱 알고리즘] 버튼 클릭 즉시 백엔드 선출발 (초기화 즉시 비동기 전송)
+    // [독립형 인터벌 타이머] 백엔드 세션과 화면 연출을 완벽히 분리
     // =========================================================
-    const apiPromise = fetch(n8nUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    });
+    let secondsElapsed = 0;
+    const uiTimer = setInterval(() => {
+        secondsElapsed += 0.5; // 0.5초마다 체크
 
-    // [Step 1 연출] 과거 정비 이력 조회 단계를 웅장하게 3.8초 노출
-    s1.className = "step-box step-loading";
-    s1.style.display = "block";
-    s1.innerText = "🔍 [Step 1] 과거 정비 이력 온톨로지 조회 중...";
-    s2.style.display = "none";
-    s3.style.display = "none";
-    
-    await new Promise(r => setTimeout(r, 3800));
-    s1.className = "step-box step-success";
-    s1.innerText = "✔ [Step 1] 과거 정비 이력 온톨로지 조회 완료";
-
-    // [Step 2 연출] 문서 매칭 단계 역시 동일 호흡으로 3.8초 노출
-    s2.className = "step-box step-loading";
-    s2.style.display = "block";
-    s2.innerText = "🔎 [Step 2] 과거 기술/RCA리포트 사례 매칭 중...";
-    
-    await new Promise(r => setTimeout(r, 3800));
-    s2.className = "step-box step-success";
-    s2.innerText = "✔ [Step 2] 과거 기술/RCA리포트 사례 매칭 완료";
-
-    // [Step 3 연출] 이미 7.6초(3.8 + 3.8) 동안 백엔드 처리가 거의 다 끝났으므로 자연스럽게 전환
-    s3.className = "step-box step-loading";
-    s3.style.display = "block";
-    s3.innerText = "🚀 [Step 3] RCA 엔지니어링 리포트 발행 중...";
-    progress.classList.remove('d-none');
+        // 3.5초 경과 시 Step 1 완료 처리 및 Step 2 기동
+        if (secondsElapsed === 3.5) {
+            s1.className = "step-box step-success";
+            s1.innerText = "✔ [Step 1] 과거 정비 이력 온톨로지 조회 완료";
+            
+            s2.className = "step-box step-loading";
+            s2.style.display = "block";
+            s2.innerText = "🔎 [Step 2] 과거 기술/RCA리포트 사례 매칭 중...";
+        }
+        
+        // 7.0초 경과 시 Step 2 완료 처리 및 Step 3 기동 (로딩 스피너 오픈)
+        if (secondsElapsed === 7.0) {
+            s2.className = "step-box step-success";
+            s2.innerText = "✔ [Step 2] 과거 기술/RCA리포트 사례 매칭 완료";
+            
+            s3.className = "step-box step-loading";
+            s3.style.display = "block";
+            s3.innerText = "🚀 [Step 3] RCA 엔지니어링 리포트 발행 중...";
+            progress.classList.remove('d-none');
+            
+            clearInterval(uiTimer); // 애니메이션 제어 타이머 종료
+        }
+    }, 500);
 
     try {
-        // 백그라운드에서 이미 도착했거나 생성 중인 데이터 대기 및 수신
-        const response = await apiPromise;
+        // 백엔드 n8n 웹훅 다이렉트 호출 (브라우저 스레드 간섭 없음)
+        const response = await fetch(n8nUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        // 만약 LLM 응답이 7초보다 빨리 왔을 경우를 대비해 타이머 강제 종료 및 UI 동기화
+        clearInterval(uiTimer);
+        s1.className = "step-box step-success";
+        s1.innerText = "✔ [Step 1] 과거 정비 이력 온톨로지 조회 완료";
+        s2.className = "step-box step-success";
+        s2.innerText = "✔ [Step 2] 과거 기술/RCA리포트 사례 매칭 완료";
+
         progress.classList.add('d-none');
 
         if (response.ok) {
@@ -210,6 +226,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
         }
 
     } catch (error) {
+        clearInterval(uiTimer);
         progress.classList.add('d-none');
         s3.className = "step-box step-error";
         s3.innerText = "❌ 리포트 발행 오류 발생";
