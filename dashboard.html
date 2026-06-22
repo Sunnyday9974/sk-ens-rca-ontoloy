@@ -11,10 +11,10 @@
         .main-header { border-bottom: 2px solid #dee2e6; padding-bottom: 15px; margin-bottom: 25px; }
         .panel { background: #ffffff; border-radius: 8px; border: 1px solid #e3e6f0; padding: 20px; min-height: 780px; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05); }
         
-        /* Step 상자 세로 폭 축소 및 가로 정렬용 슬림 가이드 */
-        .step-box { padding: 10px 12px; border-radius: 6px; font-weight: 500; font-size: 0.85rem; height: 100%; display: none; text-align: center; }
+        /* Step 상자 임원진용 가로 슬림 그리드 스타일 */
+        .step-box { padding: 10px 12px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; height: 100%; display: none; text-align: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
         .step-loading { background-color: #cff4fc; color: #055160; border: 1px solid #b6effb; }
-        .step-success { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .step-success { background-color: #e2f0d9; color: #385723; border: 1px solid #b4c6e7; }
         .step-error { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
         
         /* 마크다운 결과물 상단 밀착 및 스타일 보정 */
@@ -37,7 +37,7 @@
         </div>
         <div class="col-md-4 text-md-end text-start mt-2 mt-md-0">
             <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.85rem;">
-                🕒 Code Updated: 2026-06-22 15:40
+                🕒 Code Updated: 2026-06-22 15:45
             </span>
         </div>
     </div>
@@ -85,7 +85,7 @@
 
         <div class="col-lg-8 col-md-7">
             <div class="panel">
-                <h5 class="text-dark fw-bold mb-3">🧠 AI RCA Agent 센터 (SKI E&S 지식 자산 기반)</h5>
+                <h5 class="text-dark fw-bold mb-3">🧠 AI RCA 에이전트 분석 센터 (사내 정비 지식 자산 기반)</h5>
                 
                 <div class="row g-2 mb-2">
                     <div class="col-md-4">
@@ -101,15 +101,15 @@
 
                 <div id="progress-area" class="text-center py-4 d-none">
                     <div class="spinner-border text-primary mb-2" style="width: 2.2rem; height: 2.2rem;" role="status"></div>
-                    <div class="text-muted small mb-1">📊 인공지능이 수집된 정비 데이터를 학습 컨텍스트로 변환 중입니다...</div>
-                    <div class="text-primary fw-bold small">💡 대규모 지식 자산(GraphRAG)을 바탕으로 보고서를 추론하는 중입니다.</div>
+                    <div class="text-muted small mb-1">📊 전사 축적 정비 지식 및 유사 장애 리포트를 기반으로 원인을 심층 추론 중입니다...</div>
+                    <div class="text-primary fw-bold small">💡 AI 엔진이 엔지니어링 리포트를 생성하고 있습니다. 잠시만 기다려 주십시오.</div>
                 </div>
 
                 <hr id="divider" class="d-none" style="margin: 12px 0;">
 
                 <div id="report-output">
                     <div class="alert alert-secondary text-muted m-0">
-                        왼쪽 관제 패널에서 이상 신호를 발생시키면, 실시간으로 지식 베이스(Graph + Vector DB)를 탐색하여 이곳에 엔지니어링 리포트를 출력합니다.
+                        왼쪽 관제 패널에서 이상 신호(Alarm)를 유입시키면, 전사 운전/정비 데이터베이스 및 고장 인과관계 지식맵을 탐색하여 실시간 엔지니어링 리포트를 생성합니다.
                     </div>
                 </div>
             </div>
@@ -136,30 +136,30 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     output.innerHTML = "";
     divider.classList.add('d-none');
     
-    // --- [Step 1 기동] 가로형 매핑 연출 ---
+    // --- [Step 1] 과거 정비 이력 온톨로지 조회 연출 ---
     s1.className = "step-box step-loading";
     s1.style.display = "block";
-    s1.innerText = "⚙️ [Step 1] Neo4j 지식 분석 중...";
+    s1.innerText = "🔍 [Step 1] 과거 정비 이력 온톨로지 조회 중...";
     s2.style.display = "none";
     s3.style.display = "none";
     
     await new Promise(r => setTimeout(r, 1000));
     s1.className = "step-box step-success";
-    s1.innerText = "✔ [Step 1] Neo4j 인과관계 도출";
+    s1.innerText = "✔ [Step 1] 과거 정비 이력 온톨로지 조회 완료";
 
-    // --- [Step 2 기동] 가로형 매핑 연출 ---
+    // --- [Step 2] 과거 기술/RCA리포트 사례 매칭 연출 ---
     s2.className = "step-box step-loading";
     s2.style.display = "block";
-    s2.innerText = "⚡ [Step 2] Pinecone 벡터 검색 중...";
+    s2.innerText = "🔎 [Step 2] 기술문서 및 RCA 사례 매칭 중...";
     
     await new Promise(r => setTimeout(r, 1000));
     s2.className = "step-box step-success";
-    s2.innerText = "✔ [Step 2] Pinecone 사례 매칭";
+    s2.innerText = "✔ [Step 2] 기술/RCA 리포트 사례 매칭 완료";
 
-    // --- [Step 3 기동] 백엔드 결합 호출 시작 ---
+    // --- [Step 3] RCA 엔지니어링 리포트 발행 시작 ---
     s3.className = "step-box step-loading";
     s3.style.display = "block";
-    s3.innerText = "🚀 [Step 3] AI 에이전트 리포트 생성 중...";
+    s3.innerText = "🚀 [Step 3] RCA 엔지니어링 리포트 발행 중...";
     progress.classList.remove('d-none');
 
     const payload = {
@@ -183,7 +183,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
 
         if (response.ok) {
             s3.className = "step-box step-success";
-            s3.innerText = "✔ [Step 3] RCA 보고서 발행 완료";
+            s3.innerText = "✔ [Step 3] RCA 엔지니어링 리포트 발행 완료";
             divider.classList.remove('d-none');
 
             const resJson = await response.json();
@@ -206,7 +206,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     } catch (error) {
         progress.classList.add('d-none');
         s3.className = "step-box step-error";
-        s3.innerText = "❌ Step 3 오류 발생";
+        s3.innerText = "❌ 리포트 발행 오류 발생";
         output.innerHTML = `<div class="alert alert-danger font-monospace small mt-2">${error.message}</div>`;
     }
 });
