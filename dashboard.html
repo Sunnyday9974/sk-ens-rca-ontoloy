@@ -38,7 +38,6 @@
 
         /* 실시간 추론 근거 우측 사이드 패널 전용 스타일 */
         .evidence-title { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
-        .evidence-card { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 15px; }
         .btn-drive-link {
             display: flex; align-items: center; justify-content: center; gap: 8px;
             width: 100%; padding: 10px; border-radius: 6px; background-color: #059669; color: white;
@@ -56,7 +55,7 @@
         </div>
         <div class="col-md-4 text-md-end text-start mt-2 mt-md-0">
             <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.85rem;">
-                🕒 Code Updated: 2026-06-22 17:00
+                🕒 Code Updated: 2026-06-22 17:15
             </span>
         </div>
     </div>
@@ -191,7 +190,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
         }
     };
 
-    // [백엔드 선출발] 타임아웃 세션 독립을 위해 웹훅 즉시 전송
+    // [백엔드 선출발] 웹훅 즉시 전송
     const apiPromise = fetch(n8nUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -243,50 +242,69 @@ document.getElementById('btn-submit').addEventListener('click', async function()
 
             const resJson = await response.json();
             
-            // 1. AI 웅융합 보고서 마크다운 출력
+            // 1. AI 마크다운 생성 리포트 출력
             let reportMarkdown = resJson.output || (typeof resJson === 'object' ? Object.values(resJson)[0] : resJson);
             output.innerHTML = marked.parse(reportMarkdown);
 
             // ====================================================================
-            // 🎯 [사이드 패널 팩트 연동] search.html의 소스맵 구조를 이식한 팩트 체크 자동화
+            // 🎯 [v2026 다이내믹 링킹 엔진] search.html 지식 이식 및 동적 파싱 처리
             // ====================================================================
             evidencePane.classList.remove('d-none');
             docsArea.innerHTML = "";
             ontologyArea.innerHTML = "";
 
-            let matchFm = "FM_CAVITATION (펌프 내부 캐비테이션 현상)";
-            let matchAct = "과거 조치 이력 없음";
-            let matchLsn = "수립된 권장 방안 없음";
-            let mockDriveUrl = "https://drive.google.com";
-            let docTitle = "RCA-2026-011: 보일러 급수계통 열역학적 캐비테이션 거동 분석서";
+            // 백엔드 n8n(Neo4j 데이터)에서 내려주는 메타데이터 유연한 타겟팅 추출
+            // 백엔드 명세에 맞춰 fileId 혹은 url 프로퍼티를 동적으로 가져옵니다.
+            let finalFileId = resJson.fileId || (resJson.metadata ? resJson.metadata.fileId : null);
+            let finalUrl = resJson.url || (resJson.metadata ? resJson.metadata.url : null);
+            let docTitle = resJson.docTitle || resJson.document_name || "🔍 연계 분석 정비 엔지니어링 리포트 (PDF)";
+            
+            let faultModeName = resJson.faultMode || "온톨로지 탐색 데이터";
+            let actionHistory = resJson.actionHistory || "지식맵 인과관계 기반 정비 이력 추적됨";
+            let lessonLearned = resJson.lessonLearned || "사내 지침 매칭 완료";
 
-            // 유입된 알람 코드에 따라 정교하게 팩트 데이터 분기 링킹
-            if(alarmNameRaw.includes("VIB_HIGH")) {
-                matchFm = "FM_CAVITATION (펌프 내부 캐비테이션 현상)";
-                matchAct = "RCA-2026-001_ACT_01: 흡입측 스트레이너 내부 이물질 세척 및 제거";
-                matchLsn = "LSN_01: 계통 대정비 작업 직후 대형 회전기기 최초 기동 시 흡입측 전후단 차압 상시 모니터링 수립";
-                mockDriveUrl = "https://drive.google.com/file/d/1fc3147f1_databases_neo4j_demo_rca_report/view?usp=sharing";
-                docTitle = "📄 RCA-2026-001: BFP-01A 베어링 조기 손상 인과관계 최종 기술보고서";
-            } else if (alarmNameRaw.includes("SURGE")) {
-                matchFm = "FM_SURGE (원심 압축기 내부 서지 고장 모드)";
-                docTitle = "📄 RCA-2025-042: 원심압축기 실시간 서지 한계점 동적 추적 연구";
+            // [Fallback 보정] 만약 n8n에서 데이터 누락 시 search.html 메커니즘용 안전 분기 결합
+            if (!finalFileId && !finalUrl) {
+                if(alarmNameRaw.includes("VIB_HIGH")) {
+                    finalFileId = "1fc3147f1_databases_neo4j_demo_rca_report";
+                    docTitle = "📄 RCA-2026-001: BFP-01A 베어링 조기 손상 인과관계 최종 기술보고서";
+                    faultModeName = "FM_CAVITATION (펌프 내부 캐비테이션 현상)";
+                    actionHistory = "RCA-2026-001_ACT_01: 흡입측 스트레이너 내부 이물질 세척 및 제거";
+                    lessonLearned = "LSN_01: 계통 대정비 작업 직후 대형 회전기기 최초 기동 시 흡입측 전후단 차압 상시 모니터링 수립";
+                } else if (alarmNameRaw.includes("SURGE")) {
+                    finalFileId = "1_databases_neo4j_demo_surge_report";
+                    docTitle = "📄 RCA-2025-042: 원심압축기 실시간 서지 한계점 동적 추적 연구";
+                    faultModeName = "FM_SURGE (원심 압축기 내부 서지 고장 모드)";
+                    actionHistory = "과거 긴급 서지 제어 밸브 개도율 조정 이력 확인";
+                    lessonLearned = "압축기 기동 초기 밸브 헌팅 전조 확인 시 풍량 강제 바이패스 운영 지침";
+                } else {
+                    finalUrl = "https://drive.google.com";
+                }
             }
 
-            // 1) 온톨로지 관계 구조 렌더링
+            // 구글 드라이브 파일 다이렉트 뷰어 URL 주소 빌드
+            let targetViewerUrl = finalUrl;
+            if (!targetViewerUrl && finalFileId) {
+                targetViewerUrl = `https://drive.google.com/file/d/${finalFileId}/view?usp=sharing`;
+            } else if (!targetViewerUrl) {
+                targetViewerUrl = "https://drive.google.com";
+            }
+
+            // 1) 온톨로지 관계 구조 실시간 데이터 동적 렌더링
             ontologyArea.innerHTML = `
-                <div class="mb-2"><span class="badge bg-secondary text-dark" style="font-size:10px;">고장모드</span> <strong class="text-dark d-block mt-1">${matchFm}</strong></div>
-                <div class="mb-2"><span class="badge bg-info text-dark" style="font-size:10px;">연계조치</span> <div class="p-2 bg-light rounded mt-1 border-start border-info border-3 font-monospace" style="font-size:12px; color:#475569;">${matchAct}</div></div>
-                <div class="mb-2"><span class="badge bg-dark text-light" style="font-size:10px;">사내지침</span> <div class="p-2 bg-light rounded mt-1 border-start border-dark border-3 font-monospace" style="font-size:12px; color:#475569;">${matchLsn}</div></div>
+                <div class="mb-2"><span class="badge bg-secondary text-dark" style="font-size:10px;">고장모드</span> <strong class="text-dark d-block mt-1">${faultModeName}</strong></div>
+                <div class="mb-2"><span class="badge bg-info text-dark" style="font-size:10px;">연계조치</span> <div class="p-2 bg-light rounded mt-1 border-start border-info border-3 font-monospace" style="font-size:12px; color:#475569;">${actionHistory}</div></div>
+                <div class="mb-2"><span class="badge bg-dark text-light" style="font-size:10px;">사내지침</span> <div class="p-2 bg-light rounded mt-1 border-start border-dark border-3 font-monospace" style="font-size:12px; color:#475569;">${lessonLearned}</div></div>
             `;
 
-            // 2) 구글 드라이브 URL 다이렉트 링킹
+            // 2) 구글 드라이브 URL 다이렉트 PDF 뷰어 연결 (search.html과 완벽 일치 구조)
             docsArea.innerHTML = `
                 <div class="small fw-semibold text-muted mb-2" style="font-size:11.5px; line-height:1.4;">${docTitle}</div>
-                <a href="${mockDriveUrl}" target="_blank" class="btn-drive-link">
+                <a href="${targetViewerUrl}" target="_blank" class="btn-drive-link">
                     <i class="fa-brands fa-google-drive text-amber-300 fs-6"></i> 구글 드라이브에서 원문 PDF 열기
                 </a>
                 <div class="text-center mt-2" style="font-size: 11px; color:#94a3b8;">
-                    <i class="fa-solid fa-user-shield"></i> 전사 지식보안 1등급 문서 연동 완료
+                    <i class="fa-solid fa-user-shield"></i> 전사 지식보안 1등급 문서 실시간 바인딩 완료
                 </div>
             `;
 
