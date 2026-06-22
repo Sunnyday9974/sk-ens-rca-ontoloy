@@ -37,7 +37,7 @@
         </div>
         <div class="col-md-4 text-md-end text-start mt-2 mt-md-0">
             <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.85rem;">
-                🕒 Code Updated: 2026-06-22 15:50
+                🕒 Code Updated: 2026-06-22 16:00
             </span>
         </div>
     </div>
@@ -137,7 +137,6 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     output.innerHTML = "";
     divider.classList.add('d-none');
     
-    // API 요청 데이터 패키징
     const payload = {
         body: {
             asset_id: assetId,
@@ -148,46 +147,43 @@ document.getElementById('btn-submit').addEventListener('click', async function()
         }
     };
 
-    // ==========================================
-    // [UX 최적화] 대기 시간 균등 분배 및 비동기 프리패치 적용
-    // ==========================================
-
-    // [전개 1] 과거 정비 이력 온톨로지 조회 (2.2초 가중치 부여)
-    s1.className = "step-box step-loading";
-    s1.style.display = "block";
-    s1.innerText = "🔍 [Step 1] 과거 정비 이력 온톨로지 조회 중...";
-    s2.style.display = "none";
-    s3.style.display = "none";
-    
-    await new Promise(r => setTimeout(r, 2200));
-    s1.className = "step-box step-success";
-    s1.innerText = "✔ [Step 1] 과거 정비 이력 온톨로지 조회 완료";
-
-    // [전개 2] 과거 기술/RCA리포트 사례 매칭 (2.2초 가중치 부여)
-    s2.className = "step-box step-loading";
-    s2.style.display = "block";
-    s2.innerText = "🔎 [Step 2] 과거 기술/RCA리포트 사례 매칭 중...";
-    
-    // ★ UX 개선 핵심: 사용자가 Step 2 애니메이션을 보는 동안 백엔드 n8n API를 병렬로 먼저 출발(Pre-fetch)시킵니다.
-    // 이로 인해 백엔드가 리포트를 생성하는 실제 시간이 대기 시간 내부로 숨겨지게 됩니다.
+    // =========================================================
+    // [초균등 밸런싱 알고리즘] 버튼 클릭 즉시 백엔드 선출발 (초기화 즉시 비동기 전송)
+    // =========================================================
     const apiPromise = fetch(n8nUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     });
 
-    await new Promise(r => setTimeout(r, 2200));
+    // [Step 1 연출] 과거 정비 이력 조회 단계를 웅장하게 3.8초 노출
+    s1.className = "step-box step-loading";
+    s1.style.display = "block";
+    s1.innerText = "🔍 [Step 1] 과거 정비 이력 온톨로지 조회 중...";
+    s2.style.display = "none";
+    s3.style.display = "none";
+    
+    await new Promise(r => setTimeout(r, 3800));
+    s1.className = "step-box step-success";
+    s1.innerText = "✔ [Step 1] 과거 정비 이력 온톨로지 조회 완료";
+
+    // [Step 2 연출] 문서 매칭 단계 역시 동일 호흡으로 3.8초 노출
+    s2.className = "step-box step-loading";
+    s2.style.display = "block";
+    s2.innerText = "🔎 [Step 2] 과거 기술/RCA리포트 사례 매칭 중...";
+    
+    await new Promise(r => setTimeout(r, 3800));
     s2.className = "step-box step-success";
     s2.innerText = "✔ [Step 2] 과거 기술/RCA리포트 사례 매칭 완료";
 
-    // [전개 3] RCA 엔지니어링 리포트 최종 발행 및 화면 렌더링
+    // [Step 3 연출] 이미 7.6초(3.8 + 3.8) 동안 백엔드 처리가 거의 다 끝났으므로 자연스럽게 전환
     s3.className = "step-box step-loading";
     s3.style.display = "block";
     s3.innerText = "🚀 [Step 3] RCA 엔지니어링 리포트 발행 중...";
     progress.classList.remove('d-none');
 
     try {
-        // 이미 병렬로 시작되어 진행 중이던 비동기 응답(Promise)을 수신
+        // 백그라운드에서 이미 도착했거나 생성 중인 데이터 대기 및 수신
         const response = await apiPromise;
         progress.classList.add('d-none');
 
@@ -207,7 +203,6 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                 reportMarkdown = resJson;
             }
 
-            // 마크다운 객체를 HTML 파싱하여 밀착 출력
             output.innerHTML = marked.parse(reportMarkdown);
 
         } else {
