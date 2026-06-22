@@ -35,7 +35,7 @@
         </div>
         <div class="col-md-4 text-md-end text-start mt-2 mt-md-0">
             <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.85rem;">
-                🕒 Code Updated: 2026-06-19 18:34
+                🕒 Code Updated: 2026-06-22 10:21
             </span>
         </div>
     </div>
@@ -68,7 +68,7 @@
                         <option value="AL_RO_DP_HIGH (RO 막 전후단 차압 고)">RO 막 전후단 차압 고 (AL_RO_DP_HIGH)</option>
                         <option value="AL_BRG_TEMP_HIGH (베어링 온도 고온 경보)">베어링 온도 고온 경보 (AL_BRG_TEMP_HIGH)</option>
                     </select>
-                </div>  
+                </div>
 
                 <div class="mb-4">
                     <label class="form-label fw-semibold">현재 측정 수치 (Telemetry Value) : <span id="slider-val" class="text-primary fw-bold">12.8</span></label>
@@ -109,10 +109,15 @@
 
 <script>
 document.getElementById('btn-submit').addEventListener('click', async function() {
+    // --- [2단계 반영] 데이터 추출 가동 및 지능형 순수 ID 분리 로직 적용 ---
     const assetId = document.getElementById('asset_id').value;
-    const alarmName = document.getElementById('alarm_name').value;
+    const alarmNameRaw = document.getElementById('alarm_name').value; // 원본 전체 값 수집
     const telemetryValue = parseFloat(document.getElementById('telemetry_value').value);
     const n8nUrl = "https://seoneenam.app.n8n.cloud/webhook/early-warning-alarm";
+
+    // 첫 공백을 기준으로 앞글자만 분리하여 백엔드가 0.1초 만에 인덱싱할 고유 ID 추출
+    // 예: "AL_VIB_HIGH (급수펌프...)" -> "AL_VIB_HIGH"
+    const pureAlarmId = alarmNameRaw.split(' ')[0]; 
 
     const s1 = document.getElementById('step1');
     const s2 = document.getElementById('step2');
@@ -150,12 +155,12 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     s3.innerText = "🚀 [Step 3] AI 에이전트 컨텍스트 융합 및 엔지니어링 리포트 심층 생성 중...";
     progress.classList.remove('d-none');
 
-    // 이중 중첩 구조(body.body) 파싱 정합성 완벽 유지
+    // --- [3단계 반영] 이중 중첩 구조(body.body) 내부에 동적 추출 ID 매핑하여 전송 페이로드 빌드 ---
     const payload = {
         body: {
             asset_id: assetId,
-            alarm_name: alarmName,
-            alarm_id: "ALM-2026-0042",
+            alarm_name: alarmNameRaw,  // 전체 결합 문자열 전달 (Neo4j full-text 대조용)
+            alarm_id: pureAlarmId,     // 무조건 매칭되는 순수 알파벳 고유 코드 탑재
             value: telemetryValue,
             timestamp: new Date().toISOString()
         }
