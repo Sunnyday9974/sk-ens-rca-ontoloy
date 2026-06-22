@@ -10,15 +10,17 @@
         body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .main-header { border-bottom: 2px solid #dee2e6; padding-bottom: 15px; margin-bottom: 25px; }
         .panel { background: #ffffff; border-radius: 8px; border: 1px solid #e3e6f0; padding: 20px; min-height: 780px; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05); }
-        .step-box { padding: 12px; border-radius: 6px; margin-bottom: 12px; font-weight: 500; display: none; }
+        
+        /* Step 상자 세로 폭 축소 및 가로 정렬용 슬림 가이드 */
+        .step-box { padding: 10px 12px; border-radius: 6px; font-weight: 500; font-size: 0.85rem; height: 100%; display: none; text-align: center; }
         .step-loading { background-color: #cff4fc; color: #055160; border: 1px solid #b6effb; }
         .step-success { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
         .step-error { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
         
-        /* 마크다운 결과물 스타일 보정 */
+        /* 마크다운 결과물 상단 밀착 및 스타일 보정 */
         #report-output { line-height: 1.75; font-size: 1.05rem; color: #333333; }
         #report-output h1 { font-size: 1.8rem; margin-top: 10px; margin-bottom: 20px; font-weight: 700; }
-        #report-output h2 { font-size: 1.4rem; border-left: 5px solid #0d6efd; padding-left: 10px; margin-top: 30px; margin-bottom: 15px; font-weight: 600; color: #212529; }
+        #report-output h2 { font-size: 1.4rem; border-left: 5px solid #0d6efd; padding-left: 10px; margin-top: 25px; margin-bottom: 15px; font-weight: 600; color: #212529; }
         #report-output h3 { font-size: 1.15rem; margin-top: 20px; margin-bottom: 10px; font-weight: 600; }
         #report-output ul, #report-output ol { padding-left: 25px; margin-bottom: 15px; }
         #report-output li { margin-bottom: 5px; }
@@ -35,7 +37,7 @@
         </div>
         <div class="col-md-4 text-md-end text-start mt-2 mt-md-0">
             <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.85rem;">
-                🕒 Code Updated: 2026-06-22 10:21
+                🕒 Code Updated: 2026-06-22 15:40
             </span>
         </div>
     </div>
@@ -83,19 +85,27 @@
 
         <div class="col-lg-8 col-md-7">
             <div class="panel">
-                <h5 class="text-dark fw-bold mb-4">🧠 AI RCA Agent 센터 (SKI E&S 지식 자산 기반)</h5>
+                <h5 class="text-dark fw-bold mb-3">🧠 AI RCA Agent 센터 (SKI E&S 지식 자산 기반)</h5>
                 
-                <div id="step1" class="step-box"></div>
-                <div id="step2" class="step-box"></div>
-                <div id="step3" class="step-box"></div>
-
-                <div id="progress-area" class="text-center py-5 d-none">
-                    <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
-                    <div class="text-muted mb-2">📊 인공지능이 수집된 정비 데이터를 학습 컨텍스트로 변환 중입니다. 잠시만 기다려 주십시오...</div>
-                    <div class="text-primary fw-bold" style="font-size: 0.95rem;">💡 대규모 지식 자산(GraphRAG)을 바탕으로 보고서를 추론하는 중입니다.</div>
+                <div class="row g-2 mb-2">
+                    <div class="col-md-4">
+                        <div id="step1" class="step-box"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div id="step2" class="step-box"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div id="step3" class="step-box"></div>
+                    </div>
                 </div>
 
-                <hr id="divider" class="d-none">
+                <div id="progress-area" class="text-center py-4 d-none">
+                    <div class="spinner-border text-primary mb-2" style="width: 2.2rem; height: 2.2rem;" role="status"></div>
+                    <div class="text-muted small mb-1">📊 인공지능이 수집된 정비 데이터를 학습 컨텍스트로 변환 중입니다...</div>
+                    <div class="text-primary fw-bold small">💡 대규모 지식 자산(GraphRAG)을 바탕으로 보고서를 추론하는 중입니다.</div>
+                </div>
+
+                <hr id="divider" class="d-none" style="margin: 12px 0;">
 
                 <div id="report-output">
                     <div class="alert alert-secondary text-muted m-0">
@@ -109,14 +119,11 @@
 
 <script>
 document.getElementById('btn-submit').addEventListener('click', async function() {
-    // --- [2단계 반영] 데이터 추출 가동 및 지능형 순수 ID 분리 로직 적용 ---
     const assetId = document.getElementById('asset_id').value;
-    const alarmNameRaw = document.getElementById('alarm_name').value; // 원본 전체 값 수집
+    const alarmNameRaw = document.getElementById('alarm_name').value;
     const telemetryValue = parseFloat(document.getElementById('telemetry_value').value);
     const n8nUrl = "https://seoneenam.app.n8n.cloud/webhook/early-warning-alarm";
 
-    // 첫 공백을 기준으로 앞글자만 분리하여 백엔드가 0.1초 만에 인덱싱할 고유 ID 추출
-    // 예: "AL_VIB_HIGH (급수펌프...)" -> "AL_VIB_HIGH"
     const pureAlarmId = alarmNameRaw.split(' ')[0]; 
 
     const s1 = document.getElementById('step1');
@@ -129,38 +136,37 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     output.innerHTML = "";
     divider.classList.add('d-none');
     
-    // --- [Step 1 연출] Neo4j 지식 그래프 기동 ---
+    // --- [Step 1 기동] 가로형 매핑 연출 ---
     s1.className = "step-box step-loading";
     s1.style.display = "block";
-    s1.innerText = "⚙️ [Step 1] Neo4j 그래프 DB 접속 중... 알람-고장 모드 온톨로지 토폴로지 분석";
+    s1.innerText = "⚙️ [Step 1] Neo4j 지식 분석 중...";
     s2.style.display = "none";
     s3.style.display = "none";
     
-    await new Promise(r => setTimeout(r, 1200));
+    await new Promise(r => setTimeout(r, 1000));
     s1.className = "step-box step-success";
-    s1.innerText = "✔ [Step 1 완료] 과거 운전/정비 이력 탐색(Neo4j 지식 그래프)을 통해 설비 간 인과관계 메커니즘 도출 완료";
+    s1.innerText = "✔ [Step 1] Neo4j 인과관계 도출";
 
-    // --- [Step 2 연출] Pinecone 벡터 검색 기동 ---
+    // --- [Step 2 기동] 가로형 매핑 연출 ---
     s2.className = "step-box step-loading";
     s2.style.display = "block";
-    s2.innerText = "⚡ [Step 2] Pinecone 벡터 DB 검색 중... 과거 10년 치 RCA 이력 및 기술 매뉴얼 매칭";
+    s2.innerText = "⚡ [Step 2] Pinecone 벡터 검색 중...";
     
-    await new Promise(r => setTimeout(r, 1200));
+    await new Promise(r => setTimeout(r, 1000));
     s2.className = "step-box step-success";
-    s2.innerText = "✔ [Step 2 완료] 기술문서, RCA보고서 자료(Pinecone 벡터 DB) 고차원 임베딩 검색을 통해 실무 규격 및 유사 고장 사례 정합성 매칭 완료";
+    s2.innerText = "✔ [Step 2] Pinecone 사례 매칭";
 
-    // --- [Step 3 연출] LLM 컨텍스트 백엔드 융합 요청 시작 ---
+    // --- [Step 3 기동] 백엔드 결합 호출 시작 ---
     s3.className = "step-box step-loading";
     s3.style.display = "block";
-    s3.innerText = "🚀 [Step 3] AI 에이전트 컨텍스트 융합 및 엔지니어링 리포트 심층 생성 중...";
+    s3.innerText = "🚀 [Step 3] AI 에이전트 리포트 생성 중...";
     progress.classList.remove('d-none');
 
-    // --- [3단계 반영] 이중 중첩 구조(body.body) 내부에 동적 추출 ID 매핑하여 전송 페이로드 빌드 ---
     const payload = {
         body: {
             asset_id: assetId,
-            alarm_name: alarmNameRaw,  // 전체 결합 문자열 전달 (Neo4j full-text 대조용)
-            alarm_id: pureAlarmId,     // 무조건 매칭되는 순수 알파벳 고유 코드 탑재
+            alarm_name: alarmNameRaw,  
+            alarm_id: pureAlarmId,     
             value: telemetryValue,
             timestamp: new Date().toISOString()
         }
@@ -177,7 +183,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
 
         if (response.ok) {
             s3.className = "step-box step-success";
-            s3.innerText = "✔ [Step 3 완료] LLM 기반 컨텍스트 융합 및 RCA 리포트 생성 완료";
+            s3.innerText = "✔ [Step 3] RCA 보고서 발행 완료";
             divider.classList.remove('d-none');
 
             const resJson = await response.json();
@@ -200,7 +206,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     } catch (error) {
         progress.classList.add('d-none');
         s3.className = "step-box step-error";
-        s3.innerText = "❌ Step 3 오류: 네트워크 연결이 원활하지 않거나 n8n 응답 처리 실패";
+        s3.innerText = "❌ Step 3 오류 발생";
         output.innerHTML = `<div class="alert alert-danger font-monospace small mt-2">${error.message}</div>`;
     }
 });
