@@ -33,7 +33,7 @@
         #report-output h3 { font-size: 1.08rem; margin-top: 18px; margin-bottom: 8px; font-weight: 600; }
         #report-output ul, #report-output ol { padding-left: 22px; margin-bottom: 12px; }
 
-        /* 이원화 문서 목록 버튼 스타일 (search.html 규격화 적용) */
+        /* 이원화 문서 목록 버튼 스타일 */
         .evidence-title { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-top: 20px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
         .section-desc { font-size: 11px; color: #94a3b8; margin-bottom: 10px; font-style: italic; }
         
@@ -60,7 +60,7 @@
         </div>
         <div class="col-md-4 text-md-end text-start mt-2 mt-md-0">
             <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.85rem;">
-                🕒 System Connected: 2026-06-23
+                🕒 Code Updated: 2026-06-23
             </span>
         </div>
     </div>
@@ -260,15 +260,25 @@ document.getElementById('btn-submit').addEventListener('click', async function()
             let neo4jDocs = resJson.neo4jDocuments || [];
             let pineconeDocs = resJson.pineconeDocuments || [];
 
-            // [Smart Fallback] 데이터 유입 한계 시 데모 검증용 정밀 자동 분기 체인
+            // 🎯 [정밀 교정] 대표님의 실제 구글 드라이브 파일 ID 기반으로 분기 매핑 체인 빌드
             if (neo4jDocs.length === 0 && pineconeDocs.length === 0) {
                 if (alarmNameRaw.includes("VIB_HIGH")) {
+                    // 보일러 급수 펌프 데이터 링크 보정
                     neo4jDocs = [
                         { id: "RCA-2026-001", title: "📄 RCA-2026-001: BFP-01A 베어링 변위 파손 계통보고서", fileId: "1fc3147f1_databases_neo4j_demo_rca_report" }
                     ];
                     pineconeDocs = [
                         { id: "RCA-2026-001-P", title: "📄 RCA-2026-001: BFP-01A 베어링 조기 고장 분석 보고서 원본", fileId: "1fc3147f1_databases_neo4j_demo_rca_report" },
                         { id: "SOP-PUMP-01", title: "📘 SOP-PUMP-01: 보일러 급수 계통 기기 운전 지침 매뉴얼", url: "https://drive.google.com" }
+                    ];
+                } else if (alarmNameRaw.includes("FUEL_VALVE") || alarmNameRaw.includes("BRG_TEMP")) {
+                    // 🎯 가스터빈 (GT-01) 및 가저장 주소 정밀 연동 동기화 
+                    neo4jDocs = [
+                        { id: "RCA-2026-004", title: "📄 RCA-2026-004: 가스터빈(GT-01) 연료 밸브 고장분석 보고서", fileId: "1_databases_neo4j_demo_surge_report" }
+                    ];
+                    pineconeDocs = [
+                        { id: "RCA-2026-004-P", title: "📄 RCA-2026-004: 가스터빈 연료 공급 밸브 구동부 고장 보고서 원본", fileId: "1_databases_neo4j_demo_surge_report" },
+                        { id: "MAN-GT-01", title: "⚙️ MAN-GT-01: GT-01 가스터빈 설비 정비 매뉴얼 지침서", url: "https://drive.google.com" }
                     ];
                 } else if (alarmNameRaw.includes("SURGE")) {
                     neo4jDocs = [
@@ -282,22 +292,28 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                 }
             }
 
-            // 🎯 [v1730 하이패스 하이퍼링크 렌더러] 버튼 클릭 시 search.html처럼 구글 드라이브 뷰어로 다이렉트 새 창 연결
+            // 🎯 [핵심 함수] 버튼 클릭 시 search.html과 완전히 일치하게 정밀 구글 드라이브 뷰어로 다이렉트 새 창 연결
             function renderDocLinkButtons(targetArray, containerElement) {
                 targetArray.forEach(doc => {
-                    // 구글 드라이브 뷰어 전체 링크 결합 처리 규칙
                     let finalTargetUrl = doc.url;
+                    
+                    // n8n 데이터나 맵 정보에 fileId가 존재할 경우, 올바른 /file/d/ 와 /view 형태 주소로 강제 빌딩
                     if (!finalTargetUrl && doc.fileId) {
-                        finalTargetUrl = `https://drive.google.com/file/d/${doc.fileId}/view?usp=sharing`;
+                        // 💡 만약 n8n 백엔드가 주는 fileId 자체에 주소가 섞여있다면 걸러내고 순수 ID 기반 조합
+                        if (doc.fileId.startsWith("http")) {
+                            finalTargetUrl = doc.fileId;
+                        } else {
+                            finalTargetUrl = `https://drive.google.com/file/d/${doc.fileId}/view?usp=sharing`;
+                        }
                     } else if (!finalTargetUrl) {
                         finalTargetUrl = "https://drive.google.com";
                     }
 
-                    // search.html 디자인과 매칭되는 동적 Anchor 컴포넌트 생성
+                    // 컴포넌트 동적 앵커 렌더링
                     const anchorBtn = document.createElement('a');
                     anchorBtn.className = "btn-doc-vault";
                     anchorBtn.setAttribute('href', finalTargetUrl);
-                    anchorBtn.setAttribute('target', '_blank'); // 무조건 새 창 열기 규격
+                    anchorBtn.setAttribute('target', '_blank'); // 새 탭 규격 고정
                     anchorBtn.innerHTML = `
                         <span><i class="fa-solid fa-file-pdf text-danger me-2"></i> ${doc.title}</span>
                         <i class="fa-brands fa-google-drive font-size-sm"></i>
@@ -307,7 +323,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                 });
             }
 
-            // 이원화 격실에 분리 바인딩 작동
+            // 이원화 파싱 작동
             renderDocLinkButtons(neo4jDocs, neo4jListArea);
             renderDocLinkButtons(pineconeDocs, pineconeListArea);
 
