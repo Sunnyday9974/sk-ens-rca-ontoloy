@@ -33,18 +33,20 @@
         #report-output h3 { font-size: 1.08rem; margin-top: 18px; margin-bottom: 8px; font-weight: 600; }
         #report-output ul, #report-output ol { padding-left: 22px; margin-bottom: 12px; }
 
-        /* 실시간 인용 문서 목록 및 인라인 뷰어 스타일 */
-        .evidence-title { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+        /* 출처 분리 및 탭 버튼 스타일 */
+        .evidence-title { font-size: 0.93rem; font-weight: 700; color: #1e293b; margin-top: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
         .doc-item-link { 
-            display: block; padding: 10px 12px; background-color: #f1f5f9; border: 1px solid #cbd5e1; 
-            border-radius: 6px; color: #334155; font-size: 0.88rem; font-weight: 600; text-decoration: none; 
-            margin-bottom: 8px; transition: all 0.2s; cursor: pointer;
+            display: block; padding: 8px 10px; background-color: #f1f5f9; border: 1px solid #cbd5e1; 
+            border-radius: 6px; color: #334155; font-size: 0.82rem; font-weight: 600; text-decoration: none; 
+            margin-bottom: 6px; transition: all 0.2s; cursor: pointer; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;
         }
-        .doc-item-link:hover, .doc-item-link.active { background-color: #0d6efd; color: white; border-color: #0a58ca; }
+        .doc-item-link:hover { background-color: #e2e8f0; }
+        .doc-item-link.active { background-color: #0d6efd; color: white; border-color: #0a58ca; }
         
+        .section-desc { font-size: 11px; color: #94a3b8; margin-bottom: 8px; font-style: italic; }
         #inline-doc-viewer { 
-            width: 100%; height: 350px; background-color: #f8fafc; border-radius: 6px; border: 1px solid #cbd5e1;
-            padding: 15px; overflow-y: auto; font-size: 0.9rem; line-height: 1.6; color: #475569;
+            width: 100%; height: 320px; background-color: #f8fafc; border-radius: 6px; border: 1px solid #cbd5e1;
+            padding: 15px; overflow-y: auto; font-size: 0.88rem; line-height: 1.6; color: #475569; margin-top: 15px;
         }
     </style>
 </head>
@@ -122,7 +124,7 @@
                 <hr id="divider" class="d-none" style="margin: 12px 0;">
 
                 <div class="row g-3">
-                    <div class="col-lg-7" style="border-right: 1px solid #dee2e6;">
+                    <div class="col-lg-6" style="border-right: 1px solid #dee2e6;">
                         <div id="report-output">
                             <div class="alert alert-secondary text-muted m-0 small">
                                 왼쪽 관제 패널에서 이상 신호(Alarm)를 유입시키면, 전사 운전/정비 데이터베이스 및 고장 인과관계 지식맵을 탐색하여 실시간 엔지니어링 리포트를 생성합니다.
@@ -130,15 +132,20 @@
                         </div>
                     </div>
                     
-                    <div class="col-lg-5 d-none" id="evidence-pane">
+                    <div class="col-lg-6 d-none" id="evidence-pane">
                         <div class="p-3 border rounded bg-white">
-                            <div class="evidence-title text-primary"><i class="fa-solid fa-list-check"></i> ① 추론 참고 지식 자산 목록</div>
-                            <div id="evidence-docs-list" class="mb-3">
-                                </div>
                             
-                            <div class="evidence-title text-success"><i class="fa-solid fa-file-lines"></i> ② 선택 문서 실제 내용 (Inline Viewer)</div>
+                            <div class="evidence-title text-danger"><i class="fa-solid fa-diagram-project"></i> 1. 온톨로지 참고 문서 (Neo4j)</div>
+                            <div class="section-desc">지식 그래프 DB 고장 고리 체계에서 식별된 인과관계 문서</div>
+                            <div id="evidence-neo4j-list"></div>
+                            
+                            <div class="evidence-title text-primary"><i class="fa-solid fa-brain"></i> 2. 추론 참고 지식 자산 (Pinecone)</div>
+                            <div class="section-desc">유사 RCA 리포트 및 설비 기술 지침서 벡터 매칭 문서</div>
+                            <div id="evidence-pinecone-list"></div>
+                            
+                            <div class="evidence-title text-success" style="margin-top: 25px;"><i class="fa-solid fa-file-lines"></i> 선택 문서 팩트 원문 (Inline Viewer)</div>
                             <div id="inline-doc-viewer" class="bg-light">
-                                <p class="text-muted text-center mt-5 small">위 목록에서 분석 근거 문서를 선택하시면<br>해당 문서의 핵심 팩트 본문이 이곳에 표출됩니다.</p>
+                                <p class="text-muted text-center mt-5 small">상단 목록에서 문서를 마우스로 선택하시면<br>해당 출처 문서의 세부 팩트가 실시간 표출됩니다.</p>
                             </div>
                         </div>
                     </div>
@@ -150,7 +157,7 @@
 </div>
 
 <script>
-// 전역 캐시 변수 (각 문서의 실제 상세 내용을 저장)
+// 전역 문서 데이터 캐시 버퍼
 let cachedDocuments = {};
 
 document.getElementById('btn-submit').addEventListener('click', async function() {
@@ -168,11 +175,17 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     const output = document.getElementById('report-output');
     const divider = document.getElementById('divider');
     const evidencePane = document.getElementById('evidence-pane');
-    const docsListArea = document.getElementById('evidence-docs-list');
+    
+    // 리스트 영역 격리 획득
+    const neo4jListArea = document.getElementById('evidence-neo4j-list');
+    const pineconeListArea = document.getElementById('evidence-pinecone-list');
     const inlineViewer = document.getElementById('inline-doc-viewer');
 
+    // UI 구조 초기화
     output.innerHTML = "";
-    inlineViewer.innerHTML = `<p class="text-muted text-center mt-5 small">위 목록에서 분석 근거 문서를 선택하시면<br>해당 문서의 핵심 팩트 본문이 이곳에 표출됩니다.</p>`;
+    neo4jListArea.innerHTML = "";
+    pineconeListArea.innerHTML = "";
+    inlineViewer.innerHTML = `<p class="text-muted text-center mt-5 small">상단 목록에서 문서를 마우스로 선택하시면<br>해당 출처 문서의 세부 팩트가 실시간 표출됩니다.</p>`;
     divider.classList.add('d-none');
     evidencePane.classList.add('d-none');
     
@@ -243,65 +256,66 @@ document.getElementById('btn-submit').addEventListener('click', async function()
 
             const resJson = await response.json();
             
-            // 1. 좌측 AI 마크다운 리포트 출력
+            // 1. 좌측 AI 분석문 출력
             let reportMarkdown = resJson.output || (typeof resJson === 'object' ? Object.values(resJson)[0] : resJson);
             output.innerHTML = marked.parse(reportMarkdown);
 
-            // 2. 우측 문서 다이렉트 뷰어 패널 활성화
+            // 2. 우측 근거 대조 격실 오픈
             evidencePane.classList.remove('d-none');
-            docsListArea.innerHTML = "";
+            cachedDocuments = {}; 
 
-            // 3. n8n 백엔드 결과 매핑 체인 설정 (Neo4j 및 Pinecone 파싱)
-            let documentsArray = resJson.referencedDocuments || resJson.documents || [];
-            cachedDocuments = {}; // 구조체 리셋
+            // 3. 백엔드 수신 데이터 격리 분리 선언
+            let neo4jDocs = resJson.neo4jDocuments || [];
+            let pineconeDocs = resJson.pineconeDocuments || [];
 
-            // [Fallback] 데이터 연동 안전장치 가동
-            if (documentsArray.length === 0) {
+            // [Smart Fallback] 데이터 유입 없을 시 데모 시나리오 완벽 정밀 보정
+            if (neo4jDocs.length === 0 && pineconeDocs.length === 0) {
                 if (alarmNameRaw.includes("VIB_HIGH")) {
-                    documentsArray = [
-                        { id: "RCA-2026-001", title: "📄 RCA-2026-001: BFP-01A 베어링 조기 고장 분석 보고서", content: "<strong>[Neo4j 및 Pinecone 교차 검증 내용]</strong><br><br>• <strong>발생 현상:</strong> 급수 펌프 모터 및 펌프 베어링 하우징의 수평/수직 진동이 고장 임계치(11.5mm/s)를 초과하여 지속 상승함.<br>• <strong>근본 원인 파악:</strong> 흡입 밸브 후단 스트레이너 이물질 유입으로 인한 유량 협소화 ➡️ 불균일 유동 발생 ➡️ 펌프 내부 임펠러 캐비테이션 거동 변위 충격이 축으로 전달됨.<br>• <strong>과거 정비 조치:</strong> 스트레이너 탈거 후 메쉬 클리닝 및 베어링 오일 링 유격 정밀 조정 완료." },
-                        { id: "SOP-PUMP-01", title: "📘 발전 설비 표준 지침: 보일러 급수 계통 운전 규격", content: "<strong>[표준 기술 지침서 매뉴얼 본문 인용]</strong><br><br>• <strong>규격 제5조 (임계 수치):</strong> 대형 회전 기기의 베어링 진동 계측 시 7.5mm/s는 경보 단계이며, 11.0mm/s 이상 고착 시 설비 보호를 위한 강제 인터록 감발 또는 즉시 트립 정지 절차를 준수해야 함.<br>• <strong>오일 점검 지침:</strong> 베어링 윤활유 내부 유화 현상(수분 혼입) 발생 시 오일 점도를 실시간 계측하여 기준치 미달 시 오일 플러싱을 즉시 명함." }
+                    neo4jDocs = [
+                        { id: "NEO-BFP-01", title: "📂 GRAPH_KG: BFP-01A 인과적 고장 계통 맵 데이터", content: "<strong>[Neo4j Graph DB 연계 팩트 구조]</strong><br><br>• <strong>탐색 선로:</strong> AL_VIB_HIGH ➡️ FM_CAVITATION ➡️ ACT_01(스트레이너 이물질 제거)<br>• <strong>인과성 팩트:</strong> 과거 동일 설비군에서 흡입 차압 고온 다습 환경 조건일 때 진동 주파수 성분이 동반 상승하는 토폴로지 패턴이 3회 이상 매핑되어 있습니다." }
+                    ];
+                    pineconeDocs = [
+                        { id: "PINE-RCA-2026", title: "📄 RCA-2026-001: 보일러 급수펌프 베어링 조기 파손 기술 보고서", content: "<strong>[파인콘 벡터 검색 유사 RCA 보고서 내용]</strong><br><br>• <strong>장애 현상:</strong> 급수펌프 저압단 캐비테이션 거동으로 베어링 하우징 크랙 유발.<br>• <strong>정밀 규격 수치 오차 조치:</strong> 정비팀 레이저 정밀 축 정렬(Alignment) 마이너스 공차 범위를 0.03mm 이하로 긴급 타이트닝 조정 조치함." },
+                        { id: "PINE-SOP-05", title: "📘 SKI E&S 회전기기 진동 경보 표준 운전 지침서", content: "<strong>[전사 표준 운영 매뉴얼 본문]</strong><br><br>• <strong>제4장 고장 임계 조항:</strong> 펌프 연속 운전 시 베어링 변위 진동이 11.5mm/s 선 상회 상태로 10분 지속 시, 기기 소손을 방지하기 위하여 중앙 제어실(DCS)에서는 강제 부하 인터록 감발을 선제 조치해야 함." }
                     ];
                 } else if (alarmNameRaw.includes("SURGE")) {
-                    documentsArray = [
-                        { id: "RCA-2025-042", title: "📄 RCA-2025-042: 원심압축기 실시간 서지 한계점 기술보고서", content: "<strong>[RCA 보고서 팩트 데이터]</strong><br><br>• <strong>장애 요약:</strong> 후단 계통 가스 압력이 역류하면서 컴프레서 내부 스톨(Stall) 현상 동반.<br>• <strong>대책 요약:</strong> 안티 서지 밸브(Anti-Surge Valve)의 구동부 에어 피팅 유격 정밀 튜닝 및 제어 루프 PID 상수 보정 작업 시행 이력 존재." },
-                        { id: "MAN-COMP-02", title: "⚙️ COMP-02B 원심 압축기 정비 매뉴얼", content: "<strong>[제조사 기술 오차 규격]</strong><br><br>• <strong>서지 전조 현상:</strong> 토출 유량이 급격히 감소하고 압력 게이지가 0.5초 주기로 진동할 때 정밀 바이패스 로직이 가동되어야 함. 방치 시 임펠러 영구 변형 초래." }
+                    neo4jDocs = [
+                        { id: "NEO-COMP-02", title: "📂 GRAPH_KG: COMP-02B 원심압축기 고장 모드 사슬", content: "<strong>[Neo4j Graph DB 연계 팩트 구조]</strong><br><br>• <strong>탐색 선로:</strong> AL_SURGE_WARN ➡️ FM_SURGE_TRIP ➡️ ACT_02(안티서지 밸브 개도율 조정)" }
                     ];
-                } else {
-                    documentsArray = [
-                        { id: "DOC-DEFAULT", title: "📄 전사 통합 발전 기기 정비 표준 매뉴얼", content: "선택된 알람 패턴에 매칭되는 지식 그래프 및 기술 문서 컨텍스트 데이터 추적에 성공했습니다. 세부 근거 지침 규격을 만족합니다." }
+                    pineconeDocs = [
+                        { id: "PINE-RCA-2025", title: "📄 RCA-2025-042: 원심압축기 서지 한계점 동적 제어 보고서", content: "<strong>[파인콘 벡터 검색 결과]</strong><br><br>• <strong>내용:</strong> 토출 배관 가스 역류 차압 발생 시 안티 서지 바이패스 밸브 반응 속도 하한 임계치 보정 조치 절차 규격 명시." }
                     ];
                 }
             }
 
-            // 4. 동적 문서 리스트 단추(Button) 생성 및 이벤트 바인딩
-            documentsArray.forEach((doc, index) => {
-                // 실시간 데이터 캐싱 저장
-                cachedDocuments[doc.id] = doc.content;
-
-                const docBtn = document.createElement('div');
-                docBtn.className = "doc-item-link";
-                docBtn.setAttribute('data-doc-id', doc.id);
-                docBtn.innerHTML = `<i class="fa-solid fa-file-invoice text-primary me-2"></i> ${doc.title}`;
-                
-                // 클릭 시 뷰어 영역에 원문 본문 표출 및 Active 클래스 토글 이벤트
-                docBtn.addEventListener('click', function() {
-                    // 기존 활성화된 스타일 초기화
-                    document.querySelectorAll('.doc-item-link').forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
+            // 4. [렌더링 함수 부품] 버튼 생성 및 인라인 뷰어 트리거 로직
+            function renderDocButtons(targetArray, containerElement) {
+                targetArray.forEach((doc, idx) => {
+                    cachedDocuments[doc.id] = doc.content;
                     
-                    // 인라인 뷰어 창에 해당 문서 내용 채워넣기
-                    const selectedContent = cachedDocuments[this.getAttribute('data-doc-id')];
-                    inlineViewer.innerHTML = `<div class="p-1">${selectedContent}</div>`;
+                    const btn = document.createElement('div');
+                    btn.className = "doc-item-link";
+                    btn.setAttribute('data-id', doc.id);
+                    btn.innerHTML = `<i class="fa-solid fa-file-invoice text-secondary me-2"></i> ${doc.title}`;
+                    
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.doc-item-link').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        inlineViewer.innerHTML = `<div class="p-1">${cachedDocuments[this.getAttribute('data-id')]}</div>`;
+                    });
+                    
+                    containerElement.appendChild(btn);
+                    
+                    // 데모의 편의성을 위해 최초 1번 문서 자동 선택 연출
+                    if (containerElement.id === 'evidence-neo4j-list' && idx === 0) {
+                        btn.click();
+                    }
                 });
+            }
 
-                docsListArea.appendChild(docBtn);
-
-                // 최초 실행 시 1순위 문서를 자동으로 먼저 열어주는 스마트 UX 연출
-                if (index === 0) {
-                    docBtn.click();
-                }
-            });
+            // 각각의 격실에 동적 바인딩 실행
+            renderDocButtons(neo4jDocs, neo4jListArea);
+            renderDocButtons(pineconeDocs, pineconeListArea);
 
         } else {
             throw new Error(`서버 에러 (Status: ${response.status})`);
