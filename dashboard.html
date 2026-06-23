@@ -33,21 +33,22 @@
         #report-output h3 { font-size: 1.08rem; margin-top: 18px; margin-bottom: 8px; font-weight: 600; }
         #report-output ul, #report-output ol { padding-left: 22px; margin-bottom: 12px; }
 
-        /* 출처 분리 및 탭 버튼 스타일 */
-        .evidence-title { font-size: 0.93rem; font-weight: 700; color: #1e293b; margin-top: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
-        .doc-item-link { 
-            display: block; padding: 8px 10px; background-color: #f1f5f9; border: 1px solid #cbd5e1; 
-            border-radius: 6px; color: #334155; font-size: 0.82rem; font-weight: 600; text-decoration: none; 
-            margin-bottom: 6px; transition: all 0.2s; cursor: pointer; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;
-        }
-        .doc-item-link:hover { background-color: #e2e8f0; }
-        .doc-item-link.active { background-color: #0d6efd; color: white; border-color: #0a58ca; }
+        /* 이원화 문서 목록 버튼 스타일 (search.html 규격화 적용) */
+        .evidence-title { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-top: 20px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
+        .section-desc { font-size: 11px; color: #94a3b8; margin-bottom: 10px; font-style: italic; }
         
-        .section-desc { font-size: 11px; color: #94a3b8; margin-bottom: 8px; font-style: italic; }
-        #inline-doc-viewer { 
-            width: 100%; height: 320px; background-color: #f8fafc; border-radius: 6px; border: 1px solid #cbd5e1;
-            padding: 15px; overflow-y: auto; font-size: 0.88rem; line-height: 1.6; color: #475569; margin-top: 15px;
+        .btn-doc-vault { 
+            display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; 
+            background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; 
+            color: #334155; font-size: 0.83rem; font-weight: 600; text-decoration: none; 
+            margin-bottom: 8px; transition: all 0.2s; cursor: pointer;
         }
+        .btn-doc-vault:hover { 
+            background-color: #f1f5f9; color: #0d6efd; border-color: #0d6efd; 
+            box-shadow: 0 4px 8px rgba(13, 110, 253, 0.08); transform: translateY(-1px);
+        }
+        .btn-doc-vault i.fa-google-drive { color: #059669; }
+        .btn-doc-vault:hover i.fa-google-drive { color: #34d399; }
     </style>
 </head>
 <body>
@@ -133,19 +134,18 @@
                     </div>
                     
                     <div class="col-lg-6 d-none" id="evidence-pane">
-                        <div class="p-3 border rounded bg-white">
+                        <div class="p-3 border rounded bg-white" style="min-height: 550px;">
                             
                             <div class="evidence-title text-danger"><i class="fa-solid fa-diagram-project"></i> 1. 온톨로지 참고 문서 (Neo4j)</div>
-                            <div class="section-desc">지식 그래프 DB 고장 고리 체계에서 식별된 인과관계 문서</div>
-                            <div id="evidence-neo4j-list"></div>
+                            <div class="section-desc">클릭하면 지식 그래프 사슬에 매핑된 마스터 원문 PDF가 바로 열립니다.</div>
+                            <div id="evidence-neo4j-list" class="mb-4"></div>
                             
                             <div class="evidence-title text-primary"><i class="fa-solid fa-brain"></i> 2. 추론 참고 지식 자산 (Pinecone)</div>
-                            <div class="section-desc">유사 RCA 리포트 및 설비 기술 지침서 벡터 매칭 문서</div>
+                            <div class="section-desc">클릭하면 AI가 의미론적으로 탐색해 낸 관련 정비 기술 지침서 원문이 바로 열립니다.</div>
                             <div id="evidence-pinecone-list"></div>
                             
-                            <div class="evidence-title text-success" style="margin-top: 25px;"><i class="fa-solid fa-file-lines"></i> 선택 문서 팩트 원문 (Inline Viewer)</div>
-                            <div id="inline-doc-viewer" class="bg-light">
-                                <p class="text-muted text-center mt-5 small">상단 목록에서 문서를 마우스로 선택하시면<br>해당 출처 문서의 세부 팩트가 실시간 표출됩니다.</p>
+                            <div class="mt-5 p-3 rounded text-center" style="background-color: #f8fafc; border: 1px dashed #cbd5e1; font-size: 11px; color: #94a3b8;">
+                                <i class="fa-solid fa-user-shield text-success me-1"></i> 문서 선택 시 사내 Google Drive 보안 뷰어로 유기적 보안 연결됩니다.
                             </div>
                         </div>
                     </div>
@@ -157,9 +157,6 @@
 </div>
 
 <script>
-// 전역 문서 데이터 캐시 버퍼
-let cachedDocuments = {};
-
 document.getElementById('btn-submit').addEventListener('click', async function() {
     const assetId = document.getElementById('asset_id').value;
     const alarmNameRaw = document.getElementById('alarm_name').value;
@@ -176,16 +173,13 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     const divider = document.getElementById('divider');
     const evidencePane = document.getElementById('evidence-pane');
     
-    // 리스트 영역 격리 획득
     const neo4jListArea = document.getElementById('evidence-neo4j-list');
     const pineconeListArea = document.getElementById('evidence-pinecone-list');
-    const inlineViewer = document.getElementById('inline-doc-viewer');
 
-    // UI 구조 초기화
+    // UI 레이아웃 리셋
     output.innerHTML = "";
     neo4jListArea.innerHTML = "";
     pineconeListArea.innerHTML = "";
-    inlineViewer.innerHTML = `<p class="text-muted text-center mt-5 small">상단 목록에서 문서를 마우스로 선택하시면<br>해당 출처 문서의 세부 팩트가 실시간 표출됩니다.</p>`;
     divider.classList.add('d-none');
     evidencePane.classList.add('d-none');
     
@@ -256,66 +250,66 @@ document.getElementById('btn-submit').addEventListener('click', async function()
 
             const resJson = await response.json();
             
-            // 1. 좌측 AI 분석문 출력
             let reportMarkdown = resJson.output || (typeof resJson === 'object' ? Object.values(resJson)[0] : resJson);
             output.innerHTML = marked.parse(reportMarkdown);
 
-            // 2. 우측 근거 대조 격실 오픈
+            // 우측 사이드 패널 활성화
             evidencePane.classList.remove('d-none');
-            cachedDocuments = {}; 
 
-            // 3. 백엔드 수신 데이터 격리 분리 선언
+            // 백엔드 반환 리스트 변수 매핑
             let neo4jDocs = resJson.neo4jDocuments || [];
             let pineconeDocs = resJson.pineconeDocuments || [];
 
-            // [Smart Fallback] 데이터 유입 없을 시 데모 시나리오 완벽 정밀 보정
+            // [Smart Fallback] 데이터 유입 한계 시 데모 검증용 정밀 자동 분기 체인
             if (neo4jDocs.length === 0 && pineconeDocs.length === 0) {
                 if (alarmNameRaw.includes("VIB_HIGH")) {
                     neo4jDocs = [
-                        { id: "NEO-BFP-01", title: "📂 GRAPH_KG: BFP-01A 인과적 고장 계통 맵 데이터", content: "<strong>[Neo4j Graph DB 연계 팩트 구조]</strong><br><br>• <strong>탐색 선로:</strong> AL_VIB_HIGH ➡️ FM_CAVITATION ➡️ ACT_01(스트레이너 이물질 제거)<br>• <strong>인과성 팩트:</strong> 과거 동일 설비군에서 흡입 차압 고온 다습 환경 조건일 때 진동 주파수 성분이 동반 상승하는 토폴로지 패턴이 3회 이상 매핑되어 있습니다." }
+                        { id: "RCA-2026-001", title: "📄 RCA-2026-001: BFP-01A 베어링 변위 파손 계통보고서", fileId: "1fc3147f1_databases_neo4j_demo_rca_report" }
                     ];
                     pineconeDocs = [
-                        { id: "PINE-RCA-2026", title: "📄 RCA-2026-001: 보일러 급수펌프 베어링 조기 파손 기술 보고서", content: "<strong>[파인콘 벡터 검색 유사 RCA 보고서 내용]</strong><br><br>• <strong>장애 현상:</strong> 급수펌프 저압단 캐비테이션 거동으로 베어링 하우징 크랙 유발.<br>• <strong>정밀 규격 수치 오차 조치:</strong> 정비팀 레이저 정밀 축 정렬(Alignment) 마이너스 공차 범위를 0.03mm 이하로 긴급 타이트닝 조정 조치함." },
-                        { id: "PINE-SOP-05", title: "📘 SKI E&S 회전기기 진동 경보 표준 운전 지침서", content: "<strong>[전사 표준 운영 매뉴얼 본문]</strong><br><br>• <strong>제4장 고장 임계 조항:</strong> 펌프 연속 운전 시 베어링 변위 진동이 11.5mm/s 선 상회 상태로 10분 지속 시, 기기 소손을 방지하기 위하여 중앙 제어실(DCS)에서는 강제 부하 인터록 감발을 선제 조치해야 함." }
+                        { id: "RCA-2026-001-P", title: "📄 RCA-2026-001: BFP-01A 베어링 조기 고장 분석 보고서 원본", fileId: "1fc3147f1_databases_neo4j_demo_rca_report" },
+                        { id: "SOP-PUMP-01", title: "📘 SOP-PUMP-01: 보일러 급수 계통 기기 운전 지침 매뉴얼", url: "https://drive.google.com" }
                     ];
                 } else if (alarmNameRaw.includes("SURGE")) {
                     neo4jDocs = [
-                        { id: "NEO-COMP-02", title: "📂 GRAPH_KG: COMP-02B 원심압축기 고장 모드 사슬", content: "<strong>[Neo4j Graph DB 연계 팩트 구조]</strong><br><br>• <strong>탐색 선로:</strong> AL_SURGE_WARN ➡️ FM_SURGE_TRIP ➡️ ACT_02(안티서지 밸브 개도율 조정)" }
+                        { id: "RCA-2025-042", title: "📄 RCA-2025-042: 원심압축기 서지 한계 동적 추적 연구서", fileId: "1_databases_neo4j_demo_surge_report" }
                     ];
                     pineconeDocs = [
-                        { id: "PINE-RCA-2025", title: "📄 RCA-2025-042: 원심압축기 서지 한계점 동적 제어 보고서", content: "<strong>[파인콘 벡터 검색 결과]</strong><br><br>• <strong>내용:</strong> 토출 배관 가스 역류 차압 발생 시 안티 서지 바이패스 밸브 반응 속도 하한 임계치 보정 조치 절차 규격 명시." }
+                        { id: "MAN-COMP-02", title: "⚙️ MAN-COMP-02: COMP-02B 원심 압축기 제조사 정비 규격서", url: "https://drive.google.com" }
                     ];
+                } else {
+                    neo4jDocs = [{ id: "DOC-DEF-N", title: "📄 발전소 통합 고장 모드 분류 표준 가이드", url: "https://drive.google.com" }];
                 }
             }
 
-            // 4. [렌더링 함수 부품] 버튼 생성 및 인라인 뷰어 트리거 로직
-            function renderDocButtons(targetArray, containerElement) {
-                targetArray.forEach((doc, idx) => {
-                    cachedDocuments[doc.id] = doc.content;
-                    
-                    const btn = document.createElement('div');
-                    btn.className = "doc-item-link";
-                    btn.setAttribute('data-id', doc.id);
-                    btn.innerHTML = `<i class="fa-solid fa-file-invoice text-secondary me-2"></i> ${doc.title}`;
-                    
-                    btn.addEventListener('click', function() {
-                        document.querySelectorAll('.doc-item-link').forEach(b => b.classList.remove('active'));
-                        this.classList.add('active');
-                        inlineViewer.innerHTML = `<div class="p-1">${cachedDocuments[this.getAttribute('data-id')]}</div>`;
-                    });
-                    
-                    containerElement.appendChild(btn);
-                    
-                    // 데모의 편의성을 위해 최초 1번 문서 자동 선택 연출
-                    if (containerElement.id === 'evidence-neo4j-list' && idx === 0) {
-                        btn.click();
+            // 🎯 [v1730 하이패스 하이퍼링크 렌더러] 버튼 클릭 시 search.html처럼 구글 드라이브 뷰어로 다이렉트 새 창 연결
+            function renderDocLinkButtons(targetArray, containerElement) {
+                targetArray.forEach(doc => {
+                    // 구글 드라이브 뷰어 전체 링크 결합 처리 규칙
+                    let finalTargetUrl = doc.url;
+                    if (!finalTargetUrl && doc.fileId) {
+                        finalTargetUrl = `https://drive.google.com/file/d/${doc.fileId}/view?usp=sharing`;
+                    } else if (!finalTargetUrl) {
+                        finalTargetUrl = "https://drive.google.com";
                     }
+
+                    // search.html 디자인과 매칭되는 동적 Anchor 컴포넌트 생성
+                    const anchorBtn = document.createElement('a');
+                    anchorBtn.className = "btn-doc-vault";
+                    anchorBtn.setAttribute('href', finalTargetUrl);
+                    anchorBtn.setAttribute('target', '_blank'); // 무조건 새 창 열기 규격
+                    anchorBtn.innerHTML = `
+                        <span><i class="fa-solid fa-file-pdf text-danger me-2"></i> ${doc.title}</span>
+                        <i class="fa-brands fa-google-drive font-size-sm"></i>
+                    `;
+                    
+                    containerElement.appendChild(anchorBtn);
                 });
             }
 
-            // 각각의 격실에 동적 바인딩 실행
-            renderDocButtons(neo4jDocs, neo4jListArea);
-            renderDocButtons(pineconeDocs, pineconeListArea);
+            // 이원화 격실에 분리 바인딩 작동
+            renderDocLinkButtons(neo4jDocs, neo4jListArea);
+            renderDocLinkButtons(pineconeDocs, pineconeListArea);
 
         } else {
             throw new Error(`서버 에러 (Status: ${response.status})`);
