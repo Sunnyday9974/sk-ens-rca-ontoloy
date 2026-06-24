@@ -99,7 +99,7 @@
         <div class="col-lg-4">
             <div class="card mb-4">
                 <div class="card-header py-3">
-                    <span class="fs-6"><i class="fa-solid fa-diagram-project text-success me-2"></i> Neo4j 고장 온톨로지 연동 자산</span>
+                    <span class="fs-6"><i class="fa-solid fa-diagram-project text-success me-2"></i> 1. 온톨로지 참고 문서 (Neo4j)</span>
                 </div>
                 <div class="card-body" id="neo4j-list-area">
                     <div class="text-muted small p-2 text-center">분석 실행 후 동적 로드됩니다.</div>
@@ -108,7 +108,7 @@
 
             <div class="card">
                 <div class="card-header py-3">
-                    <span class="fs-6"><i class="fa-solid fa-database text-danger me-2"></i> Pinecone 지식 자산(Vector DB)</span>
+                    <span class="fs-6"><i class="fa-solid fa-database text-danger me-2"></i> 2. 추론 참고 지식 자산 (Pinecone)</span>
                 </div>
                 <div class="card-body" id="pinecone-list-area">
                     <div class="text-muted small p-2 text-center">분석 실행 후 동적 로드됩니다.</div>
@@ -173,8 +173,8 @@ document.getElementById('btn-analyze').addEventListener('click', async () => {
                 anchorBtn.setAttribute('href', doc.url || "https://drive.google.com");
                 anchorBtn.setAttribute('target', '_blank');
                 anchorBtn.innerHTML = `
-                    <span><i class="fa-solid fa-share-nodes text-success me-2"></i> <strong>[${doc.id || '연동'}]</strong> 과거 고장 사례 매칭</span>
-                    <i class="fa-solid fa-arrow-up-right-from-square text-muted font-size-sm"></i>
+                    <span><i class="fa-solid fa-file-pdf text-danger me-2"></i> ${doc.title || '과거 고장 사례 매칭'}</span>
+                    <i class="fa-brands fa-google-drive text-muted font-size-sm"></i>
                 `;
                 neo4jListArea.appendChild(anchorBtn);
             });
@@ -200,21 +200,20 @@ document.getElementById('btn-analyze').addEventListener('click', async () => {
                     // 하드코딩이 100% 배제된 파인콘 내부의 진짜 파일명과 실시간 signed_url 추출
                     const originName = file.name ? file.name : `참조 정비 문서_${index + 1}.pdf`;
                     const fileUrl = file.signed_url ? file.signed_url : "https://drive.google.com";
-                    const fileId = file.id ? file.id.substring(0, 8) : `REF-${index + 1}`;
 
-                    // 문서 성격(파일명)에 맞춰 알맞은 아이콘 디자인 실시간 배정
+                    // 문서 성격(파일명)에 맞춰 알맞은 아이콘 디자인 실시간 배정 (PDF 기본)
                     let iconHtml = '<i class="fa-solid fa-file-pdf text-danger me-2"></i>';
                     if (originName.toUpperCase().includes("MANUAL") || originName.toUpperCase().includes("TECH")) {
                         iconHtml = '<i class="fa-solid fa-book text-primary me-2"></i>';
                     }
 
-                    // 가변 단추 엘리먼트 실시간 조립 및 웹 마운트
+                    // 가변 단추 엘리먼트 실시간 조립 및 웹 마운트 (기존 레이아웃 규격)
                     const anchorBtn = document.createElement('a');
                     anchorBtn.className = "btn-doc-vault";
                     anchorBtn.setAttribute('href', fileUrl);
                     anchorBtn.setAttribute('target', '_blank');
                     anchorBtn.innerHTML = `
-                        <span>${iconHtml} <strong>[${fileId}]</strong> ${originName}</span>
+                        <span><i class="fa-solid fa-file-pdf text-danger me-2"></i> ${originName}</span>
                         <i class="fa-brands fa-google-drive text-muted font-size-sm"></i>
                     `;
                     pineconeListArea.appendChild(anchorBtn);
