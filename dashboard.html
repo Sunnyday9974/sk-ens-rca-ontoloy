@@ -34,7 +34,7 @@
             line-height: 1.7;
             font-size: 1.05rem;
         }
-        /* 100% 동적 문서 연동 단추 스타일 가이드 */
+        /* 100% 동적 문서 연동 단추 디자인 가이드 */
         .btn-doc-vault {
             display: flex;
             justify-content: space-between;
@@ -54,9 +54,6 @@
             color: #212529;
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.08);
-        }
-        .btn-doc-vault strong {
-            color: #495057;
         }
         .loader {
             display: none;
@@ -138,11 +135,11 @@ document.getElementById('btn-analyze').addEventListener('click', async () => {
     neo4jListArea.innerHTML = '';
     pineconeListArea.innerHTML = '';
 
-    // 테스트/프로덕션 환경에 부합하는 웹훅 URL 주소 세팅 (현재 배포 규격)
+    // 백엔드 프로덕션 웹훅 URL 주소
     const webhookUrl = 'https://prod-1-data.ke.n8n.cloud/webhook/early-warning-alarm';
 
     try {
-        // 2. n8n 백엔드 엔진 호출
+        // 2. n8n 백엔드 파이프라인 호출
         const response = await fetch(webhookUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -155,14 +152,14 @@ document.getElementById('btn-analyze').addEventListener('click', async () => {
         if (!response.ok) throw new Error('백엔드 파이프라인 응답 실패');
         const data = await response.json();
 
-        // 3. AI Agent 마크다운 리포트 출력 바인딩
+        // 3. AI Agent 마크다운 리포트 본문 렌더링
         if (data.output) {
             reportArea.innerHTML = data.output;
         } else {
             reportArea.innerHTML = `<div class="text-danger">원인 분석서 데이터가 존재하지 않습니다.</div>`;
         }
 
-        // 4. [100% 동적] Neo4j 지식 자산 렌더링 엔진
+        // 4. Neo4j 과거 고장 정비 사례 링크 렌더링
         let neo4jDocs = data.neo4jDocuments || [];
         if (typeof neo4jDocs === 'string') {
             try { neo4jDocs = JSON.parse(neo4jDocs); } catch(e) { neo4jDocs = []; }
@@ -182,52 +179,59 @@ document.getElementById('btn-analyze').addEventListener('click', async () => {
                 neo4jListArea.appendChild(anchorBtn);
             });
         } else {
-            neo4jListArea.innerHTML = `<div class="text-muted small p-2">연동된 고장계통 온톨로지가 없습니다.</div>`;
+            neo4jListArea.innerHTML = `<div class="text-muted small p-2 text-center">연동된 고장계통 온톨로지가 없습니다.</div>`;
         }
 
-        // 5. [★최종 마감] Pinecone 지식 자산 렌더링 엔진 (하드코딩 0% 무결성 버전)
+        // 5. [★최종 완결] 파인콘 직결 패킷 파싱 및 다중 단추 동적 생성 엔진
         let pineconeDocs = data.pineconeDocuments || [];
         if (typeof pineconeDocs === 'string') {
             try { pineconeDocs = JSON.parse(pineconeDocs); } catch(e) { pineconeDocs = []; }
         }
 
-        if (Array.isArray(docArray = pineconeDocs) && docArray.length > 0) {
-            pineconeListArea.innerHTML = "";
-            docArray.forEach(doc => {
-                // UI 정제: 타이틀 텍스트 내 중복 노출되는 코드명(ID)을 깨끗하게 정리합니다.
-                let cleanTitle = doc.title;
-                if (doc.id && cleanTitle.includes(doc.id)) {
-                    cleanTitle = cleanTitle.replace(doc.id, "").replace(":", "").trim();
-                }
+        if (Array.isArray(pineconeDocs) && pineconeDocs.length > 0) {
+            pineconeListArea.innerHTML = ""; // 기존 대기 메시지 세척
+            
+            pineconeDocs.forEach((doc, index) => {
+                // 백엔드 Code 노드가 통째로 토스한 원본 트리 구조 정밀 추적
+                const ref = doc.references && doc.references[0];
+                const file = ref && ref.file;
+                
+                if (file) {
+                    // 하드코딩이 100% 배제된 파인콘 내부의 진짜 파일명과 실시간 signed_url 추출
+                    const originName = file.name ? file.name : `참조 정비 문서_${index + 1}.pdf`;
+                    const fileUrl = file.signed_url ? file.signed_url : "https://drive.google.com";
+                    const fileId = file.id ? file.id.substring(0, 8) : `REF-${index + 1}`;
 
-                // 문서 종류별 다이렉트 아이콘 매핑 분기
-                let iconHtml = '<i class="fa-solid fa-file-pdf text-danger me-2"></i>';
-                if (doc.title.includes("📘") || doc.title.includes("지침서")) {
-                    iconHtml = '<i class="fa-solid fa-book text-primary me-2"></i>';
-                } else if (doc.title.includes("📕") || doc.title.includes("가이드")) {
-                    iconHtml = '<i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>';
-                }
+                    // 문서 성격(파일명)에 맞춰 알맞은 아이콘 디자인 실시간 배정
+                    let iconHtml = '<i class="fa-solid fa-file-pdf text-danger me-2"></i>';
+                    if (originName.toUpperCase().includes("MANUAL") || originName.toUpperCase().includes("TECH")) {
+                        iconHtml = '<i class="fa-solid fa-book text-primary me-2"></i>';
+                    }
 
-                // 백엔드가 준 진짜 가변 데이터로 단추 동적 마운트
-                const anchorBtn = document.createElement('a');
-                anchorBtn.className = "btn-doc-vault";
-                anchorBtn.setAttribute('href', doc.url || "https://drive.google.com");
-                anchorBtn.setAttribute('target', '_blank');
-                anchorBtn.innerHTML = `
-                    <span>${iconHtml} <strong>[${doc.id || '참조'}]</strong> ${cleanTitle}</span>
-                    <i class="fa-brands fa-google-drive text-muted font-size-sm"></i>
-                `;
-                pineconeListArea.appendChild(anchorBtn);
+                    // 가변 단추 엘리먼트 실시간 조립 및 웹 마운트
+                    const anchorBtn = document.createElement('a');
+                    anchorBtn.className = "btn-doc-vault";
+                    anchorBtn.setAttribute('href', fileUrl);
+                    anchorBtn.setAttribute('target', '_blank');
+                    anchorBtn.innerHTML = `
+                        <span>${iconHtml} <strong>[${fileId}]</strong> ${originName}</span>
+                        <i class="fa-brands fa-google-drive text-muted font-size-sm"></i>
+                    `;
+                    pineconeListArea.appendChild(anchorBtn);
+                }
             });
-        } else {
-            pineconeListArea.innerHTML = `<div class="text-muted small p-2">유사 추천 지식 자산 매칭 완료</div>`;
+        }
+        
+        // 최종 안전장치: 단추가 생성되지 않았을 때의 디폴트 예외 처리
+        if (pineconeListArea.innerHTML === "" || pineconeListArea.innerHTML.includes("분석 실행 후")) {
+            pineconeListArea.innerHTML = `<div class="text-muted small p-2 text-center">유사 추천 지식 자산 매칭 완료</div>`;
         }
 
     } catch (error) {
         console.error('대시보드 런타임 에러 발생:', error);
         reportArea.innerHTML = `<div class="alert alert-danger mt-3">파이프라인 통신 에러: ${error.message}</div>`;
     } finally {
-        // 6. 로딩 비활성화 및 화면 복원
+        // 6. 로딩 상태 비활성화 및 화면 불투명도 정상 복귀
         spinner.style.display = 'none';
         content.style.opacity = '1';
     }
