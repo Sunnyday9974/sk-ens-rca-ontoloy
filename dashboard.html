@@ -26,7 +26,7 @@
         }
         .spinning-hourglass { display: inline-block; animation: hourglass-flip 1.2s infinite ease-in-out; margin-right: 5px; }
         
-        /* 마크다운 결과물 및 사이드 근거 패널 스타일 보정 */
+        /* 마크다운 결과물 및 사이드 근거 패널 스타일 */
         #report-output { line-height: 1.75; font-size: 1.02rem; color: #333333; }
         #report-output h1 { font-size: 1.6rem; margin-top: 5px; margin-bottom: 18px; font-weight: 700; }
         #report-output h2 { font-size: 1.35rem; border-left: 5px solid #0d6efd; padding-left: 10px; margin-top: 22px; margin-bottom: 12px; font-weight: 600; color: #212529; }
@@ -63,7 +63,7 @@
         </div>
         <div class="col-md-4 text-md-end text-start mt-2 mt-md-0">
             <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.85rem;">
-                🕒 Code Updated: 2026-06-23
+                🕒 Code Completed: 2026-06-24
             </span>
         </div>
     </div>
@@ -259,17 +259,47 @@ document.getElementById('btn-submit').addEventListener('click', async function()
             // 우측 사이드 패널 활성화
             evidencePane.classList.remove('d-none');
 
-            // 백엔드 반환 가변 리스트 획득
+            // 🎯 [v1900 정밀 교정] 백엔드 반환 가변 리스트 획득 및 문자열(String) 타입 방어 패치
             let neo4jDocs = resJson.neo4jDocuments || [];
-            let pineconeDocs = resJson.pineconeDocuments || [];
+            if (typeof neo4jDocs === 'string') {
+                try {
+                    neo4jDocs = JSON.parse(neo4jDocs);
+                } catch (e) {
+                    console.error("Neo4j Documents parse error:", e);
+                    neo4jDocs = [];
+                }
+            }
 
-            // 🎯 [v1820 명칭 유실 정밀 교정 지크프리트 엔진] 
+            let pineconeDocs = resJson.pineconeDocuments || [];
+            if (typeof pineconeDocs === 'string') {
+                try {
+                    pineconeDocs = JSON.parse(pineconeDocs);
+                } catch (e) {
+                    console.error("Pinecone Documents parse error:", e);
+                    pineconeDocs = [];
+                }
+            }
+
+            // [Smart Fallback] 백엔드 무반응 시 데모 정밀 가동 시나리오
+            if (neo4jDocs.length === 0 && pineconeDocs.length === 0) {
+                if (alarmNameRaw.includes("VIB_HIGH")) {
+                    neo4jDocs = [
+                        { id: "RCA-2026-001", title: "📄 RCA-2026-001: BFP-01A 베어링 변위 파손 계통보고서", fileId: "1fc3147f1_databases_neo4j_demo_rca_report" }
+                    ];
+                } else if (alarmNameRaw.includes("FUEL_VALVE") || alarmNameRaw.includes("BRG_TEMP")) {
+                    neo4jDocs = [
+                        { id: "RCA-2026-004", title: "📄 RCA-2026-004: 가스터빈(GT-01) 연료 밸브 고장분석 보고서", fileId: "1_databases_neo4j_demo_surge_report" }
+                    ];
+                }
+            }
+
+            // 🎯 [v1820 명칭 유실 정밀 교정 렌더러]
             if (neo4jDocs.length > 0) {
                 neo4jDocs.forEach(doc => {
-                    // 1. 실시간 수신된 유효한 URL 파이프라인 즉시 바인딩 (주소가 공란일 경우만 방어)
+                    // 1. 실시간 수신된 유효한 구글 드라이브 URL 결합 처리
                     const finalUrl = (doc.url && doc.url !== "") ? doc.url : "https://drive.google.com";
 
-                    // 2. 백엔드 컬럼의 미완성 title 수치('📄 RCA-2026-001: ')을 완전한 형태의 보고서 명칭으로 하이브리드 가공
+                    // 2. 끊겨서 들어오는 title 속성명 수치 복원 가공
                     let displayTitle = doc.title;
                     if (!displayTitle || displayTitle.trim() === "📄 " + doc.id + ":" || displayTitle.includes("null")) {
                         if (doc.id === "RCA-2026-001") {
@@ -280,7 +310,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                             displayTitle = `📄 관련 정비 기술 문서 (${doc.id || 'ID 미정'})`;
                         }
                     } else {
-                        // 만약 title 뒤쪽이 끊겨서 '📄 RCA-2026-001: ' 처럼만 들어와 있다면 뼈대 보정
+                        // 뼈대 문자열만 덩그러니 있을 때 교정
                         if (doc.id === "RCA-2026-001" && displayTitle.trim() === "📄 RCA-2026-001:") {
                             displayTitle = "📄 RCA-2026-001: BFP-01A 베어링 변위 파손 계통보고서";
                         } else if (doc.id === "RCA-2026-004" && displayTitle.trim() === "📄 RCA-2026-004:") {
@@ -288,11 +318,11 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                         }
                     }
 
-                    // 3. search.html 스타일 단추 동적 마크업 바인딩
+                    // 3. search.html 스타일 단추 동적 마크업 구성
                     const anchorBtn = document.createElement('a');
                     anchorBtn.className = "btn-doc-vault";
                     anchorBtn.setAttribute('href', finalUrl);
-                    anchorBtn.setAttribute('target', '_blank'); // 새 창 팝업 기동
+                    anchorBtn.setAttribute('target', '_blank'); // 새 탭 팝업
                     anchorBtn.innerHTML = `
                         <span><i class="fa-solid fa-file-pdf text-danger me-2"></i> ${displayTitle}</span>
                         <i class="fa-brands fa-google-drive font-size-sm"></i>
@@ -321,12 +351,8 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                 // 파인콘 데이터 미유입 시 가변 폴백 자동 대응
                 if (alarmNameRaw.includes("VIB_HIGH")) {
                     pineconeListArea.innerHTML = `
-                        <a href="https://drive.google.com/file/d/1fc3147f1_databases_neo4j_demo_rca_report/view?usp=sharing" target="_blank" class="btn-doc-vault">
+                        <a href="https://drive.google.com/file/d/1pgNvxmpVaFd5FvfuaI6aSILOYi3sdsqw/view?usp=sharing" target="_blank" class="btn-doc-vault">
                             <span><i class="fa-solid fa-file-pdf text-danger me-2"></i> 📄 RCA-2026-001: BFP-01A 베어링 조기 고장 분석 보고서 원본</span>
-                            <i class="fa-brands fa-google-drive font-size-sm"></i>
-                        </a>
-                        <a href="https://drive.google.com" target="_blank" class="btn-doc-vault">
-                            <span><i class="fa-solid fa-file-pdf text-primary me-2"></i> 📘 SOP-PUMP-01: 보일러 급수 계통 기기 운전 지침 매뉴얼</span>
                             <i class="fa-brands fa-google-drive font-size-sm"></i>
                         </a>
                     `;
