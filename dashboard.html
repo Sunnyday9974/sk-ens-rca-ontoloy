@@ -8,93 +8,76 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .main-header { border-bottom: 2px solid #dee2e6; padding-bottom: 15px; margin-bottom: 25px; }
-        .panel { background: #ffffff; border-radius: 8px; border: 1px solid #e3e6f0; padding: 20px; min-height: 780px; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05); }
+        body { background-color: #f4f7f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #334155; }
+        .main-header { border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 25px; }
         
-        .step-box { padding: 10px 12px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; height: 100%; display: none; text-align: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
-        .step-loading { background-color: #cff4fc; color: #055160; border: 1px solid #b6effb; }
-        .step-success { background-color: #e2f0d9; color: #385723; border: 1px solid #badbcc; }
-        .step-error { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+        /* 메인 패널 스타일 */
+        .panel { background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 24px; min-height: 780px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .side-panel { min-height: auto; margin-bottom: 20px; }
+
+        /* 분석 단계 박스 */
+        .step-box { padding: 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; text-align: center; display: none; transition: all 0.3s ease; }
+        .step-loading { background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+        .step-success { background-color: #ecfdf5; color: #065f46; border: 1px solid #10b981; }
         
         @keyframes hourglass-flip {
             0% { transform: rotate(0deg); }
-            50% { transform: rotate(180deg); }
             100% { transform: rotate(180deg); }
         }
-        .spinning-hourglass { display: inline-block; animation: hourglass-flip 1.2s infinite ease-in-out; margin-right: 5px; }
-        
-        #report-output { line-height: 1.75; font-size: 1.05rem; color: #333333; }
-        #report-output h1 { font-size: 1.8rem; margin-top: 10px; margin-bottom: 20px; font-weight: 700; }
-        #report-output h2 { font-size: 1.4rem; border-left: 5px solid #0d6efd; padding-left: 10px; margin-top: 25px; margin-bottom: 15px; font-weight: 600; color: #212529; }
-        #report-output h3 { font-size: 1.15rem; margin-top: 20px; margin-bottom: 10px; font-weight: 600; }
-        #report-output ul, #report-output ol { padding-left: 25px; margin-bottom: 15px; }
-        #report-output li { margin-bottom: 5px; }
-        #report-output strong { color: #111111; }
-        #report-output hr { margin: 25px 0; border-top: 1px solid #dee2e6; }
+        .spinning-hourglass { display: inline-block; animation: hourglass-flip 1.2s infinite ease-in-out; }
 
-        /* [🔥 세련된 임원 보고용] 리포트 본문 내부의 근거 하이퍼링크 배지 스타일링 */
+        /* 리포트 레이아웃 전용 (내부 소스 패널 포함) */
+        .report-container { position: relative; width: 100%; margin-top: 20px; }
+        
+        /* [🔥 신규] 리포트 내 우측 상단 미니 소스 보드 */
+        #knowledge-source-board {
+            float: right;
+            width: 280px;
+            margin-left: 20px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            display: none; /* 초기 숨김 */
+        }
+        .source-section-title { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; display: flex; align-items: center; }
+        
+        /* 미니 버튼 스타일 */
+        .btn-mini-source {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            color: #475569;
+            text-decoration: none;
+            font-size: 0.75rem;
+            margin-bottom: 6px;
+            transition: all 0.2s;
+        }
+        .btn-mini-source:hover { background: #f1f5f9; color: #1e293b; border-color: #cbd5e1; transform: translateX(2px); }
+        .btn-mini-source i { font-size: 0.7rem; }
+
+        /* 리포트 본문 텍스트 */
+        #report-output { line-height: 1.8; font-size: 1rem; color: #1e293b; }
+        #report-output h2 { font-size: 1.5rem; border-left: 4px solid #3b82f6; padding-left: 12px; margin: 30px 0 15px; font-weight: 700; }
         #report-output a[href^="http"] {
             display: inline-block;
-            background-color: #e2f0d9;
-            color: #385723;
-            font-size: 0.8rem;
+            background-color: #f0fdf4;
+            color: #166534;
+            font-size: 0.75rem;
             font-weight: 600;
-            padding: 2px 7px;
+            padding: 1px 6px;
             border-radius: 4px;
             text-decoration: none;
-            margin-left: 5px;
-            border: 1px solid #badbcc;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            transition: all 0.15s ease-in-out;
-        }
-        #report-output a[href^="http"]:hover {
-            background-color: #385723;
-            color: #ffffff;
-            border-color: #385723;
-            transform: translateY(-1px);
+            border: 1px solid #bbf7d0;
+            margin: 0 2px;
         }
 
-        .btn-doc-vault {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 14px;
-            background-color: #ffffff;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            color: #495057;
-            text-decoration: none;
-            transition: all 0.15s ease-in-out;
-            margin-bottom: 10px;
-            font-size: 0.95rem;
-        }
-        .btn-doc-vault:hover {
-            background-color: #f1f3f5;
-            border-color: #ced4da;
-            color: #212529;
-            transform: translateY(-1px);
-        }
-        .sub-panel-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #495057;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-        }
-        .debug-console {
-            background-color: #212529;
-            color: #0dfd53;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.8rem;
-            padding: 12px;
-            border-radius: 6px;
-            max-height: 180px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
+        .debug-console { background: #1e293b; color: #4ade80; font-family: monospace; font-size: 0.75rem; padding: 10px; border-radius: 6px; margin-top: 20px; max-height: 150px; overflow-y: auto; display: none; }
     </style>
 </head>
 <body>
@@ -102,115 +85,83 @@
 <div class="container-fluid p-4">
     <div class="main-header row align-items-center">
         <div class="col-md-8">
-            <h2>🏭 SKI E&S 실시간 발전 설비 이상 신호 분석 시스템</h2>
+            <h2 class="fw-bold"><i class="fa-solid fa-microchip text-primary me-2"></i> SKI E&S RCA Agent Intelligence</h2>
         </div>
-        <div class="col-md-4 text-md-end text-start mt-2 mt-md-0">
-            <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.85rem;">
-                🕒 Code Updated: 2026-06-25 16:40
+        <div class="col-md-4 text-md-end">
+            <span class="badge bg-white text-dark border p-2 font-monospace" style="font-size: 0.8rem;">
+                🕒 System Sync: 2026-06-25 17:35
             </span>
         </div>
     </div>
 
     <div class="row g-4">
-        
         <div class="col-lg-4 col-md-5">
-            <div class="panel">
-                <h5 class="text-danger fw-bold mb-3">🚨 설비 관제 및 이상신호 유입</h5>
-                <div class="alert alert-info py-2" style="font-size: 0.9rem;">
-                    발전소 현장에서 발생한 실시간 텔레메트리 경보 데이터입니다.
-                </div>
-
+            <div class="panel side-panel">
+                <h5 class="fw-bold mb-4 text-primary"><i class="fa-solid fa-satellite-dish me-2"></i>Telemetry Input</h5>
+                
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">대상 설비 ID (asset_id)</label>
+                    <label class="form-label small fw-bold text-muted">대상 설비 ID (Asset)</label>
                     <select id="asset_id" class="form-select">
                         <option value="BFP-01A">보일러 급수 펌프 (BFP-01A)</option>
                         <option value="GT-01">가스 터빈 (GT-01)</option>
                         <option value="COMP-02B">원심 압축기 (COMP-02B)</option>
                         <option value="RO-02">역삼투압 시스템 (RO-02)</option>
-                        <option value="CWP-03">냉각수 순환 펌프 (CWP-03)</option>
                     </select>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">발생 알람명 (alarm_name)</label>
+                    <label class="form-label small fw-bold text-muted">유입 알람명 (Alarm)</label>
                     <select id="alarm_name" class="form-select">
                         <option value="AL_VIB_HIGH (급수펌프 베어링 진동 고)">급수펌프 베어링 진동 고 (AL_VIB_HIGH)</option>
                         <option value="AL_SURGE_WARN (압축기 서지 전조 알람)">압축기 서지 전조 알람 (AL_SURGE_WARN)</option>
-                        <option value="AL_FUEL_VALVE_FAIL (연료 밸브 제어 편차 알람)">연료 밸브 제어 편차 알람 (AL_FUEL_VALVE_FAIL)</option>
                         <option value="AL_RO_DP_HIGH (RO 막 전후단 차압 고)">RO 막 전후단 차압 고 (AL_RO_DP_HIGH)</option>
-                        <option value="AL_BRG_TEMP_HIGH (베어링 온도 고온 경보)">베어링 온도 고온 경보 (AL_BRG_TEMP_HIGH)</option>
                     </select>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-semibold">현재 측정 수치 (Telemetry Value) : <span id="slider-val" class="text-primary fw-bold">12.8</span></label>
+                    <label class="form-label small fw-bold text-muted">측정 수치 (Value): <span id="slider-val" class="text-primary">12.8</span></label>
                     <input type="range" class="form-range" id="telemetry_value" min="0" max="20" step="0.1" value="12.8" oninput="document.getElementById('slider-val').innerText=this.value">
                 </div>
 
-                <hr>
-
-                <button id="btn-submit" class="btn btn-primary w-100 py-2 fw-bold fs-5">⚡ 실시간 RCA 분석 실행</button>
+                <button id="btn-submit" class="btn btn-primary w-100 py-2 fw-bold border-0" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+                    <i class="fa-solid fa-bolt me-2"></i>실시간 RCA 분석 실행
+                </button>
             </div>
+            
+            <div id="debug-monitor" class="debug-console"></div>
         </div>
 
-        <div class="col-lg-5 col-md-7">
+        <div class="col-lg-8 col-md-7">
             <div class="panel">
-                <h5 class="text-dark fw-bold mb-3">🧠 AI RCA 에이전트 분석 센터 (사내 정비 지식 자산 기반)</h5>
-                
-                <div class="row g-2 mb-2">
-                    <div class="col-md-4">
-                        <div id="step1" class="step-box"></div>
-                    </div>
-                    <div class="col-md-4">
-                        <div id="step2" class="step-box"></div>
-                    </div>
-                    <div class="col-md-4">
-                        <div id="step3" class="step-box"></div>
-                    </div>
+                <div class="row g-2 mb-4">
+                    <div class="col-4"><div id="step1" class="step-box"></div></div>
+                    <div class="col-4"><div id="step2" class="step-box"></div></div>
+                    <div class="col-4"><div id="step3" class="step-box"></div></div>
                 </div>
 
-                <div id="progress-area" class="text-center py-4 d-none">
-                    <div class="spinner-border text-primary mb-2" style="width: 2.2rem; height: 2.2rem;" role="status"></div>
-                    <div class="text-muted small mb-1">📊 전사 축적 정비 지식 및 유사 장애 리포트를 기반으로 원인을 심층 추론 중입니다...</div>
-                    <div class="text-primary fw-bold small">💡 AI 엔진이 엔지니어링 리포트를 생성하고 있습니다. 잠시만 기다려 주십시오.</div>
+                <div id="progress-area" class="text-center py-5 d-none">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <p class="text-muted">전사 정비 지식 및 과거 RCA 리포트 조각들을 매칭하여 원인을 추론 중입니다...</p>
                 </div>
 
-                <hr id="divider" class="d-none" style="margin: 12px 0;">
+                <div class="report-container">
+                    <div id="knowledge-source-board">
+                        <div class="source-section-title"><i class="fa-solid fa-share-nodes me-2 text-success"></i>Ontology (Neo4j)</div>
+                        <div id="neo4j-list-area" class="mb-3"></div>
+                        
+                        <div class="source-section-title"><i class="fa-solid fa-database me-2 text-danger"></i>Evidence (Pinecone)</div>
+                        <div id="pinecone-list-area"></div>
+                    </div>
 
-                <div id="report-output">
-                    <div class="alert alert-secondary text-muted m-0">
-                        왼쪽 관제 패널에서 이상 신호(Alarm)를 유입시키면, 전사 운전/정비 데이터베이스 및 고장 인과관계 지식맵을 탐색하여 실시간 엔지니어링 리포트를 생성합니다.
+                    <div id="report-output">
+                        <div class="text-center text-muted py-5">
+                            <i class="fa-solid fa-file-invoice-arrow-right fa-3x mb-3 opacity-25"></i>
+                            <p>좌측 설비 데이터를 입력하고 분석 버튼을 누르면<br>엔지니어링 RCA 리포트가 이곳에 생성됩니다.</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="col-lg-3 col-md-12 d-flex flex-column gap-4">
-            <div id="reference-zone" class="panel" style="min-height: auto; flex-grow: 1;">
-                <h5 class="text-dark fw-bold mb-3"><i class="fa-solid fa-folder-tree text-warning me-2"></i> 실시간 탐색 지식 자산</h5>
-                <hr style="margin: 10px 0 15px 0;">
-                
-                <div class="mb-4">
-                    <div class="sub-panel-title"><i class="fa-solid fa-share-nodes text-success me-2"></i> 1. 온톨로지 참고 문서 (Neo4j)</div>
-                    <div id="neo4j-list-area">
-                        <div class="text-muted small p-1">RCA 분석 실행 대기 중...</div>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="sub-panel-title"><i class="fa-solid fa-database text-danger me-2"></i> 2. 추론 참고 지식 자산 (Pinecone)</div>
-                    <div id="pinecone-list-area">
-                        <div class="text-muted small p-1">RCA 분석 실행 대기 중...</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel" style="min-height: auto;">
-                <h5 class="text-primary fw-bold mb-2"><i class="fa-solid fa-bug me-2"></i> 🔬 실시간 디버그 모니터</h5>
-                <div id="debug-monitor" class="debug-console">대기 중...</div>
-            </div>
-        </div>
-
     </div>
 </div>
 
@@ -228,182 +179,100 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     const s3 = document.getElementById('step3');
     const progress = document.getElementById('progress-area');
     const output = document.getElementById('report-output');
-    const divider = document.getElementById('divider');
-    const neo4jListArea = document.getElementById('neo4j-list-area');
-    const pineconeListArea = document.getElementById('pinecone-list-area');
-    const debugMonitor = document.getElementById('debug-monitor');
+    const sourceBoard = document.getElementById('knowledge-source-board');
+    const neo4jArea = document.getElementById('neo4j-list-area');
+    const pineconeArea = document.getElementById('pinecone-list-area');
 
+    // UI 초기화
     output.innerHTML = "";
-    divider.classList.add('d-none');
-    neo4jListArea.innerHTML = "<div class='text-muted small p-1'>실시간 탐색 중...</div>";
-    pineconeListArea.innerHTML = "<div class='text-muted small p-1'>실시간 탐색 중...</div>";
-    debugMonitor.innerText = "데이터 패킷 수신 대기 중...";
+    sourceBoard.style.display = "none";
+    neo4jArea.innerHTML = "";
+    pineconeArea.innerHTML = "";
     
-    const loadingHourglass = `<span class="spinning-hourglass">⏳</span>`;
+    const loader = `<span class="spinning-hourglass me-2">⏳</span>`;
 
-    s1.className = "step-box step-loading";
-    s1.style.display = "block";
-    s1.innerHTML = `${loadingHourglass} [Step 1] 과거 정비 이력 온톨로지 조회 중...`;
-    s2.style.display = "none";
-    s3.style.display = "none";
-    progress.classList.add('d-none');
-
-    const payload = {
-        asset_id: assetId,
-        alarm_name: alarmNameRaw,  
-        alarm_id: pureAlarmId,     
-        value: telemetryValue,
-        timestamp: new Date().toISOString()
-    };
+    s1.className = "step-box step-loading"; s1.style.display = "block"; s1.innerHTML = `${loader}Ontology Mapping`;
+    s2.style.display = "none"; s3.style.display = "none";
+    progress.classList.remove('d-none');
 
     const apiPromise = fetch(n8nUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ asset_id: assetId, alarm_name: alarmNameRaw, alarm_id: pureAlarmId, value: telemetryValue, timestamp: new Date().toISOString() })
     });
 
-    let secondsElapsed = 0;
-    const uiTimer = setInterval(() => {
-        secondsElapsed += 0.5;
-        if (secondsElapsed === 3.5) {
-            s1.className = "step-box step-success";
-            s1.innerText = "✔ [Step 1] 과거 정비 이력 온톨로지 조회 완료";
-            s2.className = "step-box step-loading";
-            s2.style.display = "block";
-            s2.innerHTML = `${loadingHourglass} [Step 2] 과거 기술/RCA리포트 사례 매칭 중...`;
+    // 가짜 진행 애니메이션
+    let timer = 0;
+    const interval = setInterval(() => {
+        timer += 0.5;
+        if (timer === 3) {
+            s1.className = "step-box step-success"; s1.innerHTML = "✔ Ontology Linked";
+            s2.className = "step-box step-loading"; s2.style.display = "block"; s2.innerHTML = `${loader}Evidence Retrieval`;
         }
-        if (secondsElapsed === 7.0) {
-            s2.className = "step-box step-success";
-            s2.innerText = "✔ [Step 2] 과거 기술/RCA리포트 사례 매칭 완료";
-            s3.className = "step-box step-loading";
-            s3.style.display = "block";
-            s3.innerHTML = `${loadingHourglass} [Step 3] RCA 엔지니어링 리포트 발행 중...`;
-            progress.classList.remove('d-none');
-            clearInterval(uiTimer); 
+        if (timer === 6) {
+            s2.className = "step-box step-success"; s2.innerHTML = "✔ Evidence Found";
+            s3.className = "step-box step-loading"; s3.style.display = "block"; s3.innerHTML = `${loader}Generating Report`;
         }
     }, 500);
 
     try {
         const response = await apiPromise;
-        clearInterval(uiTimer);
-        s1.className = "step-box step-success";
-        s1.innerText = "✔ [Step 1] 과거 정비 이력 온톨로지 조회 완료";
-        s2.className = "step-box step-success";
-        s2.innerText = "✔ [Step 2] 과거 기술/RCA리포트 사례 매칭 완료";
+        clearInterval(interval);
         progress.classList.add('d-none');
 
         if (response.ok) {
-            s3.className = "step-box step-success";
-            s3.innerText = "✔ [Step 3] RCA 엔지니어링 리포트 발행 완료";
-            divider.classList.remove('d-none');
-
+            s3.className = "step-box step-success"; s3.innerHTML = "✔ Report Finalized";
             const rawData = await response.json();
-            debugMonitor.innerText = JSON.stringify(rawData, null, 2);
-
             const resJson = Array.isArray(rawData) ? rawData[0] : rawData;
 
-            // 1. AI 리포트 본문 마운트 (이곳에서 Markdown 렌더링 시점에 삽입된 링크들이 배지 CSS를 부여받습니다)
-            try {
-                let reportMarkdown = resJson.output || "";
-                if (!reportMarkdown && typeof resJson === 'object') {
-                    const textKey = Object.keys(resJson).find(k => k !== 'pineconeDocuments' && k !== 'neo4jDocuments' && k !== 'neo4j_documents');
-                    if (textKey) reportMarkdown = resJson[textKey];
-                }
-                output.innerHTML = marked.parse(String(reportMarkdown || "분석 리포트가 성공적으로 업데이트되었습니다."));
-            } catch (mdErr) {
-                output.innerHTML = `<div class="alert alert-secondary">RCA 분석서 발행을 마감했습니다.</div>`;
-            }
+            // 1. 리포트 본문 렌더링
+            let reportMarkdown = resJson.output || "분석 결과가 없습니다.";
+            output.innerHTML = marked.parse(reportMarkdown);
 
-            // 2. Neo4j 정밀 매핑 및 유효 링크 다중 가드 보완
-            try {
-                let neo4jDocs = resJson.neo4jDocuments || resJson.neo4j_documents || [];
-                
-                while (typeof neo4jDocs === 'string') {
-                    if (neo4jDocs.trim() === "" || neo4jDocs.trim() === "[]") {
-                        neo4jDocs = [];
-                        break;
+            // 2. 소스 보드 활성화 및 데이터 매핑
+            sourceBoard.style.display = "block";
+
+            // Neo4j 매핑
+            let neo4jDocs = resJson.neo4jDocuments || resJson.neo4j_documents || [];
+            while (typeof neo4jDocs === 'string') {
+                if (neo4jDocs.trim() === "" || neo4jDocs.trim() === "[]") { neo4jDocs = []; break; }
+                neo4jDocs = JSON.parse(neo4jDocs);
+            }
+            if (Array.isArray(neo4jDocs) && neo4jDocs.length > 0) {
+                neo4jDocs.forEach(doc => {
+                    if (!doc.url || doc.url === "#") return;
+                    const a = document.createElement('a');
+                    a.className = "btn-mini-source";
+                    a.href = doc.url; a.target = "_blank";
+                    a.innerHTML = `<span><i class="fa-solid fa-file-pdf text-danger me-2"></i>${doc.title}</span><i class="fa-solid fa-arrow-up-right-from-square opacity-50"></i>`;
+                    neo4jArea.appendChild(a);
+                });
+            } else { neo4jArea.innerHTML = "<div class='text-muted' style='font-size:0.7rem;'>No ontology matched.</div>"; }
+
+            // Pinecone 매핑
+            let pineconeDocs = resJson.pineconeDocuments || [];
+            if (typeof pineconeDocs === 'string') pineconeDocs = JSON.parse(pineconeDocs);
+            if (Array.isArray(pineconeDocs) && pineconeDocs.length > 0) {
+                pineconeDocs.forEach(doc => {
+                    if (doc.references) {
+                        doc.references.forEach(ref => {
+                            const file = ref.file;
+                            if (file && file.signed_url) {
+                                const a = document.createElement('a');
+                                a.className = "btn-mini-source";
+                                a.href = file.signed_url; a.target = "_blank";
+                                a.innerHTML = `<span><i class="fa-solid fa-file-lines text-primary me-2"></i>${file.name}</span><i class="fa-solid fa-link opacity-50"></i>`;
+                                pineconeArea.appendChild(a);
+                            }
+                        });
                     }
-                    neo4jDocs = JSON.parse(neo4jDocs);
-                }
-                
-                if (Array.isArray(neo4jDocs) && neo4jDocs.length > 0) {
-                    neo4jListArea.innerHTML = ""; 
-                    let validDocCount = 0;
+                });
+            } else { pineconeArea.innerHTML = "<div class='text-muted' style='font-size:0.7rem;'>No documents found.</div>"; }
 
-                    neo4jDocs.forEach(doc => {
-                        if (!doc || !doc.title || !doc.url || doc.url.trim() === "" || doc.url === "#") {
-                            return; 
-                        }
-                        
-                        validDocCount++;
-                        const anchorBtn = document.createElement('a');
-                        anchorBtn.className = "btn-doc-vault";
-                        anchorBtn.setAttribute('href', doc.url);
-                        anchorBtn.setAttribute('target', '_blank');
-                        anchorBtn.innerHTML = `
-                            <span><i class="fa-solid fa-file-pdf text-danger me-2"></i> ${doc.title}</span>
-                            <i class="fa-brands fa-google-drive text-muted font-size-sm"></i>
-                        `;
-                        neo4jListArea.appendChild(anchorBtn);
-                    });
-
-                    if (validDocCount === 0) {
-                        neo4jListArea.innerHTML = `<div class="text-muted small p-1">✔ 연동된 고장 온톨로지 매칭 완료 (과거 이력 없음)</div>`;
-                    }
-                } else {
-                    neo4jListArea.innerHTML = `<div class="text-muted small p-1">✔ 연동된 고장 온톨로지 매칭 완료 (과거 이력 없음)</div>`;
-                }
-            } catch (e) { 
-                neo4jListArea.innerHTML = `<div class="text-muted small p-1">✔ 연동된 고장 온톨로지 매칭 완료 (과거 이력 없음)</div>`; 
-            }
-
-            // 3. Pinecone PDF 매핑
-            try {
-                let pineconeDocs = resJson.pineconeDocuments || [];
-                if (typeof pineconeDocs === 'string') pineconeDocs = JSON.parse(pineconeDocs);
-
-                if (Array.isArray(pineconeDocs) && pineconeDocs.length > 0) {
-                    pineconeListArea.innerHTML = "";
-                    
-                    pineconeDocs.forEach((doc, index) => {
-                        if (doc && Array.isArray(doc.references)) {
-                            doc.references.forEach((ref) => {
-                                const file = ref && ref.file;
-                                if (file) {
-                                    const originName = file.name ? file.name : `참조 문서_${index + 1}.pdf`;
-                                    const fileUrl = file.signed_url ? file.signed_url : "#";
-
-                                    const anchorBtn = document.createElement('a');
-                                    anchorBtn.className = "btn-doc-vault";
-                                    anchorBtn.setAttribute('href', fileUrl);
-                                    anchorBtn.setAttribute('target', '_blank');
-                                    anchorBtn.innerHTML = `
-                                        <span><i class="fa-solid fa-file-pdf text-danger me-2"></i> ${originName}</span>
-                                        <i class="fa-brands fa-google-drive text-muted font-size-sm"></i>
-                                    `;
-                                    pineconeListArea.appendChild(anchorBtn);
-                                }
-                            });
-                        }
-                    });
-                }
-            } catch (pErr) { console.error("파인콘 렌더링 가드:", pErr); }
-            
-            if (pineconeListArea.innerHTML === "" || pineconeListArea.innerHTML === "<div class='text-muted small p-1'>실시간 탐색 중...</div>") {
-                pineconeListArea.innerHTML = `<div class="text-muted small p-1">추천 지식 자산 매칭 완료</div>`;
-            }
-
-        } else {
-            throw new Error(`서버 에러 (Status: ${response.status})`);
         }
-
     } catch (error) {
-        clearInterval(uiTimer);
-        progress.classList.add('d-none');
-        s3.className = "step-box step-error";
-        s3.innerText = "❌ 리포트 발행 오류 발생";
-        output.innerHTML = `<div class="alert alert-danger font-monospace small mt-2">${error.message}</div>`;
-        debugMonitor.innerText = `[런타임 에러] 원인 추적:\n${error.message}`;
+        clearInterval(interval);
+        output.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
     }
 });
 </script>
