@@ -12,13 +12,11 @@
         .main-header { border-bottom: 2px solid #dee2e6; padding-bottom: 15px; margin-bottom: 25px; }
         .panel { background: #ffffff; border-radius: 8px; border: 1px solid #e3e6f0; padding: 20px; min-height: 780px; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05); }
         
-        /* 임원 보고용 가로 슬림 그리드 스타일 */
         .step-box { padding: 10px 12px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; height: 100%; display: none; text-align: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
         .step-loading { background-color: #cff4fc; color: #055160; border: 1px solid #b6effb; }
         .step-success { background-color: #e2f0d9; color: #385723; border: 1px solid #badbcc; }
         .step-error { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
         
-        /* 모래시계 회전 애니메이션 효과 추가 */
         @keyframes hourglass-flip {
             0% { transform: rotate(0deg); }
             50% { transform: rotate(180deg); }
@@ -26,7 +24,6 @@
         }
         .spinning-hourglass { display: inline-block; animation: hourglass-flip 1.2s infinite ease-in-out; margin-right: 5px; }
         
-        /* 마크다운 결과물 상단 밀착 및 스타일 보정 */
         #report-output { line-height: 1.75; font-size: 1.05rem; color: #333333; }
         #report-output h1 { font-size: 1.8rem; margin-top: 10px; margin-bottom: 20px; font-weight: 700; }
         #report-output h2 { font-size: 1.4rem; border-left: 5px solid #0d6efd; padding-left: 10px; margin-top: 25px; margin-bottom: 15px; font-weight: 600; color: #212529; }
@@ -36,7 +33,6 @@
         #report-output strong { color: #111111; }
         #report-output hr { margin: 25px 0; border-top: 1px solid #dee2e6; }
 
-        /* 100% 동적 참조 지식 단추 스타일 가이드 (대표님 오리지널 레이아웃 밀착형) */
         .btn-doc-vault {
             display: flex;
             justify-content: space-between;
@@ -76,7 +72,7 @@
         </div>
         <div class="col-md-4 text-md-end text-start mt-2 mt-md-0">
             <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.85rem;">
-                🕒 Code Updated: 2026-06-25 11:22
+                🕒 Code Updated: 2026-06-25 11:53
             </span>
         </div>
     </div>
@@ -197,7 +193,6 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     const neo4jListArea = document.getElementById('neo4j-list-area');
     const pineconeListArea = document.getElementById('pinecone-list-area');
 
-    // UI 상태 초기화
     output.innerHTML = "";
     divider.classList.add('d-none');
     neo4jListArea.innerHTML = "<div class='text-muted small p-1'>실시간 탐색 중...</div>";
@@ -212,7 +207,6 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     s3.style.display = "none";
     progress.classList.add('d-none');
 
-    // [이중 body 해제 완결 규격 수동 동기화]
     const payload = {
         asset_id: assetId,
         alarm_name: alarmNameRaw,  
@@ -265,7 +259,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
             const rawData = await response.json();
             const resJson = Array.isArray(rawData) ? rawData[0] : rawData;
 
-            // 1. [독립 격실] AI 리포트 본문 마운트
+            // 1. AI 리포트 본문 마운트
             try {
                 let reportMarkdown = resJson.output || "";
                 if (!reportMarkdown && typeof resJson === 'object') {
@@ -277,7 +271,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                 output.innerHTML = `<div class="alert alert-secondary">RCA 분석서 발행을 마감했습니다.</div>`;
             }
 
-            // 2. [독립 격실] Neo4j 바인딩
+            // 2. Neo4j 정밀 매핑 복원 보정
             try {
                 let neo4jDocs = resJson.neo4j_documents || [];
                 if (typeof neo4jDocs === 'string') neo4jDocs = JSON.parse(neo4jDocs);
@@ -300,7 +294,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                 }
             } catch (e) { neo4jListArea.innerHTML = `<div class="text-muted small p-1">온톨로지 마감</div>`; }
 
-            // 3. [★독립 격실] Pinecone 오리지널 PDF 2개 1:1 출력 매핑
+            // 3. Pinecone PDF 매핑
             try {
                 let pineconeDocs = resJson.pineconeDocuments || [];
                 if (typeof pineconeDocs === 'string') pineconeDocs = JSON.parse(pineconeDocs);
@@ -330,7 +324,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                         }
                     });
                 }
-            } catch (pErr) { console.error("파인콘 렌더링 세이프 가드:", pErr); }
+            } catch (pErr) { console.error("파인콘 렌더링 가드:", pErr); }
             
             if (pineconeListArea.innerHTML === "" || pineconeListArea.innerHTML === "<div class='text-muted small p-1'>실시간 탐색 중...</div>") {
                 pineconeListArea.innerHTML = `<div class="text-muted small p-1">추천 지식 자산 매칭 완료</div>`;
