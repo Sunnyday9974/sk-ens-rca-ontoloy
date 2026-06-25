@@ -33,6 +33,28 @@
         #report-output strong { color: #111111; }
         #report-output hr { margin: 25px 0; border-top: 1px solid #dee2e6; }
 
+        /* [🔥 세련된 임원 보고용] 리포트 본문 내부의 근거 하이퍼링크 배지 스타일링 */
+        #report-output a[href^="http"] {
+            display: inline-block;
+            background-color: #e2f0d9;
+            color: #385723;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 4px;
+            text-decoration: none;
+            margin-left: 5px;
+            border: 1px solid #badbcc;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: all 0.15s ease-in-out;
+        }
+        #report-output a[href^="http"]:hover {
+            background-color: #385723;
+            color: #ffffff;
+            border-color: #385723;
+            transform: translateY(-1px);
+        }
+
         .btn-doc-vault {
             display: flex;
             justify-content: space-between;
@@ -68,7 +90,7 @@
             font-size: 0.8rem;
             padding: 12px;
             border-radius: 6px;
-            max-height: 200px;
+            max-height: 180px;
             overflow-y: auto;
             white-space: pre-wrap;
             word-break: break-all;
@@ -84,7 +106,7 @@
         </div>
         <div class="col-md-4 text-md-end text-start mt-2 mt-md-0">
             <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.85rem;">
-                🕒 Code Updated: 2026-06-25 16:15
+                🕒 Code Updated: 2026-06-25 16:40
             </span>
         </div>
     </div>
@@ -280,7 +302,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
 
             const resJson = Array.isArray(rawData) ? rawData[0] : rawData;
 
-            // 1. AI 리포트 본문 마운트
+            // 1. AI 리포트 본문 마운트 (이곳에서 Markdown 렌더링 시점에 삽입된 링크들이 배지 CSS를 부여받습니다)
             try {
                 let reportMarkdown = resJson.output || "";
                 if (!reportMarkdown && typeof resJson === 'object') {
@@ -292,7 +314,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                 output.innerHTML = `<div class="alert alert-secondary">RCA 분석서 발행을 마감했습니다.</div>`;
             }
 
-            // 2. Neo4j 정밀 매핑 및 유효 링크 다중 가드 보완 (가짜 껍데기 단추 생성을 원천 차단)
+            // 2. Neo4j 정밀 매핑 및 유효 링크 다중 가드 보완
             try {
                 let neo4jDocs = resJson.neo4jDocuments || resJson.neo4j_documents || [];
                 
@@ -309,7 +331,6 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                     let validDocCount = 0;
 
                     neo4jDocs.forEach(doc => {
-                        // [★최종 안전 가드선] 비어있거나 가짜 링크('#') 데이터 유형은 단추 생성에서 제외
                         if (!doc || !doc.title || !doc.url || doc.url.trim() === "" || doc.url === "#") {
                             return; 
                         }
@@ -327,7 +348,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                     });
 
                     if (validDocCount === 0) {
-                        neo4jListArea.innerHTML = `<div class="text-muted small p-1">✔ 연동된 고장 온톨로지 과거 이력 없음</div>`;
+                        neo4jListArea.innerHTML = `<div class="text-muted small p-1">✔ 연동된 고장 온톨로지 매칭 완료 (과거 이력 없음)</div>`;
                     }
                 } else {
                     neo4jListArea.innerHTML = `<div class="text-muted small p-1">✔ 연동된 고장 온톨로지 매칭 완료 (과거 이력 없음)</div>`;
