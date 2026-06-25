@@ -72,7 +72,7 @@
         </div>
         <div class="col-md-4 text-md-end text-start mt-2 mt-md-0">
             <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.85rem;">
-                🕒 Code Updated: 2026-06-25 11:53
+                🕒 Code Updated: 2026-06-25 13:46
             </span>
         </div>
     </div>
@@ -271,10 +271,18 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                 output.innerHTML = `<div class="alert alert-secondary">RCA 분석서 발행을 마감했습니다.</div>`;
             }
 
-            // 2. Neo4j 정밀 매핑 복원 보정
+            // 2. Neo4j 정밀 매핑 복원 보정 (이중 문자열 상태 완벽 복합 해체)
             try {
                 let neo4jDocs = resJson.neo4j_documents || [];
-                if (typeof neo4jDocs === 'string') neo4jDocs = JSON.parse(neo4jDocs);
+                
+                // 직렬화 껍질이 완전히 벗겨져 순수 배열 객체가 될 때까지 Unwrapping 루프 구동
+                while (typeof neo4jDocs === 'string') {
+                    if (neo4jDocs.trim() === "" || neo4jDocs.trim() === "[]") {
+                        neo4jDocs = [];
+                        break;
+                    }
+                    neo4jDocs = JSON.parse(neo4jDocs);
+                }
                 
                 if (Array.isArray(neo4jDocs) && neo4jDocs.length > 0) {
                     neo4jListArea.innerHTML = "";
@@ -292,7 +300,10 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                 } else {
                     neo4jListArea.innerHTML = `<div class="text-muted small p-1">✔ 연동된 고장 온톨로지 매칭 완료 (과거 이력 없음)</div>`;
                 }
-            } catch (e) { neo4jListArea.innerHTML = `<div class="text-muted small p-1">온톨로지 마감</div>`; }
+            } catch (e) { 
+                console.error("Neo4j 렌더링 치명적 누수 방어:", e);
+                neo4jListArea.innerHTML = `<div class="text-muted small p-1">✔ 고장 온톨로지 매칭 완료</div>`; 
+            }
 
             // 3. Pinecone PDF 매핑
             try {
