@@ -273,12 +273,14 @@ document.getElementById('btn-submit').addEventListener('click', async function()
             // [★핵심 보정] n8n 아웃풋 배열([]) 캡슐 레이어 다이렉트 해체
             const resJson = Array.isArray(rawData) ? rawData[0] : rawData;
             
-            // 1. 리포트 본문 바인딩
+            // 1. 리포트 본문 바인딩 (output 키가 명확히 존재하지 않을 때의 안전장치 보완)
             let reportMarkdown = resJson.output || "";
             if (!reportMarkdown && typeof resJson === 'object') {
-                reportMarkdown = Object.values(resJson)[0] || "";
+                // pineconeDocuments나 neo4j_documents가 아닌 일반 텍스트 성격의 키값을 찾아 바인딩
+                const textKey = Object.keys(resJson).find(k => k !== 'pineconeDocuments' && k !== 'neo4j_documents');
+                if (textKey) reportMarkdown = resJson[textKey];
             }
-            output.innerHTML = marked.parse(reportMarkdown);
+            output.innerHTML = marked.parse(reportMarkdown || "리포트 본문 내용을 불러오지 못했습니다.");
 
             // 2. Neo4j 바인딩
             let neo4jDocs = resJson.neo4j_documents || [];
@@ -301,7 +303,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                 neo4jListArea.innerHTML = `<div class="text-muted small p-1">✔ 연동된 고장 온톨로지 매칭 완료 (과거 이력 없음)</div>`;
             }
 
-            // 3. Pinecone 정밀 계층 순회 및 진짜 PDF 2개 파일명 추출 연동 구역
+            // 3. Pinecone 정밀 계층 순회 및 PDF 파일명 추출 연동 구역 [★구조 정밀 전면 수정]
             let pineconeDocs = resJson.pineconeDocuments || [];
             if (typeof pineconeDocs === 'string') {
                 try { pineconeDocs = JSON.parse(pineconeDocs); } catch(e) { pineconeDocs = []; }
@@ -309,22 +311,25 @@ document.getElementById('btn-submit').addEventListener('click', async function()
 
             if (Array.isArray(pineconeDocs) && pineconeDocs.length > 0) {
                 pineconeDocs.forEach((doc, index) => {
-                    const ref = doc.references && doc.references[0];
-                    const file = ref && ref.file;
-                    
-                    if (file) {
-                        const originName = file.name ? file.name : `참조 정비 문서_${index + 1}.pdf`;
-                        const fileUrl = file.signed_url ? file.signed_url : "#";
+                    // references 배열 내부 순회 추출
+                    if (Array.isArray(doc.references) && doc.references.length > 0) {
+                        doc.references.forEach((ref) => {
+                            const file = ref.file;
+                            if (file && file.status === "Available") {
+                                const originName = file.name ? file.name : `참조 정비 문서_${index + 1}.pdf`;
+                                const fileUrl = file.signed_url ? file.signed_url : "#";
 
-                        const anchorBtn = document.createElement('a');
-                        anchorBtn.className = "btn-doc-vault";
-                        anchorBtn.setAttribute('href', fileUrl);
-                        anchorBtn.setAttribute('target', '_blank');
-                        anchorBtn.innerHTML = `
-                            <span><i class="fa-solid fa-file-pdf text-danger me-2"></i> ${originName}</span>
-                            <i class="fa-brands fa-google-drive text-muted font-size-sm"></i>
-                        `;
-                        pineconeListArea.appendChild(anchorBtn);
+                                const anchorBtn = document.createElement('a');
+                                anchorBtn.className = "btn-doc-vault";
+                                anchorBtn.setAttribute('href', fileUrl);
+                                anchorBtn.setAttribute('target', '_blank');
+                                anchorBtn.innerHTML = `
+                                    <span><i class="fa-solid fa-file-pdf text-danger me-2"></i> ${originName}</span>
+                                    <i class="fa-brands fa-google-drive text-muted font-size-sm"></i>
+                                `;
+                                pineconeListArea.appendChild(anchorBtn);
+                            }
+                        });
                     }
                 });
             }
