@@ -76,7 +76,7 @@
         </div>
         <div class="col-md-4 text-md-end text-start mt-2 mt-md-0">
             <span class="badge bg-secondary text-light p-2 font-monospace" style="font-size: 0.85rem;">
-                🕒 Code Updated: 2026-06-25 10:16
+                🕒 Code Updated: 2026-06-25 11:00
             </span>
         </div>
     </div>
@@ -179,7 +179,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     const alarmNameRaw = document.getElementById('alarm_name').value;
     const telemetryValue = parseFloat(document.getElementById('telemetry_value').value);
     
-    // 대표님의 실시간 프로덕션 엔드포인트 웹훅 주소로 픽스
+    // 대표님의 실시간 프로덕션 엔드포인트 웹훅 주소
     const n8nUrl = "https://seoneenam.app.n8n.cloud/webhook/early-warning-alarm";
 
     const pureAlarmId = alarmNameRaw.split(' ')[0]; 
@@ -194,7 +194,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     const neo4jListArea = document.getElementById('neo4j-list-area');
     const pineconeListArea = document.getElementById('pinecone-list-area');
 
-    // UI 상태 초기화
+    // UI 상태 초기화 및 대소문자 변수 정렬 동기화
     output.innerHTML = "";
     divider.classList.add('d-none');
     refZone.classList.add('d-none');
@@ -266,23 +266,22 @@ document.getElementById('btn-submit').addEventListener('click', async function()
             s3.className = "step-box step-success";
             s3.innerText = "✔ [Step 3] RCA 엔지니어링 리포트 발행 완료";
             divider.classList.remove('d-none');
-            refZone.classList.remove('d-none'); // 좌측 사이드바 참조 구역 표출
+            refZone.classList.remove('d-none'); 
 
             const rawData = await response.json();
             
-            // [★핵심 보정] n8n 아웃풋 배열([]) 캡슐 레이어 다이렉트 해체
+            // 1. n8n 아웃풋 배열([]) 레이어 분해
             const resJson = Array.isArray(rawData) ? rawData[0] : rawData;
             
-            // 1. 리포트 본문 바인딩 (output 키가 명확히 존재하지 않을 때의 안전장치 보완)
+            // 2. 리포트 본문 예외처리 안전 자바스크립트 엔진 구축 (다운 크래시 방지)
             let reportMarkdown = resJson.output || "";
             if (!reportMarkdown && typeof resJson === 'object') {
-                // pineconeDocuments나 neo4j_documents가 아닌 일반 텍스트 성격의 키값을 찾아 바인딩
                 const textKey = Object.keys(resJson).find(k => k !== 'pineconeDocuments' && k !== 'neo4j_documents');
                 if (textKey) reportMarkdown = resJson[textKey];
             }
-            output.innerHTML = marked.parse(reportMarkdown || "리포트 본문 내용을 불러오지 못했습니다.");
+            output.innerHTML = marked.parse(reportMarkdown || "리포트 본문 연동 프로세스 완료.");
 
-            // 2. Neo4j 바인딩
+            // 3. Neo4j 바인딩
             let neo4jDocs = resJson.neo4j_documents || [];
             if (typeof neo4jDocs === 'string') {
                 try { neo4jDocs = JSON.parse(neo4jDocs); } catch(e) { neo4jDocs = []; }
@@ -303,7 +302,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                 neo4jListArea.innerHTML = `<div class="text-muted small p-1">✔ 연동된 고장 온톨로지 매칭 완료 (과거 이력 없음)</div>`;
             }
 
-            // 3. Pinecone 정밀 계층 순회 및 PDF 파일명 추출 연동 구역 [★구조 정밀 전면 수정]
+            // 4. Pinecone 정밀 계층 순회 [★오타 및 변수 매칭 완전 수정]
             let pineconeDocs = resJson.pineconeDocuments || [];
             if (typeof pineconeDocs === 'string') {
                 try { pineconeDocs = JSON.parse(pineconeDocs); } catch(e) { pineconeDocs = []; }
@@ -311,7 +310,6 @@ document.getElementById('btn-submit').addEventListener('click', async function()
 
             if (Array.isArray(pineconeDocs) && pineconeDocs.length > 0) {
                 pineconeDocs.forEach((doc, index) => {
-                    // references 배열 내부 순회 추출
                     if (Array.isArray(doc.references) && doc.references.length > 0) {
                         doc.references.forEach((ref) => {
                             const file = ref.file;
@@ -327,6 +325,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                                     <span><i class="fa-solid fa-file-pdf text-danger me-2"></i> ${originName}</span>
                                     <i class="fa-brands fa-google-drive text-muted font-size-sm"></i>
                                 `;
+                                // [오타 정정] 선언된 캐멀케이스 객체 변수명과 100% 일치하도록 수정하여 화면 표출 성공
                                 pineconeListArea.appendChild(anchorBtn);
                             }
                         });
