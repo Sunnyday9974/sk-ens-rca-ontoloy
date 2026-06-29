@@ -17,7 +17,7 @@
             color: #f8fafc;
             border-radius: 14px; 
             border: 1px solid #1e293b; 
-            padding: 26px; 
+            padding: 24px; 
             min-height: 800px; 
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); 
         }
@@ -43,7 +43,7 @@
         }
         .spinning-hourglass { display: inline-block; animation: hourglass-flip 1.2s infinite ease-in-out; }
 
-        /* [🔥 구조 전면 변경] 대제목 하단에서부터 2단 그리드가 작동하도록 구조 정밀 재설계 */
+        /* 대제목 하단에서부터 2단 그리드가 작동하도록 구조 정밀 재설계 */
         .report-layout-grid { display: flex; gap: 24px; width: 100%; align-items: flex-start; }
         .report-main-body { flex: 1; min-width: 0; }
         
@@ -57,29 +57,28 @@
             border-radius: 10px;
             display: none; 
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
-            /* 대제목 아래 정렬을 맞추기 위한 여백 보정 */
             margin-top: 10px;
         }
-        .source-section-title { font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; display: flex; align-items: center; }
+        .source-section-title { font-size: 0.85rem; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; display: flex; align-items: center; }
         
-        /* 인프라 버튼 가독성 글자 크기 업그레이드 */
+        /* [🔥 5번 반영] 우측 참조 문서 단추 글자 크기 시원하게 확대 수정 */
         .btn-mini-source {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 8px 12px;
+            padding: 10px 14px;
             background: #ffffff;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #cbd5e1;
             border-radius: 6px;
-            color: #334155;
+            color: #1e293b;
             text-decoration: none;
-            font-size: 0.85rem;
-            font-weight: 500;
-            margin-bottom: 8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-            transition: all 0.2s ease-in-out;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.15s ease-in-out;
         }
-        .btn-mini-source:hover { background: #f1f5f9; color: #0f172a; border-color: #cbd5e1; transform: translateX(3px); }
+        .btn-mini-source:hover { background: #f8fafc; color: #2563eb; border-color: #3b82f6; transform: translateX(3px); }
         
         .ai-fallback-badge {
             margin-top: 15px;
@@ -117,8 +116,9 @@
 
         /* 리포트 내 마크다운 스타일 정돈 */
         #report-output { line-height: 1.85; font-size: 1.05rem; color: #0f172a; }
-        /* [🔥 타이포그래피 정형화] 마크다운 변환 시 리포트 메인 제목인 H1과 하위 섹션인 H2의 영역 규격 분리 */
-        #report-output h1 { font-size: 1.9rem; font-weight: 800; color: #0f172a; margin-bottom: 25px; width: 100%; padding-bottom: 10px; }
+        
+        /* [🔥 2번 반영] 메인 대제목 글자 크기를 정돈하여 줄바꿈 방지 및 세련미 부여 */
+        #report-title-header h1 { font-size: 1.6rem; font-weight: 800; color: #0f172a; margin-bottom: 25px; width: 100%; padding-bottom: 10px; border-bottom: 2px solid #f1f5f9; }
         #report-output h2 { font-size: 1.45rem; border-left: 5px solid #2563eb; padding-left: 14px; margin: 35px 0 15px; font-weight: 700; color: #1e3a8a; }
         #report-output a[href^="http"] {
             display: inline-block;
@@ -145,13 +145,13 @@
         </div>
         <div class="col-md-4 text-md-end">
             <span class="badge bg-white text-dark border p-2 font-monospace" style="font-size: 0.8rem;">
-                🕒 System Sync: 2026-06-29 11:25
+                🕒 System Sync: 2026-06-29 14:30
             </span>
         </div>
     </div>
 
     <div class="row g-4">
-        <div class="col-lg-4 col-md-5">
+        <div class="col-lg-3 col-md-5">
             <div class="panel-control">
                 <h5 class="fw-bold mb-2 text-warning"><i class="fa-solid fa-gauge-high me-2"></i>조기경보시스템 이상 신호 유입</h5>
                 <p class="text-slate-400 small mb-4" style="color: #94a3b8;">현장 DCS 인프라로부터 실시간 유입된 설비 텔레메트리 경보 데이터입니다.</p>
@@ -159,7 +159,7 @@
                 <hr style="border-color: #334155;" class="my-4">
 
                 <div class="mb-4">
-                    <label class="form-label small fw-bold text-slate-300" style="color: #cbd5e1;">대상 설비 ID (Asset Specification)</label>
+                    <label class="form-label small fw-bold text-slate-300" style="color: #cbd5e1;">대상 설비 ID (Asset Spec)</label>
                     <select id="asset_id" class="form-select bg-slate-800 text-white border-secondary" style="background-color: #1e293b; border-color: #475569; color: #fff;">
                         <option value="BFP-01A">보일러 급수 펌프 (BFP-01A)</option>
                         <option value="GT-01">가스 터빈 (GT-01)</option>
@@ -170,7 +170,7 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label small fw-bold text-slate-300" style="color: #cbd5e1;">발생 알람명 (Alarm Identification)</label>
+                    <label class="form-label small fw-bold text-slate-300" style="color: #cbd5e1;">발생 알람명 (Alarm ID)</label>
                     <select id="alarm_name" class="form-select bg-slate-800 text-white border-secondary" style="background-color: #1e293b; border-color: #475569; color: #fff;">
                         <option value="AL_VIB_HIGH (급수펌프 베어링 진동 고)">급수펌프 베어링 진동 고 (AL_VIB_HIGH)</option>
                         <option value="AL_SURGE_WARN (압축기 서지 전조 알람)">압축기 서지 전조 알람 (AL_SURGE_WARN)</option>
@@ -181,7 +181,7 @@
                 </div>
 
                 <div class="mb-5">
-                    <label class="form-label small fw-bold" style="color: #cbd5e1;">현재 측정 수치 (Telemetry Value) : <span id="slider-val" class="text-info fw-bold fs-5">12.8</span></label>
+                    <label class="form-label small fw-bold" style="color: #cbd5e1;">현재 측정 수치 : <span id="slider-val" class="text-info fw-bold fs-5">12.8</span></label>
                     <div class="range-wrapper">
                         <input type="range" class="form-range" id="telemetry_value" min="0" max="20" step="0.1" value="12.8">
                     </div>
@@ -195,7 +195,7 @@
             <div id="debug-monitor" class="debug-console"></div>
         </div>
 
-        <div class="col-lg-8 col-md-7">
+        <div class="col-lg-9 col-md-7">
             <div class="panel-report">
                 <h5 class="fw-bold mb-4 text-dark"><i class="fa-solid fa-brain text-primary me-2"></i>AI RCA 에이전트 분석 센터 (사내 정비 지식 자산 기반)</h5>
                 
@@ -347,30 +347,23 @@ document.getElementById('btn-submit').addEventListener('click', async function()
             const rawData = await response.json();
             const resJson = Array.isArray(rawData) ? rawData[0] : rawData;
 
-            // [🔥 핵심 교정 가드선] 마크다운 문자열에서 #으로 구성된 최상위 대제목을 분리해 냅니다.
             let reportMarkdown = resJson.output || "분석 결과가 없습니다.";
             
             let mainTitleText = "# 📋 [RCA 엔지니어링 리포트] 대상 설비 이상 신호 분석";
             let remainingMarkdown = reportMarkdown;
 
-            // 만약 받아온 데이터에 대제목이 포함되어 있다면 분리 처리 진행
             if (reportMarkdown.includes("# ")) {
                 const lines = reportMarkdown.split('\n');
                 const firstHeadingIndex = lines.findIndex(line => line.trim().startsWith('# '));
                 if (firstHeadingIndex !== -1) {
                     mainTitleText = lines[firstHeadingIndex];
-                    lines.splice(firstHeadingIndex, 1); // 제목행 제거
+                    lines.splice(firstHeadingIndex, 1); 
                     remainingMarkdown = lines.join('\n');
                 }
             }
 
-            // 1. 대제목을 리포트 상단 영역 전체 가로폭에 넓게 주입
             titleHeader.innerHTML = marked.parse(mainTitleText);
-
-            // 2. 1번 섹션 이하 본문 내용을 좌측 분할 그리드 공간에 격리 출력
             output.innerHTML = marked.parse(remainingMarkdown);
-
-            // 3. 우측 지식 소스 보드 활성화 (개요 섹션 라인과 자연스럽게 매칭 정렬)
             sourceBoard.style.display = "block";
 
             let hasNeo4j = false;
@@ -392,7 +385,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                     a.innerHTML = `<span><i class="fa-solid fa-file-pdf text-danger me-2"></i>${doc.title}</span><i class="fa-solid fa-arrow-up-right-from-square opacity-50"></i>`;
                     neo4jArea.appendChild(a);
                 });
-            } else { neo4jArea.innerHTML = "<div class='text-muted' style='font-size:0.8rem; padding: 4px;'>연동 완료 (과거 이력 없음)</div>"; }
+            } else { neo4jArea.innerHTML = "<div class='text-muted' style='font-size:0.85rem; padding: 4px;'>연동 완료 (과거 이력 없음)</div>"; }
 
             // Pinecone 매핑
             let pineconeDocs = resJson.pineconeDocuments || [];
@@ -415,10 +408,9 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                         });
                     }
                 });
-                if(validRefCount === 0) { pineconeArea.innerHTML = "<div class='text-muted' style='font-size:0.8rem; padding: 4px;'>추천 지식 매칭 완료</div>"; }
-            } else { pineconeArea.innerHTML = "<div class='text-muted' style='font-size:0.8rem; padding: 4px;'>추천 지식 매칭 완료</div>"; }
+                if(validRefCount === 0) { pineconeArea.innerHTML = "<div class='text-muted' style='font-size:0.85rem; padding: 4px;'>추천 지식 매칭 완료</div>"; }
+            } else { pineconeArea.innerHTML = "<div class='text-muted' style='font-size:0.85rem; padding: 4px;'>추천 지식 매칭 완료</div>"; }
 
-            // 둘 중 하나라도 실제 문서 연동이 없다면 정중한 출처 보증 배지를 하단에 인젝트
             if (!hasNeo4j || !hasPinecone) {
                 const infoDiv = document.createElement('div');
                 infoDiv.className = "ai-fallback-badge";
