@@ -8,17 +8,34 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        body { background-color: #f4f7f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #334155; }
-        .main-header { border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 25px; }
+        body { background-color: #f1f5f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; }
+        .main-header { border-bottom: 1px solid #cbd5e1; padding-bottom: 15px; margin-bottom: 25px; }
         
-        /* 메인 패널 스타일 */
-        .panel { background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 24px; min-height: 780px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .side-panel { min-height: auto; margin-bottom: 20px; }
+        /* [🔥 3번 반영] 좌측 조기경보 패널 - 산업 제어실 테마 */
+        .panel-control { 
+            background: #0f172a; 
+            color: #f8fafc;
+            border-radius: 14px; 
+            border: 1px solid #1e293b; 
+            padding: 26px; 
+            min-height: 800px; 
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); 
+        }
+        
+        /* [🔥 3번 반영] 우측 엔지니어링 리포트 패널 - 백서 다큐먼트 테마 */
+        .panel-report { 
+            background: #ffffff; 
+            border-radius: 14px; 
+            border: 1px solid #e2e8f0; 
+            padding: 30px; 
+            min-height: 800px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); 
+        }
 
-        /* 분석 단계 박스 */
-        .step-box { padding: 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; text-align: center; display: none; transition: all 0.3s ease; }
-        .step-loading { background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
-        .step-success { background-color: #ecfdf5; color: #065f46; border: 1px solid #10b981; }
+        /* 분석 단계 인디케이터 */
+        .step-box { padding: 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; text-align: center; display: none; }
+        .step-loading { background-color: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+        .step-success { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
         
         @keyframes hourglass-flip {
             0% { transform: rotate(0deg); }
@@ -26,66 +43,90 @@
         }
         .spinning-hourglass { display: inline-block; animation: hourglass-flip 1.2s infinite ease-in-out; }
 
-        /* 리포트 레이아웃 전용 */
-        .report-container { position: relative; width: 100%; margin-top: 20px; }
+        /* [🔥 4번 반영] 전문적인 2단 분할 레이아웃 설계 */
+        .report-layout-grid { display: flex; gap: 24px; width: 100%; margin-top: 20px; align-items: flex-start; }
+        .report-main-body { flex: 1; min-width: 0; }
         
-        /* 리포트 내 우측 상단 미니 소스 보드 */
+        /* [🔥 4, 5번 반영] 가독성이 대폭 상향된 지식 자산 고정 보드 */
         #knowledge-source-board {
-            float: right;
-            width: 290px;
-            margin-left: 20px;
-            margin-bottom: 20px;
-            padding: 16px;
+            width: 320px;
+            flex-shrink: 0;
+            padding: 20px;
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
-            border-radius: 8px;
+            border-radius: 10px;
             display: none; 
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
         }
-        .source-section-title { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; display: flex; align-items: center; }
+        .source-section-title { font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; display: flex; align-items: center; }
         
-        /* [🔥 신규 추가] 문서 부재 시 하단에 붙을 동적 AI 출처 가이드 배지 */
-        .ai-fallback-badge {
-            margin-top: 12px;
-            padding: 10px 12px;
-            background-color: #f0fdfa;
-            border: 1px solid #ccfbf1;
-            border-radius: 6px;
-            color: #0d9488;
-            font-size: 0.72rem;
-            line-height: 1.4;
-        }
-
-        /* 미니 버튼 스타일 */
+        /* [🔥 5번 반영] 인프라 버튼 가독성 글자 크기 업그레이드 */
         .btn-mini-source {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 6px 10px;
+            padding: 8px 12px;
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            color: #475569;
+            border-radius: 6px;
+            color: #334155;
             text-decoration: none;
-            font-size: 0.75rem;
-            margin-bottom: 6px;
-            transition: all 0.2s;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            transition: all 0.2s ease-in-out;
         }
-        .btn-mini-source:hover { background: #f1f5f9; color: #1e293b; border-color: #cbd5e1; transform: translateX(2px); }
+        .btn-mini-source:hover { background: #f1f5f9; color: #0f172a; border-color: #cbd5e1; transform: translateX(3px); }
+        
+        .ai-fallback-badge {
+            margin-top: 15px;
+            padding: 12px;
+            background-color: #f0fdfa;
+            border: 1px solid #ccfbf1;
+            border-radius: 8px;
+            color: #0d9488;
+            font-size: 0.78rem;
+            line-height: 1.5;
+        }
 
-        /* 리포트 본문 텍스트 */
-        #report-output { line-height: 1.8; font-size: 1rem; color: #1e293b; }
-        #report-output h2 { font-size: 1.5rem; border-left: 4px solid #3b82f6; padding-left: 12px; margin: 30px 0 15px; font-weight: 700; }
+        /* [🔥 1번 반영] 실시간 그라데이션 채우기 스타일링 슬라이더 */
+        .range-wrapper { position: relative; width: 100%; }
+        .form-range {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #334155; /* 기본 배경 트랙 */
+            outline: none;
+        }
+        .form-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+            transition: transform 0.1s;
+        }
+        .form-range::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+        /* 리포트 내 마크다운 스타일 정돈 */
+        #report-output { line-height: 1.85; font-size: 1.05rem; color: #0f172a; }
+        #report-output h2 { font-size: 1.45rem; border-left: 5px solid #2563eb; padding-left: 14px; margin: 35px 0 15px; font-weight: 700; color: #1e3a8a; }
         #report-output a[href^="http"] {
             display: inline-block;
             background-color: #f0fdf4;
             color: #166534;
-            font-size: 0.75rem;
+            font-size: 0.78rem;
             font-weight: 600;
-            padding: 1px 6px;
+            padding: 2px 6px;
             border-radius: 4px;
             text-decoration: none;
             border: 1px solid #bbf7d0;
-            margin: 0 2px;
+            margin: 0 3px;
         }
 
         .debug-console { background: #1e293b; color: #4ade80; font-family: monospace; font-size: 0.75rem; padding: 10px; border-radius: 6px; margin-top: 20px; max-height: 150px; overflow-y: auto; display: none; }
@@ -96,24 +137,26 @@
 <div class="container-fluid p-4">
     <div class="main-header row align-items-center">
         <div class="col-md-8">
-            <h2 class="fw-bold"><i class="fa-solid fa-microchip text-primary me-2"></i> SKI E&S 발전 설비 실시간 이상 신호 분석 시스템</h2>
+            <h2 class="fw-bold text-dark"><i class="fa-solid fa-microchip text-primary me-2"></i> SKI E&S 발전 설비 실시간 이상 신호 분석 시스템</h2>
         </div>
         <div class="col-md-4 text-md-end">
             <span class="badge bg-white text-dark border p-2 font-monospace" style="font-size: 0.8rem;">
-                🕒 System Sync: 2026-06-29 11:00
+                🕒 System Sync: 2026-06-29 11:15
             </span>
         </div>
     </div>
 
     <div class="row g-4">
         <div class="col-lg-4 col-md-5">
-            <div class="panel side-panel">
-                <h5 class="fw-bold mb-2 text-danger"><i class="fa-solid fa-satellite-dish me-2"></i>🚨 조기경보시스템 및 이상 신호 유입</h5>
-                <p class="text-muted small mb-4">발전소 현장에 배치된 IoT 센서와 DCS 계측 인프라로부터 실시간 유입된 설비 텔레메트리 경보(Early Warning Alarm) 데이터입니다.</p>
+            <div class="panel-control">
+                <h5 class="fw-bold mb-2 text-warning"><i class="fa-solid fa-gauge-high me-2"></i>조기경보시스템 이상 신호 유입</h5>
+                <p class="text-slate-400 small mb-4" style="color: #94a3b8;">현장 DCS 인프라로부터 실시간 유입된 설비 텔레메트리 경보 데이터입니다.</p>
                 
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">대상 설비 ID (Asset Specification)</label>
-                    <select id="asset_id" class="form-select">
+                <hr style="border-color: #334155;" class="my-4">
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-slate-300" style="color: #cbd5e1;">대상 설비 ID (Asset Specification)</label>
+                    <select id="asset_id" class="form-select bg-slate-800 text-white border-secondary" style="background-color: #1e293b; border-color: #475569; color: #fff;">
                         <option value="BFP-01A">보일러 급수 펌프 (BFP-01A)</option>
                         <option value="GT-01">가스 터빈 (GT-01)</option>
                         <option value="COMP-02B">원심 압축기 (COMP-02B)</option>
@@ -122,9 +165,9 @@
                     </select>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">발생 알람명 (Alarm Identification)</label>
-                    <select id="alarm_name" class="form-select">
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-slate-300" style="color: #cbd5e1;">발생 알람명 (Alarm Identification)</label>
+                    <select id="alarm_name" class="form-select bg-slate-800 text-white border-secondary" style="background-color: #1e293b; border-color: #475569; color: #fff;">
                         <option value="AL_VIB_HIGH (급수펌프 베어링 진동 고)">급수펌프 베어링 진동 고 (AL_VIB_HIGH)</option>
                         <option value="AL_SURGE_WARN (압축기 서지 전조 알람)">압축기 서지 전조 알람 (AL_SURGE_WARN)</option>
                         <option value="AL_FUEL_VALVE_FAIL (연료 밸브 제어 편차 알람)">연료 밸브 제어 편차 알람 (AL_FUEL_VALVE_FAIL)</option>
@@ -133,13 +176,15 @@
                     </select>
                 </div>
 
-                <div class="mb-4">
-                    <label class="form-label small fw-bold text-muted">현재 측정 수치 (Telemetry Value) : <span id="slider-val" class="text-primary fw-bold">12.8</span></label>
-                    <input type="range" class="form-range" id="telemetry_value" min="0" max="20" step="0.1" value="12.8" oninput="document.getElementById('slider-val').innerText=this.value">
+                <div class="mb-5">
+                    <label class="form-label small fw-bold" style="color: #cbd5e1;">현재 측정 수치 (Telemetry Value) : <span id="slider-val" class="text-info fw-bold fs-5">12.8</span></label>
+                    <div class="range-wrapper">
+                        <input type="range" class="form-range" id="telemetry_value" min="0" max="20" step="0.1" value="12.8">
+                    </div>
                 </div>
 
-                <button id="btn-submit" class="btn btn-primary w-100 py-2 fw-bold border-0 fs-5" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-                    <i class="fa-solid fa-bolt me-2"></i>⚡ 실시간 RCA 분석 실행
+                <button id="btn-submit" class="btn btn-danger w-100 py-3 fw-bold border-0 fs-5 mt-4" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">
+                    <i class="fa-solid fa-bolt-lightning me-2"></i>실시간 RCA 분석 기동
                 </button>
             </div>
             
@@ -147,8 +192,8 @@
         </div>
 
         <div class="col-lg-8 col-md-7">
-            <div class="panel">
-                <h5 class="fw-bold mb-3 text-dark">🧠 AI RCA 에이전트 분석 센터 (사내 정비 지식 자산 기반)</h5>
+            <div class="panel-report">
+                <h5 class="fw-bold mb-4 text-dark"><i class="fa-solid fa-brain text-primary me-2"></i>AI RCA 에이전트 분석 센터 (사내 정비 지식 자산 기반)</h5>
                 
                 <div class="row g-2 mb-4">
                     <div class="col-4"><div id="step1" class="step-box"></div></div>
@@ -162,46 +207,50 @@
                     <small class="text-primary block">💡 AI 엔진이 엔지니어링 리포트 및 인용구 매핑을 수행하고 있습니다. 잠시만 기다려 주십시오.</small>
                 </div>
 
-                <div class="report-container">
+                <div class="report-layout-grid">
+                    
+                    <div class="report-main-body">
+                        <div id="report-output">
+                            <div class="py-4">
+                                <h4 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-circle-question me-2 text-primary"></i>이상 신호 분석 가이드 및 아키텍처 안내</h4>
+                                <p class="text-muted" style="font-size: 0.95rem; line-height: 1.75;">
+                                    본 시스템은 발전소 설비 현장에서 급성 경보 또는 이상 전조 신호가 감지되었을 때, 전사 데이터베이스 및 지식 그래프에 축적된 정비 이력을 다각도로 추론하여 즉각적인 <strong>[RCA 엔지니어링 리포트]</strong>를 자동 발행합니다.
+                                </p>
+                                <hr class="my-4" style="border-top: 1px dashed #cbd5e1;">
+                                
+                                <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bezier-curve me-2 text-success"></i>실시간 다차원 지식 자산 참조 메커니즘</h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="p-3 border rounded-3 bg-light height-100">
+                                            <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-network-wired me-1"></i> Graph DB (Neo4j) 지식맵 연동</h6>
+                                            <small class="text-muted">유입된 알람 코드와 설비 ID를 기반으로 사내 지식 그래프에 등록된 고장 모드 인과관계, 표준 조치 절차(Past Actions) 및 축적된 레슨런(Lessons Learned)을 1차적으로 탐색하여 하이재킹합니다.</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="p-3 border rounded-3 bg-light height-100">
+                                            <h6 class="fw-bold text-danger mb-2"><i class="fa-solid fa-file-shield me-1"></i> Vector DB (Pinecone) 추론 연동</h6>
+                                            <small class="text-muted">과거 10년 이상 축적된 정비 보고서, 기술 매뉴얼, RCA 장애 리포트 원본 파일들의 의미론적(Semantic) 유사도를 분석하여 리포트 본문의 인용 문장 뒤에 <strong>실시간 검증용 PDF 보안 하이퍼링크 배지</strong>를 매핑합니다.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-secondary text-center mt-4 mb-0 py-3" style="font-size: 0.9rem; background-color: #f8fafc;">
+                                    <i class="fa-solid fa-arrow-left text-danger me-1"></i> 왼쪽 관제 패널에서 발전 설비 이상 데이터를 입력한 후 <strong>"실시간 RCA 분석 실행"</strong> 버튼을 클릭하십시오.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="knowledge-source-board">
                         <div class="source-section-title"><i class="fa-solid fa-share-nodes me-2 text-success"></i>1. 고장 온톨로지 (Neo4j)</div>
                         <div id="neo4j-list-area" class="mb-3"></div>
                         
                         <div class="source-section-title"><i class="fa-solid fa-database me-2 text-danger"></i>2. 정비 지식 자산 (Pinecone)</div>
-                        <div id="pinecone-list-area"></div>
+                        <div id="pinecone-list-area" class="mb-2"></div>
                         
                         <div id="dynamic-fallback-area"></div>
                     </div>
 
-                    <div id="report-output">
-                        <div class="py-4">
-                            <h4 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-circle-question me-2 text-primary"></i>이상 신호 분석 가이드 및 아키텍처 안내</h4>
-                            <p class="text-muted" style="font-size: 0.95rem; line-height: 1.75;">
-                                본 시스템은 발전소 설비 현장에서 급성 경보 또는 이상 전조 신호가 감지되었을 때, 전사 데이터베이스 및 지식 그래프에 축적된 정비 이력을 다각도로 추론하여 즉각적인 <strong>[RCA 엔지니어링 리포트]</strong>를 자동 발행합니다.
-                            </p>
-                            <hr class="my-4" style="border-top: 1px dashed #cbd5e1;">
-                            
-                            <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bezier-curve me-2 text-success"></i>실시간 다차원 지식 자산 참조 메커니즘</h5>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="p-3 border rounded-3 bg-light height-100">
-                                        <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-network-wired me-1"></i> Graph DB (Neo4j) 지식맵 연동</h6>
-                                        <small class="text-muted">유입된 알람 코드와 설비 ID를 기반으로 사내 지식 그래프에 등록된 고장 모드 인과관계, 표준 조치 절차(Past Actions) 및 축적된 레슨런(Lessons Learned)을 1차적으로 탐색하여 하이재킹합니다.</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="p-3 border rounded-3 bg-light height-100">
-                                        <h6 class="fw-bold text-danger mb-2"><i class="fa-solid fa-file-shield me-1"></i> Vector DB (Pinecone) 추론 연동</h6>
-                                        <small class="text-muted">과거 10년 이상 축적된 정비 보고서, 기술 매뉴얼, RCA 장애 리포트 원본 파일들의 의미론적(Semantic) 유사도를 분석하여 리포트 본문의 인용 문장 뒤에 <strong>실시간 검증용 PDF 보안 하이퍼링크 배지</strong>를 매핑합니다.</small>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="alert alert-secondary text-center mt-4 mb-0 py-3" style="font-size: 0.9rem; background-color: #f8fafc;">
-                                <i class="fa-solid fa-arrow-left text-danger me-1"></i> 왼쪽 관제 패널에서 발전 설비 이상 데이터를 입력한 후 <strong>"실시간 RCA 분석 실행"</strong> 버튼을 클릭하십시오.
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -209,10 +258,30 @@
 </div>
 
 <script>
+// [🔥 1번 반영] 슬라이더 채우기 로직 정밀 빌드 함수
+const slider = document.getElementById('telemetry_value');
+const sliderVal = document.getElementById('slider-val');
+
+function updateSliderBackground(value) {
+    const min = slider.min || 0;
+    const max = slider.max || 20;
+    const percentage = ((value - min) / (max - min)) * 100;
+    // 선택값까지는 밝은 파란색, 나머지는 슬레이트 다크 네이비로 채움
+    slider.style.background = `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${percentage}%, #334155 ${percentage}%, #334155 100%)`;
+}
+
+// 최초 1회 초기화 가동
+updateSliderBackground(slider.value);
+
+slider.addEventListener('input', function() {
+    sliderVal.innerText = this.value;
+    updateSliderBackground(this.value);
+});
+
 document.getElementById('btn-submit').addEventListener('click', async function() {
     const assetId = document.getElementById('asset_id').value;
     const alarmNameRaw = document.getElementById('alarm_name').value;
-    const telemetryValue = parseFloat(document.getElementById('telemetry_value').value);
+    const telemetryValue = parseFloat(slider.value);
     
     const n8nUrl = "https://seoneenam.app.n8n.cloud/webhook/early-warning-alarm";
     const pureAlarmId = alarmNameRaw.split(' ')[0]; 
@@ -227,16 +296,15 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     const pineconeArea = document.getElementById('pinecone-list-area');
     const fallbackArea = document.getElementById('dynamic-fallback-area');
 
-    // UI 초기화
     output.innerHTML = "";
     sourceBoard.style.display = "none";
     neo4jArea.innerHTML = "";
     pineconeArea.innerHTML = "";
-    fallbackArea.innerHTML = ""; // 🎯 폴백 영역 청소
+    fallbackArea.innerHTML = ""; 
     
     const loader = `<span class="spinning-hourglass me-2">⏳</span>`;
 
-    s1.className = "step-box step-loading"; s1.style.display = "block"; s1.innerHTML = `${loader}온톨로지(Neo4j) 매핑 중...`;
+    s1.className = "step-box step-loading"; s1.style.display = "block"; s1.innerHTML = `${loader}온톨로지 조회`;
     s2.style.display = "none"; s3.style.display = "none";
     progress.classList.remove('d-none');
 
@@ -250,12 +318,12 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     const interval = setInterval(() => {
         timer += 0.5;
         if (timer === 3) {
-            s1.className = "step-box step-success"; s1.innerHTML = "✔ 온톨로지 지식 링크 완료";
-            s2.className = "step-box step-loading"; s2.style.display = "block"; s2.innerHTML = `${loader}지식 자산(Pinecone) 매칭 중...`;
+            s1.className = "step-box step-success"; s1.innerHTML = "✔ 온톨로지 완료";
+            s2.className = "step-box step-loading"; s2.style.display = "block"; s2.innerHTML = `${loader}지식 탐색`;
         }
         if (timer === 6) {
-            s2.className = "step-box step-success"; s2.innerHTML = "✔ 기술 지식 자산 탐색 완료";
-            s3.className = "step-box step-loading"; s3.style.display = "block"; s3.innerHTML = `${loader}RCA 리포트 발행 중...`;
+            s2.className = "step-box step-success"; s2.innerHTML = "✔ 지식 탐색 완료";
+            s3.className = "step-box step-loading"; s3.style.display = "block"; s3.innerHTML = `${loader}리포트 발행`;
         }
     }, 500);
 
@@ -265,7 +333,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
         progress.classList.add('d-none');
 
         if (response.ok) {
-            s3.className = "step-box step-success"; s3.innerHTML = "✔ RCA 마스터 리포트 발행 완료";
+            s3.className = "step-box step-success"; s3.innerHTML = "✔ 리포트 발행 완료";
             const rawData = await response.json();
             const resJson = Array.isArray(rawData) ? rawData[0] : rawData;
 
@@ -295,13 +363,12 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                     a.innerHTML = `<span><i class="fa-solid fa-file-pdf text-danger me-2"></i>${doc.title}</span><i class="fa-solid fa-arrow-up-right-from-square opacity-50"></i>`;
                     neo4jArea.appendChild(a);
                 });
-            } else { neo4jArea.innerHTML = "<div class='text-muted' style='font-size:0.7rem;'>연동된 고장 온톨로지 매칭 완료 (과거 이력 없음)</div>"; }
+            } else { neo4jArea.innerHTML = "<div class='text-muted' style='font-size:0.8rem; padding: 4px;'>연동 완료 (과거 이력 없음)</div>"; }
 
             // Pinecone 매핑
             let pineconeDocs = resJson.pineconeDocuments || [];
             if (typeof pineconeDocs === 'string') pineconeDocs = JSON.parse(pineconeDocs);
             if (Array.isArray(pineconeDocs) && pineconeDocs.length > 0) {
-                // 실존하는 레퍼런스 카운트 체크
                 let validRefCount = 0;
                 pineconeDocs.forEach(doc => {
                     if (doc.references) {
@@ -319,10 +386,10 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                         });
                     }
                 });
-                if(validRefCount === 0) { pineconeArea.innerHTML = "<div class='text-muted' style='font-size:0.7rem;'>추천 기술 자산 매칭 완료</div>"; }
-            } else { pineconeArea.innerHTML = "<div class='text-muted' style='font-size:0.7rem;'>추천 기술 자산 매칭 완료</div>"; }
+                if(validRefCount === 0) { pineconeArea.innerHTML = "<div class='text-muted' style='font-size:0.8rem; padding: 4px;'>추천 지식 매칭 완료</div>"; }
+            } else { pineconeArea.innerHTML = "<div class='text-muted' style='font-size:0.8rem; padding: 4px;'>추천 지식 매칭 완료</div>"; }
 
-            // 🎯 [핵심 보완] 둘 중 하나라도 실제 문서 연동이 없다면 정중한 출처 보증 배지를 하단에 인젝트
+            // 둘 중 하나라도 실제 문서 연동이 없다면 정중한 출처 보증 배지를 하단에 인젝트
             if (!hasNeo4j || !hasPinecone) {
                 const infoDiv = document.createElement('div');
                 infoDiv.className = "ai-fallback-badge";
@@ -330,8 +397,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                     <i class="fa-solid fa-brain me-1"></i> 
                     <strong>[AI 공학 추론 안내]</strong><br>
                     본 가설 및 정비 지침은 실시간 매칭된 고유 정비 이력이 존재하지 않거나 부족하여, 
-                    <strong>AI 에이전트의 발전 설비 표준 정비 지식 맵(LLM Engineering Cross-Mapping)</strong>을 
-                    교차 탐색하여 생성한 마스터 리포트입니다.
+                    AI 에이전트의 표준 정비 지식 맵(LLM Engineering Cross-Mapping)을 교차 탐색하여 생성한 마스터 리포트입니다.
                 `;
                 fallbackArea.appendChild(infoDiv);
             }
