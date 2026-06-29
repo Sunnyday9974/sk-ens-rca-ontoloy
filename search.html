@@ -162,11 +162,17 @@
                 let opt = document.createElement('option');
                 
                 if (isComplexObject && typeof item === 'object') {
-                    // Neo4j 수정 쿼리로 인해 반환된 Map 객체인 경우
-                    opt.value = item.id; // 실제 서버 전송 파라미터로 동작할 Key 고정
-                    opt.innerText = item.name ? `${item.name} (${item.id})` : item.id; // 사용자 가독성용 '이름 (ID)'
+                    opt.value = item.id; // 서버 전송용 Key (ID)
+                    
+                    // 🎯 [정밀 교정] 무조건 'ID (이름)' 형태로 통일
+                    // 만약 이름이 없거나 ID와 이름이 완전히 같다면 ID만 표시하여 중복 방지
+                    if (!item.name || item.name === item.id) {
+                        opt.innerText = item.id;
+                    } else {
+                        opt.innerText = `${item.id} (${item.name})`;
+                    }
                 } else {
-                    // 기존 단일 문자열 포맷인 경우 대응
+                    // Document 등 단일 문자열 포맷 대응
                     opt.value = item;
                     opt.innerText = item;
                 }
@@ -175,7 +181,6 @@
             } 
         });
     }
-
     async function searchNetworkAND() {
         const docId = document.getElementById('docSelect').value;
         const assetId = document.getElementById('assetSelect').value;
