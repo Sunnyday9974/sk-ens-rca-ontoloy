@@ -29,7 +29,7 @@
         .search-panel { display: flex; gap: 12px; padding: 0 60px 25px 60px; background: white; border-bottom: 1px solid var(--border); flex-wrap: wrap; align-items: flex-end; }
         .control-group { display: flex; flex-direction: column; gap: 5px; }
         .control-group label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
-        select { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); background-color: #fff; font-size: 13px; min-width: 180px; transition: all 0.2s; outline: none; cursor: pointer; }
+        select { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); background-color: #fff; font-size: 13px; min-width: 180px; max-width: 280px; transition: all 0.2s; outline: none; cursor: pointer; }
         select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(224, 32, 32, 0.1); }
         .btn-search { background-color: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; transition: background 0.2s; height: 40px; margin-left: 10px; }
         .btn-search:hover { background-color: #b01818; }
@@ -135,22 +135,45 @@
         return result.trim();
     }
 
+    // 🎯 페이지 로드 시 마스터 코드 연동 처리 개정 버전
     window.onload = async function() {
         try {
             const response = await fetch(`${N8N_PRODUCTION_URL}/master-codes`);
             const jsonResult = await response.json();
             let rawData = jsonResult[0]?.data || jsonResult[0]?.body?.data || jsonResult.data;
             const values = rawData.values[0];
-            bindDropdown('docSelect', values[0] || []);
-            bindDropdown('assetSelect', values[1] || []);
-            bindDropdown('alarmSelect', values[2] || []);
-            bindDropdown('failureModeSelect', values[3] || []);
+            
+            // 1. Document는 기존 포맷 유지 (1차원 문자열 배열 배열)
+            bindDropdown('docSelect', values[0] || [], false);
+            
+            // 2. Asset, Alarm, FailureMode는 맵 객체 구조 {id: '...', name: '...'} 전달 받아 텍스트 바인딩 적용
+            bindDropdown('assetSelect', values[1] || [], true);
+            bindDropdown('alarmSelect', values[2] || [], true);
+            bindDropdown('failureModeSelect', values[3] || [], true);
         } catch (error) { console.error('목록 로드 실패:', error); }
     };
 
-    function bindDropdown(elementId, dataList) {
+    // 🎯 가공된 데이터를 콤보박스에 '이름 (ID)' 패턴으로 정밀 매핑하는 빌더 함수
+    function bindDropdown(elementId, dataList, isComplexObject = false) {
         const select = document.getElementById(elementId);
-        dataList.forEach(id => { if(id) { let opt = document.createElement('option'); opt.value = id; opt.innerText = id; select.appendChild(opt); } });
+        
+        dataList.forEach(item => { 
+            if (item) { 
+                let opt = document.createElement('option');
+                
+                if (isComplexObject && typeof item === 'object') {
+                    // Neo4j 수정 쿼리로 인해 반환된 Map 객체인 경우
+                    opt.value = item.id; // 실제 서버 전송 파라미터로 동작할 Key 고정
+                    opt.innerText = item.name ? `${item.name} (${item.id})` : item.id; // 사용자 가독성용 '이름 (ID)'
+                } else {
+                    // 기존 단일 문자열 포맷인 경우 대응
+                    opt.value = item;
+                    opt.innerText = item;
+                }
+                
+                select.appendChild(opt); 
+            } 
+        });
     }
 
     async function searchNetworkAND() {
