@@ -99,17 +99,14 @@
                 <h5 class="fw-bold mb-2 text-danger"><i class="fa-solid fa-satellite-dish me-2"></i>🚨 조기경보시스템 및 이상 신호 유입</h5>
                 <p class="text-muted small mb-4">발전소 현장에 배치된 IoT 센서와 DCS 계측 인프라로부터 실시간 유입된 설비 텔레메트리 경보(Early Warning Alarm) 데이터입니다.</p>
                 
-                <div class="alert alert-info py-2 mb-4" style="font-size: 0.85rem; border-left: 4px solid #0ea5e9;">
-                    <i class="fa-solid fa-circle-info me-1"></i> 대상 설비와 알람명을 선택한 후 하단의 <strong>RCA 분석 실행</strong> 버튼을 클릭하면 사내 정비 지식 자산 기반의 추론이 시작됩니다.
-                </div>
-
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted">대상 설비 ID (Asset Specification)</label>
                     <select id="asset_id" class="form-select">
-                        <option value="BFP-01A">보일러 급수 펌프 (Boiler Feedwater Pump - BFP-01A)</option>
-                        <option value="GT-01">가스 터빈 (Gas Turbine - GT-01)</option>
-                        <option value="COMP-02B">원심 압축기 (Centrifugal Compressor - COMP-02B)</option>
-                        <option value="RO-02">역삼투압 시스템 (Reverse Osmosis - RO-02)</option>
+                        <option value="BFP-01A">보일러 급수 펌프 (BFP-01A)</option>
+                        <option value="GT-01">가스 터빈 (GT-01)</option>
+                        <option value="COMP-02B">원심 압축기 (COMP-02B)</option>
+                        <option value="RO-02">역삼투압 시스템 (RO-02)</option>
+                        <option value="CWP-03">냉각수 순환 펌프 (CWP-03)</option>
                     </select>
                 </div>
 
@@ -118,7 +115,9 @@
                     <select id="alarm_name" class="form-select">
                         <option value="AL_VIB_HIGH (급수펌프 베어링 진동 고)">급수펌프 베어링 진동 고 (AL_VIB_HIGH)</option>
                         <option value="AL_SURGE_WARN (압축기 서지 전조 알람)">압축기 서지 전조 알람 (AL_SURGE_WARN)</option>
+                        <option value="AL_FUEL_VALVE_FAIL (연료 밸브 제어 편차 알람)">연료 밸브 제어 편차 알람 (AL_FUEL_VALVE_FAIL)</option>
                         <option value="AL_RO_DP_HIGH (RO 막 전후단 차압 고)">RO 막 전후단 차압 고 (AL_RO_DP_HIGH)</option>
+                        <option value="AL_BRG_TEMP_HIGH (베어링 온도 고온 경보)">베어링 온도 고온 경보 (AL_BRG_TEMP_HIGH)</option>
                     </select>
                 </div>
 
