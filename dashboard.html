@@ -11,7 +11,7 @@
         body { background-color: #f1f5f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; }
         .main-header { border-bottom: 1px solid #cbd5e1; padding-bottom: 15px; margin-bottom: 25px; }
         
-        /* [🔥 3번 반영] 좌측 조기경보 패널 - 산업 제어실 테마 */
+        /* 좌측 조기경보 패널 - 산업 제어실 테마 */
         .panel-control { 
             background: #0f172a; 
             color: #f8fafc;
@@ -22,7 +22,7 @@
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); 
         }
         
-        /* [🔥 3번 반영] 우측 엔지니어링 리포트 패널 - 백서 다큐먼트 테마 */
+        /* 우측 엔지니어링 리포트 패널 - 백서 다큐먼트 테마 */
         .panel-report { 
             background: #ffffff; 
             border-radius: 14px; 
@@ -43,11 +43,11 @@
         }
         .spinning-hourglass { display: inline-block; animation: hourglass-flip 1.2s infinite ease-in-out; }
 
-        /* [🔥 4번 반영] 전문적인 2단 분할 레이아웃 설계 */
-        .report-layout-grid { display: flex; gap: 24px; width: 100%; margin-top: 20px; align-items: flex-start; }
+        /* [🔥 구조 전면 변경] 대제목 하단에서부터 2단 그리드가 작동하도록 구조 정밀 재설계 */
+        .report-layout-grid { display: flex; gap: 24px; width: 100%; align-items: flex-start; }
         .report-main-body { flex: 1; min-width: 0; }
         
-        /* [🔥 4, 5번 반영] 가독성이 대폭 상향된 지식 자산 고정 보드 */
+        /* 가독성이 대폭 상향된 지식 자산 고정 보드 */
         #knowledge-source-board {
             width: 320px;
             flex-shrink: 0;
@@ -57,10 +57,12 @@
             border-radius: 10px;
             display: none; 
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+            /* 대제목 아래 정렬을 맞추기 위한 여백 보정 */
+            margin-top: 10px;
         }
         .source-section-title { font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; display: flex; align-items: center; }
         
-        /* [🔥 5번 반영] 인프라 버튼 가독성 글자 크기 업그레이드 */
+        /* 인프라 버튼 가독성 글자 크기 업그레이드 */
         .btn-mini-source {
             display: flex;
             align-items: center;
@@ -90,14 +92,14 @@
             line-height: 1.5;
         }
 
-        /* [🔥 1번 반영] 실시간 그라데이션 채우기 스타일링 슬라이더 */
+        /* 실시간 그라데이션 채우기 스타일링 슬라이더 */
         .range-wrapper { position: relative; width: 100%; }
         .form-range {
             -webkit-appearance: none;
             width: 100%;
             height: 6px;
             border-radius: 3px;
-            background: #334155; /* 기본 배경 트랙 */
+            background: #334155; 
             outline: none;
         }
         .form-range::-webkit-slider-thumb {
@@ -115,6 +117,8 @@
 
         /* 리포트 내 마크다운 스타일 정돈 */
         #report-output { line-height: 1.85; font-size: 1.05rem; color: #0f172a; }
+        /* [🔥 타이포그래피 정형화] 마크다운 변환 시 리포트 메인 제목인 H1과 하위 섹션인 H2의 영역 규격 분리 */
+        #report-output h1 { font-size: 1.9rem; font-weight: 800; color: #0f172a; margin-bottom: 25px; width: 100%; padding-bottom: 10px; }
         #report-output h2 { font-size: 1.45rem; border-left: 5px solid #2563eb; padding-left: 14px; margin: 35px 0 15px; font-weight: 700; color: #1e3a8a; }
         #report-output a[href^="http"] {
             display: inline-block;
@@ -141,7 +145,7 @@
         </div>
         <div class="col-md-4 text-md-end">
             <span class="badge bg-white text-dark border p-2 font-monospace" style="font-size: 0.8rem;">
-                🕒 System Sync: 2026-06-29 11:15
+                🕒 System Sync: 2026-06-29 11:25
             </span>
         </div>
     </div>
@@ -207,58 +211,63 @@
                     <small class="text-primary block">💡 AI 엔진이 엔지니어링 리포트 및 인용구 매핑을 수행하고 있습니다. 잠시만 기다려 주십시오.</small>
                 </div>
 
-                <div class="report-layout-grid">
+                <div class="report-container">
                     
-                    <div class="report-main-body">
-                        <div id="report-output">
-                            <div class="py-4">
-                                <h4 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-circle-question me-2 text-primary"></i>이상 신호 분석 가이드 및 아키텍처 안내</h4>
-                                <p class="text-muted" style="font-size: 0.95rem; line-height: 1.75;">
-                                    본 시스템은 발전소 설비 현장에서 급성 경보 또는 이상 전조 신호가 감지되었을 때, 전사 데이터베이스 및 지식 그래프에 축적된 정비 이력을 다각도로 추론하여 즉각적인 <strong>[RCA 엔지니어링 리포트]</strong>를 자동 발행합니다.
-                                </p>
-                                <hr class="my-4" style="border-top: 1px dashed #cbd5e1;">
-                                
-                                <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bezier-curve me-2 text-success"></i>실시간 다차원 지식 자산 참조 메커니즘</h5>
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <div class="p-3 border rounded-3 bg-light height-100">
-                                            <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-network-wired me-1"></i> Graph DB (Neo4j) 지식맵 연동</h6>
-                                            <small class="text-muted">유입된 알람 코드와 설비 ID를 기반으로 사내 지식 그래프에 등록된 고장 모드 인과관계, 표준 조치 절차(Past Actions) 및 축적된 레슨런(Lessons Learned)을 1차적으로 탐색하여 하이재킹합니다.</small>
+                    <div id="report-title-header"></div>
+
+                    <div class="report-layout-grid">
+                        
+                        <div class="report-main-body">
+                            <div id="report-output">
+                                <div class="py-4" id="guide-initial-view">
+                                    <h4 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-circle-question me-2 text-primary"></i>이상 신호 분석 가이드 및 아키텍처 안내</h4>
+                                    <p class="text-muted" style="font-size: 0.95rem; line-height: 1.75;">
+                                        본 시스템은 발전소 설비 현장에서 급성 경보 또는 이상 전조 신호가 감지되었을 때, 전사 데이터베이스 및 지식 그래프에 축적된 정비 이력을 다각도로 추론하여 즉각적인 <strong>[RCA 엔지니어링 리포트]</strong>를 자동 발행합니다.
+                                    </p>
+                                    <br>
+                                    <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bezier-curve me-2 text-success"></i>실시간 다차원 지식 자산 참조 메커니즘</h5>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="p-3 border rounded-3 bg-light height-100">
+                                                <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-network-wired me-1"></i> Graph DB (Neo4j) 지식맵 연동</h6>
+                                                <small class="text-muted">유입된 알람 코드와 설비 ID를 기반으로 사내 지식 그래프에 등록된 고장 모드 인과관계, 표준 조치 절차 및 축적된 레슨런을 탐색합니다.</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="p-3 border rounded-3 bg-light height-100">
+                                                <h6 class="fw-bold text-danger mb-2"><i class="fa-solid fa-file-shield me-1"></i> Vector DB (Pinecone) 추론 연동</h6>
+                                                <small class="text-muted">과거 10년 이상 축적된 정비 보고서, 기술 매뉴얼의 의미론적 유사도를 분석하여 본문의 인용 문장 뒤에 <strong>실시간 검증용 PDF 보안 하이퍼링크 배지</strong>를 매핑합니다.</small>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="p-3 border rounded-3 bg-light height-100">
-                                            <h6 class="fw-bold text-danger mb-2"><i class="fa-solid fa-file-shield me-1"></i> Vector DB (Pinecone) 추론 연동</h6>
-                                            <small class="text-muted">과거 10년 이상 축적된 정비 보고서, 기술 매뉴얼, RCA 장애 리포트 원본 파일들의 의미론적(Semantic) 유사도를 분석하여 리포트 본문의 인용 문장 뒤에 <strong>실시간 검증용 PDF 보안 하이퍼링크 배지</strong>를 매핑합니다.</small>
-                                        </div>
+                                    
+                                    <div class="alert alert-secondary text-center mt-4 mb-0 py-3" style="font-size: 0.9rem; background-color: #f8fafc;">
+                                        <i class="fa-solid fa-arrow-left text-danger me-1"></i> 왼쪽 관제 패널에서 발전 설비 이상 데이터를 입력한 후 <strong>"실시간 RCA 분석 실행"</strong> 버튼을 클릭하십시오.
                                     </div>
-                                </div>
-                                
-                                <div class="alert alert-secondary text-center mt-4 mb-0 py-3" style="font-size: 0.9rem; background-color: #f8fafc;">
-                                    <i class="fa-solid fa-arrow-left text-danger me-1"></i> 왼쪽 관제 패널에서 발전 설비 이상 데이터를 입력한 후 <strong>"실시간 RCA 분석 실행"</strong> 버튼을 클릭하십시오.
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div id="knowledge-source-board">
-                        <div class="source-section-title"><i class="fa-solid fa-share-nodes me-2 text-success"></i>1. 고장 온톨로지 (Neo4j)</div>
-                        <div id="neo4j-list-area" class="mb-3"></div>
-                        
-                        <div class="source-section-title"><i class="fa-solid fa-database me-2 text-danger"></i>2. 정비 지식 자산 (Pinecone)</div>
-                        <div id="pinecone-list-area" class="mb-2"></div>
-                        
-                        <div id="dynamic-fallback-area"></div>
-                    </div>
+                        <div id="knowledge-source-board">
+                            <div class="source-section-title"><i class="fa-solid fa-share-nodes me-2 text-success"></i>1. 고장 온톨로지 (Neo4j)</div>
+                            <div id="neo4j-list-area" class="mb-4"></div>
+                            
+                            <div class="source-section-title"><i class="fa-solid fa-database me-2 text-danger"></i>2. 정비 지식 자산 (Pinecone)</div>
+                            <div id="pinecone-list-area" class="mb-2"></div>
+                            
+                            <div id="dynamic-fallback-area"></div>
+                        </div>
 
+                    </div>
                 </div>
+
             </div>
         </div>
     </div>
 </div>
 
 <script>
-// [🔥 1번 반영] 슬라이더 채우기 로직 정밀 빌드 함수
+// 슬라이더 채우기 로직 정밀 빌드 함수
 const slider = document.getElementById('telemetry_value');
 const sliderVal = document.getElementById('slider-val');
 
@@ -266,11 +275,9 @@ function updateSliderBackground(value) {
     const min = slider.min || 0;
     const max = slider.max || 20;
     const percentage = ((value - min) / (max - min)) * 100;
-    // 선택값까지는 밝은 파란색, 나머지는 슬레이트 다크 네이비로 채움
     slider.style.background = `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${percentage}%, #334155 ${percentage}%, #334155 100%)`;
 }
 
-// 최초 1회 초기화 가동
 updateSliderBackground(slider.value);
 
 slider.addEventListener('input', function() {
@@ -290,12 +297,15 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     const s2 = document.getElementById('step2');
     const s3 = document.getElementById('step3');
     const progress = document.getElementById('progress-area');
+    const titleHeader = document.getElementById('report-title-header');
     const output = document.getElementById('report-output');
     const sourceBoard = document.getElementById('knowledge-source-board');
     const neo4jArea = document.getElementById('neo4j-list-area');
     const pineconeArea = document.getElementById('pinecone-list-area');
     const fallbackArea = document.getElementById('dynamic-fallback-area');
 
+    // UI 완벽 리셋
+    titleHeader.innerHTML = "";
     output.innerHTML = "";
     sourceBoard.style.display = "none";
     neo4jArea.innerHTML = "";
@@ -337,11 +347,30 @@ document.getElementById('btn-submit').addEventListener('click', async function()
             const rawData = await response.json();
             const resJson = Array.isArray(rawData) ? rawData[0] : rawData;
 
-            // 1. 리포트 본문 렌더링
+            // [🔥 핵심 교정 가드선] 마크다운 문자열에서 #으로 구성된 최상위 대제목을 분리해 냅니다.
             let reportMarkdown = resJson.output || "분석 결과가 없습니다.";
-            output.innerHTML = marked.parse(reportMarkdown);
+            
+            let mainTitleText = "# 📋 [RCA 엔지니어링 리포트] 대상 설비 이상 신호 분석";
+            let remainingMarkdown = reportMarkdown;
 
-            // 2. 소스 보드 활성화 및 데이터 매핑
+            // 만약 받아온 데이터에 대제목이 포함되어 있다면 분리 처리 진행
+            if (reportMarkdown.includes("# ")) {
+                const lines = reportMarkdown.split('\n');
+                const firstHeadingIndex = lines.findIndex(line => line.trim().startsWith('# '));
+                if (firstHeadingIndex !== -1) {
+                    mainTitleText = lines[firstHeadingIndex];
+                    lines.splice(firstHeadingIndex, 1); // 제목행 제거
+                    remainingMarkdown = lines.join('\n');
+                }
+            }
+
+            // 1. 대제목을 리포트 상단 영역 전체 가로폭에 넓게 주입
+            titleHeader.innerHTML = marked.parse(mainTitleText);
+
+            // 2. 1번 섹션 이하 본문 내용을 좌측 분할 그리드 공간에 격리 출력
+            output.innerHTML = marked.parse(remainingMarkdown);
+
+            // 3. 우측 지식 소스 보드 활성화 (개요 섹션 라인과 자연스럽게 매칭 정렬)
             sourceBoard.style.display = "block";
 
             let hasNeo4j = false;
@@ -397,7 +426,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                     <i class="fa-solid fa-brain me-1"></i> 
                     <strong>[AI 공학 추론 안내]</strong><br>
                     본 가설 및 정비 지침은 실시간 매칭된 고유 정비 이력이 존재하지 않거나 부족하여, 
-                    AI 에이전트의 표준 정비 지식 맵(LLM Engineering Cross-Mapping)을 교차 탐색하여 생성한 마스터 리포트입니다.
+                    AI 에이전트의 표준 정비 지식 맵을 교차 탐색하여 생성한 마스터 리포트입니다.
                 `;
                 fallbackArea.appendChild(infoDiv);
             }
