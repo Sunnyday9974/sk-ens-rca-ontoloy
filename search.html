@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SK Group AI/DT - RCA 지식 그래프 탐색기 [v2026.06.29.1500]</title>
+    <title>SK Group AI/DT - RCA 지식 그래프 탐색기 [v2026.06.29.1600]</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
@@ -25,7 +25,7 @@
         .slide-title i { color: var(--accent); }
         .subtitle { font-size: 14px; color: #64748b; margin-top: 5px; }
         
-        /* 🎯 검색 모드 탭 컨트롤 스타일 */
+        /* 검색 모드 탭 컨트롤 스타일 */
         .search-tab-container { display: flex; gap: 4px; padding: 0 60px; background: white; }
         .search-tab { padding: 8px 18px; font-size: 13px; font-weight: 600; color: #64748b; background: #f1f5f9; border: 1px solid var(--border); border-bottom: none; border-radius: 6px 6px 0 0; cursor: pointer; transition: all 0.2s; }
         .search-tab.active { color: var(--accent); background: white; border-color: var(--border) var(--border) transparent var(--border); font-weight: 700; position: relative; z-index: 2; }
@@ -158,7 +158,6 @@
         return result.trim();
     }
 
-    // 🎯 탭 전환 처리 핸들러
     function switchSearchMode(mode) {
         document.querySelectorAll('.search-tab').forEach((tab, idx) => {
             tab.classList.toggle('active', (mode === 'selectMode' && idx === 0) || (mode === 'textMode' && idx === 1));
@@ -174,16 +173,13 @@
             let rawData = jsonResult[0]?.data || jsonResult[0]?.body?.data || jsonResult.data;
             const values = rawData.values[0];
             
-            // 🎯 [오름차순 정렬 처리 로직 반영]
             let docList = values[0] || [];
             let assetList = values[1] || [];
             let alarmList = values[2] || [];
             let fmList = values[3] || [];
 
-            // 1. 단일 문자열 리스트 정렬
-            docList.sort();
-
-            // 2. 객체배열 리스트 ID 오름차순 정렬 ({id: '...', name: '...'})
+            // 🎯 오름차순 알파벳/글자 정렬 규칙 적용
+            docList.sort((a, b) => (a || "").localeCompare(b || ""));
             assetList.sort((a, b) => (a.id || "").localeCompare(b.id || ""));
             alarmList.sort((a, b) => (a.id || "").localeCompare(b.id || ""));
             fmList.sort((a, b) => (a.id || "").localeCompare(b.id || ""));
@@ -195,6 +191,7 @@
         } catch (error) { console.error('목록 로드 실패:', error); }
     };
 
+    // 🎯 괄호 구조 텍스트 정밀 클렌징 알고리즘 반영 빌더 함수
     function bindDropdown(elementId, dataList, isComplexObject = false) {
         const select = document.getElementById(elementId);
         
@@ -203,10 +200,23 @@
                 let opt = document.createElement('option');
                 if (isComplexObject && typeof item === 'object') {
                     opt.value = item.id;
-                    if (!item.name || item.name === item.id) {
-                        opt.innerText = item.id;
+                    
+                    let rawName = item.name || "";
+                    let targetId = item.id;
+                    let cleanName = rawName;
+
+                    // 1. 만약 name에 "ID (이름)" 혹은 "이름 (ID)" 구조가 들어있을 경우 중복 괄호 완전 걷어내기
+                    if (rawName.includes(`(${targetId})`)) {
+                        cleanName = rawName.replace(`(${targetId})`, "").trim();
+                    } else if (rawName.startsWith(targetId)) {
+                        cleanName = rawName.replace(targetId, "").replace(/^\s*\(\s*/, "").replace(/\s*\)\s*$/, "").trim();
+                    }
+
+                    // 2. 최종 무조건 깔끔하게 "ID (순수이름)"으로 통일 바인딩
+                    if (!cleanName || cleanName === targetId) {
+                        opt.innerText = targetId;
                     } else {
-                        opt.innerText = `${item.id} (${item.name})`;
+                        opt.innerText = `${targetId} (${cleanName})`;
                     }
                 } else {
                     opt.value = item;
@@ -217,7 +227,7 @@
         });
     }
 
-    // 공통 결과 처리기 추출
+    // 🎯 고립 노드 및 에러 방어 메커니즘을 포함한 결과 처리기
     function processGraphResponse(jsonResult, chosenCenterIds) {
         let rows = jsonResult[0]?.data?.values || jsonResult[0]?.body?.data?.values || jsonResult.data?.values;
 
@@ -235,6 +245,7 @@
             const target = row[0]; const relationship = row[1]; const neighbor = row[2];
 
             [target, neighbor].forEach(n => {
+                // 노드가 실재하고 유효할 때만 격자 맵에 추가 처리
                 if (n && n.properties && !nodesMap.has(n.properties.id)) {
                     const typeLabel = n.labels[0] || 'Nodes';
                     let textBody = n.properties.name || n.properties.id;
@@ -259,7 +270,8 @@
                 }
             });
 
-            if (relationship && target && neighbor) {
+            // 🎯 [고립 노드 방어형 구조] 관계선 및 연동 관계가 전부 완벽할 때만 에지 연결 처리
+            if (relationship && target && neighbor && target.properties && neighbor.properties) {
                 visEdges.push({
                     from: relationship.startNodeElementId === target.elementId ? target.properties.id : neighbor.properties.id,
                     to: relationship.endNodeElementId === target.elementId ? target.properties.id : neighbor.properties.id,
@@ -273,7 +285,6 @@
         renderVisGraph(Array.from(nodesMap.values()), visEdges);
     }
 
-    // 모드 1 호출 실행부
     async function searchNetworkAND() {
         const docId = document.getElementById('docSelect').value;
         const assetId = document.getElementById('assetSelect').value;
@@ -290,13 +301,11 @@
         } catch (error) { console.error('조회 실패:', error); }
     }
 
-    // 🎯 모드 2 호출 실행부 (텍스트 유사성 분석 연동용)
     async function searchNetworkByText() {
         const keyword = document.getElementById('textSearchInput').value.trim();
         if (!keyword) { alert('검색어를 입력해 주세요.'); return; }
 
         try {
-            // n8n Webhook의 새로운 분기 주소 호출 (text 쿼리 스트링 패싱)
             const response = await fetch(`${N8N_PRODUCTION_URL}/search-text?keyword=${encodeURIComponent(keyword)}`);
             const jsonResult = await response.json();
             processGraphResponse(jsonResult, []);
