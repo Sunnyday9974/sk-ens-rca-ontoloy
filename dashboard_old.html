@@ -43,6 +43,18 @@
         }
         .source-section-title { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; display: flex; align-items: center; }
         
+        /* [🔥 신규 추가] 문서 부재 시 하단에 붙을 동적 AI 출처 가이드 배지 */
+        .ai-fallback-badge {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background-color: #f0fdfa;
+            border: 1px solid #ccfbf1;
+            border-radius: 6px;
+            color: #0d9488;
+            font-size: 0.72rem;
+            line-height: 1.4;
+        }
+
         /* 미니 버튼 스타일 */
         .btn-mini-source {
             display: flex;
@@ -88,7 +100,7 @@
         </div>
         <div class="col-md-4 text-md-end">
             <span class="badge bg-white text-dark border p-2 font-monospace" style="font-size: 0.8rem;">
-                🕒 System Sync: 2026-06-25 17:49
+                🕒 System Sync: 2026-06-29 11:00
             </span>
         </div>
     </div>
@@ -157,6 +169,8 @@
                         
                         <div class="source-section-title"><i class="fa-solid fa-database me-2 text-danger"></i>2. 정비 지식 자산 (Pinecone)</div>
                         <div id="pinecone-list-area"></div>
+                        
+                        <div id="dynamic-fallback-area"></div>
                     </div>
 
                     <div id="report-output">
@@ -211,12 +225,14 @@ document.getElementById('btn-submit').addEventListener('click', async function()
     const sourceBoard = document.getElementById('knowledge-source-board');
     const neo4jArea = document.getElementById('neo4j-list-area');
     const pineconeArea = document.getElementById('pinecone-list-area');
+    const fallbackArea = document.getElementById('dynamic-fallback-area');
 
     // UI 초기화
     output.innerHTML = "";
     sourceBoard.style.display = "none";
     neo4jArea.innerHTML = "";
     pineconeArea.innerHTML = "";
+    fallbackArea.innerHTML = ""; // 🎯 폴백 영역 청소
     
     const loader = `<span class="spinning-hourglass me-2">⏳</span>`;
 
@@ -260,6 +276,9 @@ document.getElementById('btn-submit').addEventListener('click', async function()
             // 2. 소스 보드 활성화 및 데이터 매핑
             sourceBoard.style.display = "block";
 
+            let hasNeo4j = false;
+            let hasPinecone = false;
+
             // Neo4j 매핑
             let neo4jDocs = resJson.neo4jDocuments || resJson.neo4j_documents || [];
             while (typeof neo4jDocs === 'string') {
@@ -267,6 +286,7 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                 neo4jDocs = JSON.parse(neo4jDocs);
             }
             if (Array.isArray(neo4jDocs) && neo4jDocs.length > 0) {
+                hasNeo4j = true;
                 neo4jDocs.forEach(doc => {
                     if (!doc.url || doc.url === "#") return;
                     const a = document.createElement('a');
@@ -281,11 +301,15 @@ document.getElementById('btn-submit').addEventListener('click', async function()
             let pineconeDocs = resJson.pineconeDocuments || [];
             if (typeof pineconeDocs === 'string') pineconeDocs = JSON.parse(pineconeDocs);
             if (Array.isArray(pineconeDocs) && pineconeDocs.length > 0) {
+                // 실존하는 레퍼런스 카운트 체크
+                let validRefCount = 0;
                 pineconeDocs.forEach(doc => {
                     if (doc.references) {
                         doc.references.forEach(ref => {
                             const file = ref.file;
                             if (file && file.signed_url) {
+                                validRefCount++;
+                                hasPinecone = true;
                                 const a = document.createElement('a');
                                 a.className = "btn-mini-source";
                                 a.href = file.signed_url; a.target = "_blank";
@@ -295,7 +319,22 @@ document.getElementById('btn-submit').addEventListener('click', async function()
                         });
                     }
                 });
+                if(validRefCount === 0) { pineconeArea.innerHTML = "<div class='text-muted' style='font-size:0.7rem;'>추천 기술 자산 매칭 완료</div>"; }
             } else { pineconeArea.innerHTML = "<div class='text-muted' style='font-size:0.7rem;'>추천 기술 자산 매칭 완료</div>"; }
+
+            // 🎯 [핵심 보완] 둘 중 하나라도 실제 문서 연동이 없다면 정중한 출처 보증 배지를 하단에 인젝트
+            if (!hasNeo4j || !hasPinecone) {
+                const infoDiv = document.createElement('div');
+                infoDiv.className = "ai-fallback-badge";
+                infoDiv.innerHTML = `
+                    <i class="fa-solid fa-brain me-1"></i> 
+                    <strong>[AI 공학 추론 안내]</strong><br>
+                    본 가설 및 정비 지침은 실시간 매칭된 고유 정비 이력이 존재하지 않거나 부족하여, 
+                    <strong>AI 에이전트의 발전 설비 표준 정비 지식 맵(LLM Engineering Cross-Mapping)</strong>을 
+                    교차 탐색하여 생성한 마스터 리포트입니다.
+                `;
+                fallbackArea.appendChild(infoDiv);
+            }
 
         }
     } catch (error) {
