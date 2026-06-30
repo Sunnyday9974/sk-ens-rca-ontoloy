@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
+        /* 🌟 [가독성 테마]: 눈이 편안한 밝은 격자 스타일의 인텔리전트 캔버스 */
         #network-canvas { 
             width: 100%; 
             height: 100%; 
@@ -38,7 +39,7 @@
                 실시간 동기화 활성화
             </div>
             <div class="text-[10px] text-slate-400 font-mono bg-black/40 px-2.5 py-1 rounded border border-slate-800">
-                인프라 인증 상태: <span id="auth-status-badge" class="text-emerald-400 font-bold">연동 완료 (시연 모드)</span>
+                소스 반영 시각: <span class="text-amber-400 font-bold">06.16 11:30</span>
             </div>
         </div>
     </header>
@@ -49,16 +50,16 @@
             
             <section class="p-4 bg-white shadow-sm rounded-2xl border border-slate-200">
                 <h2 class="text-xs font-bold mb-3 text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                    <i class="fa-solid fa-file-pdf text-rose-500"></i> Step 1. 구글 드라이브 파일 지정
+                    <i class="fa-solid fa-file-pdf text-rose-500"></i> Step 1. 파일 지정
                 </h2>
                 <div class="flex flex-col gap-2">
-                    <button id="btn-select-file" onclick="alert('시연용 프리셋 파일이 이미 로드되었습니다.')" class="w-full bg-slate-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2 cursor-pointer">
-                        <i id="drive-icon" class="fa-brands fa-google-drive text-emerald-400"></i> 구글 드라이브 리포트 선택
+                    <button id="btn-select-file" onclick="btnSelectFileClick(event)" class="w-full bg-slate-900 hover:bg-black text-white font-bold text-xs py-2.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2 cursor-pointer">
+                        <i id="drive-icon" class="fa-brands fa-google-drive text-amber-400"></i> 구글 드라이브 리포트 선택
                     </button>
-                    <div id="file-info" class="text-emerald-600 font-bold text-[11px] text-center border border-emerald-200 rounded-xl py-2.5 bg-emerald-50 px-2 truncate shadow-inner">
-                        📁 [Drive] 로딩 중...
+                    <div id="file-info" class="text-slate-400 italic text-[11px] text-center border border-dashed border-slate-200 rounded-xl py-2 bg-slate-50 px-2 truncate">
+                        파일을 선택해 주세요.
                     </div>
-                    <button id="btn-start-transform" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 px-4 rounded-xl transition shadow-blue-200/50 shadow-lg flex items-center justify-center gap-2 cursor-pointer">
+                    <button id="btn-start-transform" disabled class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 px-4 rounded-xl transition shadow-blue-200/50 shadow-lg disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer">
                         <i class="fa-solid fa-bolt-lightning"></i> 변환 프로세스 시작
                     </button>
                 </div>
@@ -187,21 +188,22 @@
         © 2026 나래 O&M AI/DT TF. Intellectual Asset Management System v2.0
     </footer>
 
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
+
     <script>
+        const API_KEY = 'AIzaSyDUb9w8DUJ1z6rA3f1cWLvtK_dHML2B0Ys';
+        const CLIENT_ID = '226564701904-hr1l78rknenlm0fn3gul1cvmkve0ntuc.apps.googleusercontent.com';
+        const SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
         const N8N_WEBHOOK_URL = 'https://seoneenam.app.n8n.cloud/webhook/rca-ontology-trigger';
         
-        // ⚡️ [시연 전용 하드코딩 설정 영역]
-        // 앞서 n8n 404 에러 로그에 등장했거나 실제 n8n 다운로드 노드가 참조해야 하는 진짜 구글 드라이브 파일 ID를 여기에 지정합니다.
-        const PRESET_FILE_ID = '1W-7UCj5AdL1ZJMhy2puVpS5PxP7GWEQX'; // 👈 실제 구글 드라이브 테스트 파일 ID 입력 가능
-        const PRESET_FILE_NAME = 'ETS-INSIGHT_70호.pdf'; // 👈 실제 테스트 파일명 입력 가능
+        let accessToken = null; let selectedFileId = null; let selectedFileName = null; let tokenClient = null; let pickerApiLoaded = false;
+        let networkInstance = null; let timerInterval = null; let fakeProgressInterval = null;
 
-        let selectedFileId = PRESET_FILE_ID; 
-        let selectedFileName = PRESET_FILE_NAME; 
-        let networkInstance = null; 
-        let timerInterval = null; 
-        let fakeProgressInterval = null;
-
+        // 🌟 [변수 매핑 복원]: 상단 본문의 요소들을 자바스크립트가 무조건 낚아챌 수 있도록 동기화 스코프 고정
+        const btnSelectFile = document.getElementById('btn-select-file'); 
         const btnStartTransform = document.getElementById('btn-start-transform');
+        const fileInfo = document.getElementById('file-info'); 
         const processSection = document.getElementById('process-section'); 
         const resultSection = document.getElementById('result-section');
         const monitorStatus = document.getElementById('monitor-status'); 
@@ -220,17 +222,73 @@
             return result.trim();
         }
 
-        // ⚡️ 페이지 켜지자마자 이미 파일 선택이 된 것처럼 연출
-        window.onload = function() {
-            const targetInfo = document.getElementById('file-info');
-            if (targetInfo) {
-                targetInfo.innerText = `📁 [Drive] ${selectedFileName}`;
+        function gapiLoadCallback() { gapi.load('picker', () => { pickerApiLoaded = true; checkInfrastructureReady(); }); }
+        function gsiLoadCallback() {
+            if (typeof google !== 'undefined') {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID, scope: SCOPE,
+                    callback: (response) => { if (response.error !== undefined) return; accessToken = response.access_token; if (accessToken) createPicker(); },
+                });
+                checkInfrastructureReady();
             }
-            console.log("시연 우회 프리셋 주입 완료 ID:", selectedFileId);
+        }
+        
+        function checkInfrastructureReady() { 
+            if (pickerApiLoaded && tokenClient) { 
+                const driveIcon = document.getElementById('drive-icon');
+                if (driveIcon) driveIcon.className = "fa-brands fa-google-drive text-emerald-400 animate-bounce"; 
+            } 
+        }
+
+        window.onload = () => {
+            gapiLoadCallback();
+            setTimeout(gsiLoadCallback, 150);
         };
 
-        // 🚀 변환 프로세스 작동 로직 (n8n 웹훅 전송 및 Neo4j UI 빌드 연동 유지)
+        // 🚀 구글 팝업 다이렉트 인터셉트 함수 
+        function btnSelectFileClick(event) {
+            if (event) event.preventDefault();
+            if (typeof google === 'undefined' || !tokenClient) {
+                gapiLoadCallback(); gsiLoadCallback();
+                setTimeout(() => { if(tokenClient) tokenClient.requestAccessToken(); }, 300);
+            } else {
+                tokenClient.requestAccessToken();
+            }
+        }
+
+        function createPicker() {
+            if (!accessToken) { tokenClient.requestAccessToken(); return; }
+            try {
+                const view = new google.picker.View(google.picker.ViewId.DOCS); view.setMimeTypes("application/pdf");
+                const picker = new google.picker.PickerBuilder().addView(view).setOAuthToken(accessToken).setDeveloperKey(API_KEY).setCallback(pickerCallback).setTitle("RCA 리포트 PDF 선택").build();
+                picker.setVisible(true);
+            } catch (err) { alert("인프라 부팅 중입니다. 다시 시도해 주세요."); }
+        }
+
+        // 🚀 [링크 바인딩 정상화]: 파일 선택이 끝나는 순간 껍데기가 아닌 진짜 요소를 찾아 값을 꽂도록 패치
+        function pickerCallback(data) {
+            if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
+                const doc = data[google.picker.Response.DOCUMENTS][0]; 
+                selectedFileId = doc[google.picker.Document.ID]; 
+                selectedFileName = doc[google.picker.Document.NAME];
+                
+                // 전역 DOM 변수를 재탐색하여 안전하게 파일명 주입 및 잠금 해제 실행
+                const targetInfo = document.getElementById('file-info');
+                const targetBtn = document.getElementById('btn-start-transform');
+                
+                if (targetInfo) {
+                    targetInfo.innerText = `📄 ${selectedFileName}`;
+                    targetInfo.className = "text-blue-600 font-bold text-[11px] text-center border border-blue-200 rounded-xl py-2.5 bg-blue-50 px-2 truncate shadow-inner animate-fade-in";
+                }
+                if (targetBtn) {
+                    targetBtn.removeAttribute('disabled');
+                }
+            }
+        }
+
         btnStartTransform.addEventListener('click', async () => {
+            if(!selectedFileId) return;
+            
             processSection.classList.remove('hidden'); resultSection.classList.add('hidden'); viewPlaceholder.classList.add('hidden'); graphContainer.classList.remove('hidden'); loadingGraph.classList.add('hidden');
             document.getElementById('live-cypher-text').innerText = `MATCH (d:Document {title: "${selectedFileName}"})-[r]-(m) RETURN d,r,m;`;
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 inline-block animate-ping"></span> 실시간 분석 가동 중';
@@ -337,12 +395,12 @@
 
             if (!rawNodes || !Array.isArray(rawNodes)) {
                 document.getElementById('engine-log-title-icon').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-500"></i>';
-                alert(`[데이터 구조 안내]\nn8n 웹훅 응답 바디에 'nodes' 구조가 누락되었습니다.`);
+                alert(`[데이터 구조 가이드]\nn8n 반환 바디에 'nodes' 배열이 보이지 않습니다.`);
                 return;
             }
 
             resultSection.classList.remove('hidden');
-            monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span> 실시간 DB 토폴로지 매핑 완료';
+            monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span> 실시간 데이터베이스 동기화 완료';
             monitorStatus.className = "flex items-center gap-2 text-[10px] text-emerald-600 font-bold font-mono";
             
             let visNodes = []; let visEdges = []; let nodesMap = new Map();
@@ -414,7 +472,7 @@
             if(timerInterval) clearInterval(timerInterval);
             const titleIcon = document.getElementById('engine-log-title-icon');
             if (titleIcon) titleIcon.innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-500"></i>';
-            alert(`[나래 O&M 파이프라인 에러]\n\n내용: ${reason}`); 
+            alert(`[나래 O&M 파이프라인 에러 리포트]\n\n원인: ${reason}`); 
         }
 
         function resetAllStepsToDefault() { 
