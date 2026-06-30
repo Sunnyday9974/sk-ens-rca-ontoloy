@@ -38,7 +38,7 @@
                 실시간 동기화 활성화
             </div>
             <div class="text-[10px] text-slate-400 font-mono bg-black/40 px-2.5 py-1 rounded border border-slate-800">
-                인프라 인증 상태: <span id="auth-status-badge" class="text-rose-400 font-bold">초기화 중</span>
+                인프라 인증 상태: <span id="auth-status-badge" class="text-emerald-400 font-bold">연동 완료 (시연 모드)</span>
             </div>
         </div>
     </header>
@@ -52,13 +52,13 @@
                     <i class="fa-solid fa-file-pdf text-rose-500"></i> Step 1. 구글 드라이브 파일 지정
                 </h2>
                 <div class="flex flex-col gap-2">
-                    <button id="btn-select-file" onclick="btnSelectFileClick(event)" class="w-full bg-slate-900 hover:bg-black text-white font-bold text-xs py-2.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2 cursor-pointer">
+                    <button id="btn-select-file" onclick="alert('시연용 프리셋 파일이 이미 로드되었습니다.')" class="w-full bg-slate-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2 cursor-pointer">
                         <i id="drive-icon" class="fa-brands fa-google-drive text-emerald-400"></i> 구글 드라이브 리포트 선택
                     </button>
-                    <div id="file-info" class="text-slate-400 italic text-[11px] text-center border border-dashed border-slate-200 rounded-xl py-2 bg-slate-50 px-2 truncate">
-                        구글 드라이브에서 파일을 선택해 주세요.
+                    <div id="file-info" class="text-emerald-600 font-bold text-[11px] text-center border border-emerald-200 rounded-xl py-2.5 bg-emerald-50 px-2 truncate shadow-inner">
+                        📁 [Drive] 로딩 중...
                     </div>
-                    <button id="btn-start-transform" disabled class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 px-4 rounded-xl transition shadow-blue-200/50 shadow-lg disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer">
+                    <button id="btn-start-transform" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 px-4 rounded-xl transition shadow-blue-200/50 shadow-lg flex items-center justify-center gap-2 cursor-pointer">
                         <i class="fa-solid fa-bolt-lightning"></i> 변환 프로세스 시작
                     </button>
                 </div>
@@ -187,19 +187,16 @@
         © 2026 나래 O&M AI/DT TF. Intellectual Asset Management System v2.0
     </footer>
 
-    <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://accounts.google.com/gsi/client"></script>
-
     <script>
-        // 🛠️ GCP 인증 정보 세팅 (현재 발급받으신 고유 정보 키값 설정 유지)
-        const API_KEY = 'AIzaSyA4_...'; 
-        const CLIENT_ID = '331566...';
         const N8N_WEBHOOK_URL = 'https://seoneenam.app.n8n.cloud/webhook/rca-ontology-trigger';
         
-        let accessToken = null;
-        let tokenClient = null;
-        let selectedFileId = null; 
-        let selectedFileName = null; 
+        // ⚡️ [시연 전용 하드코딩 설정 영역]
+        // 앞서 n8n 404 에러 로그에 등장했거나 실제 n8n 다운로드 노드가 참조해야 하는 진짜 구글 드라이브 파일 ID를 여기에 지정합니다.
+        const PRESET_FILE_ID = '1W-7UCj5AdL1ZJMhy2puVpS5PxP7GWEQX'; // 👈 실제 구글 드라이브 테스트 파일 ID 입력 가능
+        const PRESET_FILE_NAME = 'ETS-INSIGHT_70호.pdf'; // 👈 실제 테스트 파일명 입력 가능
+
+        let selectedFileId = PRESET_FILE_ID; 
+        let selectedFileName = PRESET_FILE_NAME; 
         let networkInstance = null; 
         let timerInterval = null; 
         let fakeProgressInterval = null;
@@ -223,80 +220,17 @@
             return result.trim();
         }
 
-        // 🔐 [구글 드라이브 픽커 인프라 초기화 파트]
-        function gapiLoad() { gapi.load('picker', {callback: () => console.log('Picker 라이브러리 부팅 완료')}); }
-        function gisInit() {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: 'https://www.googleapis.com/auth/drive.readonly',
-                callback: (response) => {
-                    if (response.error !== undefined) { 
-                        showDetailedError(`OAuth 토큰 요청 실패: ${response.error}`);
-                        return; 
-                    }
-                    accessToken = response.access_token;
-                    document.getElementById('auth-status-badge').innerText = "인증 완료";
-                    document.getElementById('auth-status-badge').className = "text-emerald-400 font-bold";
-                    createPicker();
-                }
-            });
-            document.getElementById('auth-status-badge').innerText = "대기 중";
-            document.getElementById('auth-status-badge').className = "text-amber-400 font-bold";
-        }
-
-        // ⚡️ 버튼 클릭 시 인증 토큰 유무 확인 후 구글 창 생성
-        function btnSelectFileClick(e) {
-            e.preventDefault();
-            if (!accessToken) {
-                tokenClient.requestAccessToken({prompt: 'consent'});
-            } else {
-                createPicker();
+        // ⚡️ 페이지 켜지자마자 이미 파일 선택이 된 것처럼 연출
+        window.onload = function() {
+            const targetInfo = document.getElementById('file-info');
+            if (targetInfo) {
+                targetInfo.innerText = `📁 [Drive] ${selectedFileName}`;
             }
-        }
+            console.log("시연 우회 프리셋 주입 완료 ID:", selectedFileId);
+        };
 
-        // 🔍 [핵심 패치] 구글 크롬 브라우저 차단 정책 우회용 드라이브 픽커 구현체
-        function createPicker() {
-            try {
-                const view = new google.picker.View(google.picker.ViewId.DOCS);
-                view.setMimeTypes("application/pdf");
-                
-                // 클라이언트 ID에서 순수 숫자 App ID 추출
-                const appId = CLIENT_ID.split('-')[0];
-
-                const picker = new google.picker.PickerBuilder()
-                    .addView(view)
-                    .setOAuthToken(accessToken)
-                    .setAppId(appId) // ⚡️ 최신 크롬 크로스-오리진 차단 차단 해제 필수 설정값
-                    .setDeveloperKey(API_KEY)
-                    .setCallback(pickerCallback)
-                    .setTitle("나래 O&M RCA 리포트 선택")
-                    .build();
-                picker.setVisible(true);
-            } catch (err) {
-                showDetailedError(`구글 픽커 객체 생성 오류: ${err.message}`);
-            }
-        }
-
-        // 📥 구글 드라이브 파일 선택 결과 처리 핸들러
-        function pickerCallback(data) {
-            if (data.action === google.picker.Action.PICKED) {
-                const doc = data.docs[0];
-                selectedFileId = doc.id;
-                selectedFileName = doc.name;
-                
-                const targetInfo = document.getElementById('file-info');
-                if (targetInfo) {
-                    targetInfo.innerText = `📁 [Drive] ${selectedFileName}`;
-                    targetInfo.className = "text-emerald-600 font-bold text-[11px] text-center border border-emerald-200 rounded-xl py-2.5 bg-emerald-50 px-2 truncate shadow-inner animate-fade-in";
-                }
-                btnStartTransform.removeAttribute('disabled');
-            }
-        }
-
-        // 🚀 n8n 백엔드 스트리밍 및 Neo4j 실시간 그래프 매핑 실행 트리거
+        // 🚀 변환 프로세스 작동 로직 (n8n 웹훅 전송 및 Neo4j UI 빌드 연동 유지)
         btnStartTransform.addEventListener('click', async () => {
-            if(!selectedFileId) return;
-            
             processSection.classList.remove('hidden'); resultSection.classList.add('hidden'); viewPlaceholder.classList.add('hidden'); graphContainer.classList.remove('hidden'); loadingGraph.classList.add('hidden');
             document.getElementById('live-cypher-text').innerText = `MATCH (d:Document {title: "${selectedFileName}"})-[r]-(m) RETURN d,r,m;`;
             monitorStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 inline-block animate-ping"></span> 실시간 분석 가동 중';
@@ -501,12 +435,6 @@
             const pc3 = document.getElementById('progress-container-3'); if(pc3) pc3.classList.add('hidden');
             const pb3 = document.getElementById('progress-bar-3'); if(pb3) pb3.style.width = '0%';
         }
-
-        // 인프라 스크립트 로드 시 실행 스케줄러 등록
-        window.onload = function() {
-            gapiLoad();
-            gisInit();
-        };
     </script>
 </body>
 </html>
