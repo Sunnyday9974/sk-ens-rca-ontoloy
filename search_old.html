@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SK Group AI/DT - RCA 지식 그래프 탐색기 [v2026.06.17.1500]</title>
+    <title>SK Group AI/DT - RCA 지식 그래프 탐색기 [v2026.06.29.1600]</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
@@ -13,34 +13,43 @@
     <style>
         :root {
             --primary: #1e293b; --secondary: #f8fafc; --accent: #e02020; --text: #334155; --border: #e2e8f0;
-            /* 🎯 index.html과 100% 동기화된 정밀 헥사 컬러 팔레트 */
             --color-doc: #059669; --color-asset: #2563eb; --color-alarm: #dc2626; --color-fm: #d97706; --color-step: #7c3aed; --color-act: #db2777; --color-lsn: #4b5563;
         }
         body { background-color: #e2e8f0; font-family: 'Inter', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--text); }
         .slide-container { width: 1280px; height: 720px; background-color: var(--secondary); border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; position: relative; }
         
         /* 헤더 섹션 */
-        header { padding: 35px 60px 15px 60px; background: linear-gradient(to right, #ffffff, #f1f5f9); display: flex; justify-content: space-between; align-items: flex-end; }
+        header { padding: 30px 60px 10px 60px; background: linear-gradient(to right, #ffffff, #f1f5f9); display: flex; justify-content: space-between; align-items: flex-end; }
         .title-area { display: flex; flex-direction: column; }
         .slide-title { font-family: 'Poppins', sans-serif; font-size: 30px; font-weight: 700; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 12px; }
         .slide-title i { color: var(--accent); }
         .subtitle { font-size: 14px; color: #64748b; margin-top: 5px; }
         
-        .search-panel { display: flex; gap: 12px; padding: 0 60px 25px 60px; background: white; border-bottom: 1px solid var(--border); flex-wrap: wrap; align-items: flex-end; }
+        /* 검색 모드 탭 컨트롤 스타일 */
+        .search-tab-container { display: flex; gap: 4px; padding: 0 60px; background: white; }
+        .search-tab { padding: 8px 18px; font-size: 13px; font-weight: 600; color: #64748b; background: #f1f5f9; border: 1px solid var(--border); border-bottom: none; border-radius: 6px 6px 0 0; cursor: pointer; transition: all 0.2s; }
+        .search-tab.active { color: var(--accent); background: white; border-color: var(--border) var(--border) transparent var(--border); font-weight: 700; position: relative; z-index: 2; }
+        
+        /* 검색 통합 패널 */
+        .search-panel { display: flex; gap: 12px; padding: 15px 60px 20px 60px; background: white; border-bottom: 1px solid var(--border); border-top: 1px solid var(--border); min-height: 52px; align-items: flex-end; position: relative; z-index: 1; margin-top: -1px; }
+        .search-content-block { display: none; width: 100%; gap: 12px; align-items: flex-end; }
+        .search-content-block.active { display: flex; }
+        
         .control-group { display: flex; flex-direction: column; gap: 5px; }
         .control-group label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
-        select { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); background-color: #fff; font-size: 13px; min-width: 180px; transition: all 0.2s; outline: none; cursor: pointer; }
-        select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(224, 32, 32, 0.1); }
-        .btn-search { background-color: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; transition: background 0.2s; height: 40px; margin-left: 10px; }
+        select, .input-text-search { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); background-color: #fff; font-size: 13px; min-width: 180px; max-width: 260px; transition: all 0.2s; outline: none; }
+        .input-text-search { min-width: 450px; max-width: 600px; }
+        select:focus, .input-text-search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(224, 32, 32, 0.1); }
+        
+        .btn-search { background-color: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; transition: background 0.2s; height: 40px; white-space: nowrap; }
         .btn-search:hover { background-color: #b01818; }
         
         /* 메인 레이아웃 및 격자 캔버스 */
         .main-content { display: flex; flex: 1; padding: 25px 60px; gap: 25px; overflow: hidden; }
         .canvas-container { flex: 2.5; position: relative; display: flex; }
-        
         #network-canvas { flex: 1; background-color: #f8fafc; border-radius: 12px; border: 1px solid var(--border); background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px); background-size: 24px 24px; }
         
-        /* 🎯 그래프 영역 내부 플로팅 범례 패널 */
+        /* 그래프 영역 내부 플로팅 범례 패널 */
         .legend-floating-panel { 
             position: absolute; top: 15px; right: 15px; z-index: 10;
             display: flex; flex-direction: column; gap: 8px; background: rgba(255, 255, 255, 0.92); 
@@ -57,7 +66,6 @@
         .detail-card { background-color: #f8fafc; border-radius: 8px; padding: 15px; border-left: 4px solid var(--accent); margin-top: 10px; }
         .info-tag { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; }
         
-        /* 🎯 구글 드라이브 실시간 문서 연동 버튼 스타일 */
         .btn-drive-link {
             display: flex; align-items: center; justify-content: center; gap: 8px;
             width: 100%; margin-top: 15px; padding: 12px; border-radius: 6px;
@@ -67,7 +75,7 @@
         }
         .btn-drive-link:hover { background-color: #047857; box-shadow: 0 6px 14px rgba(5, 150, 105, 0.3); }
 
-        /* 사이드바 전용 뱃지 색상 규칙 */
+        /* 사이드바 뱃지 색상 */
         .tag-document { background: #d1fae5; color: #065f46; }
         .tag-asset { background: #dbeafe; color: #1e40af; }
         .tag-alarm { background: #fee2e2; color: #991b1b; }
@@ -87,12 +95,27 @@
         </div>
     </header>
 
+    <div class="search-tab-container">
+        <div class="search-tab active" onclick="switchSearchMode('selectMode')"><i class="fa-solid fa-list-check"></i> 조건 매핑 검색</div>
+        <div class="search-tab" onclick="switchSearchMode('textMode')"><i class="fa-solid fa-keyboard"></i> 텍스트 유사검색</div>
+    </div>
+
     <div class="search-panel">
-        <div class="control-group"><label>Document</label><select id="docSelect"><option value="">-- 전체 --</option></select></div>
-        <div class="control-group"><label>Asset</label><select id="assetSelect"><option value="">-- 전체 --</option></select></div>
-        <div class="control-group"><label>Alarm</label><select id="alarmSelect"><option value="">-- 전체 --</option></select></div>
-        <div class="control-group"><label>Failure Mode</label><select id="failureModeSelect"><option value="">-- 전체 --</option></select></div>
-        <button class="btn-search" onclick="searchNetworkAND()">지식 그래프 조회</button>
+        <div id="selectModeBlock" class="search-content-block active">
+            <div class="control-group"><label>Document</label><select id="docSelect"><option value="">-- 전체 --</option></select></div>
+            <div class="control-group"><label>Asset</label><select id="assetSelect"><option value="">-- 전체 --</option></select></div>
+            <div class="control-group"><label>Alarm</label><select id="alarmSelect"><option value="">-- 전체 --</option></select></div>
+            <div class="control-group"><label>Failure Mode</label><select id="failureModeSelect"><option value="">-- 전체 --</option></select></div>
+            <button class="btn-search" onclick="searchNetworkAND()">지식 그래프 조회</button>
+        </div>
+
+        <div id="textModeBlock" class="search-content-block">
+            <div class="control-group">
+                <label>자유 질의 입력 (현상, 장비명, 고장 원인 등)</label>
+                <input type="text" id="textSearchInput" class="input-text-search" placeholder="예: 급수 펌프 캐비테이션 현상 발생 및 베어링 진동 고 원인" onkeyup="if(event.key==='Enter') searchNetworkByText()">
+            </div>
+            <button class="btn-search" onclick="searchNetworkByText()"><i class="fa-solid fa-magnifying-glass"></i> 유사 자율 검색</button>
+        </div>
     </div>
 
     <div class="main-content">
@@ -135,22 +158,131 @@
         return result.trim();
     }
 
+    function switchSearchMode(mode) {
+        document.querySelectorAll('.search-tab').forEach((tab, idx) => {
+            tab.classList.toggle('active', (mode === 'selectMode' && idx === 0) || (mode === 'textMode' && idx === 1));
+        });
+        document.getElementById('selectModeBlock').classList.toggle('active', mode === 'selectMode');
+        document.getElementById('textModeBlock').classList.toggle('active', mode === 'textMode');
+    }
+
     window.onload = async function() {
         try {
             const response = await fetch(`${N8N_PRODUCTION_URL}/master-codes`);
             const jsonResult = await response.json();
             let rawData = jsonResult[0]?.data || jsonResult[0]?.body?.data || jsonResult.data;
             const values = rawData.values[0];
-            bindDropdown('docSelect', values[0] || []);
-            bindDropdown('assetSelect', values[1] || []);
-            bindDropdown('alarmSelect', values[2] || []);
-            bindDropdown('failureModeSelect', values[3] || []);
+            
+            let docList = values[0] || [];
+            let assetList = values[1] || [];
+            let alarmList = values[2] || [];
+            let fmList = values[3] || [];
+
+            // 🎯 오름차순 알파벳/글자 정렬 규칙 적용
+            docList.sort((a, b) => (a || "").localeCompare(b || ""));
+            assetList.sort((a, b) => (a.id || "").localeCompare(b.id || ""));
+            alarmList.sort((a, b) => (a.id || "").localeCompare(b.id || ""));
+            fmList.sort((a, b) => (a.id || "").localeCompare(b.id || ""));
+            
+            bindDropdown('docSelect', docList, false);
+            bindDropdown('assetSelect', assetList, true);
+            bindDropdown('alarmSelect', alarmList, true);
+            bindDropdown('failureModeSelect', fmList, true);
         } catch (error) { console.error('목록 로드 실패:', error); }
     };
 
-    function bindDropdown(elementId, dataList) {
+    // 🎯 괄호 구조 텍스트 정밀 클렌징 알고리즘 반영 빌더 함수
+    function bindDropdown(elementId, dataList, isComplexObject = false) {
         const select = document.getElementById(elementId);
-        dataList.forEach(id => { if(id) { let opt = document.createElement('option'); opt.value = id; opt.innerText = id; select.appendChild(opt); } });
+        
+        dataList.forEach(item => { 
+            if (item) { 
+                let opt = document.createElement('option');
+                if (isComplexObject && typeof item === 'object') {
+                    opt.value = item.id;
+                    
+                    let rawName = item.name || "";
+                    let targetId = item.id;
+                    let cleanName = rawName;
+
+                    // 1. 만약 name에 "ID (이름)" 혹은 "이름 (ID)" 구조가 들어있을 경우 중복 괄호 완전 걷어내기
+                    if (rawName.includes(`(${targetId})`)) {
+                        cleanName = rawName.replace(`(${targetId})`, "").trim();
+                    } else if (rawName.startsWith(targetId)) {
+                        cleanName = rawName.replace(targetId, "").replace(/^\s*\(\s*/, "").replace(/\s*\)\s*$/, "").trim();
+                    }
+
+                    // 2. 최종 무조건 깔끔하게 "ID (순수이름)"으로 통일 바인딩
+                    if (!cleanName || cleanName === targetId) {
+                        opt.innerText = targetId;
+                    } else {
+                        opt.innerText = `${targetId} (${cleanName})`;
+                    }
+                } else {
+                    opt.value = item;
+                    opt.innerText = item;
+                }
+                select.appendChild(opt); 
+            } 
+        });
+    }
+
+    // 🎯 고립 노드 및 에러 방어 메커니즘을 포함한 결과 처리기
+    function processGraphResponse(jsonResult, chosenCenterIds) {
+        let rows = jsonResult[0]?.data?.values || jsonResult[0]?.body?.data?.values || jsonResult.data?.values;
+
+        if (!rows || rows.length === 0) { 
+            alert('일치하는 인과관계 선로가 없습니다.'); 
+            if(networkInstance) networkInstance.destroy(); 
+            return; 
+        }
+
+        let visNodes = []; let visEdges = []; let nodesMap = new Map();
+        allNodesData = {};
+        const colorPalette = { 'Document': '#059669', 'Asset': '#2563eb', 'Alarm': '#dc2626', 'FailureMode': '#d97706', 'CauseStep': '#7c3aed', 'Action': '#db2777', 'Lesson': '#4b5563' };
+
+        rows.forEach(row => {
+            const target = row[0]; const relationship = row[1]; const neighbor = row[2];
+
+            [target, neighbor].forEach(n => {
+                // 노드가 실재하고 유효할 때만 격자 맵에 추가 처리
+                if (n && n.properties && !nodesMap.has(n.properties.id)) {
+                    const typeLabel = n.labels[0] || 'Nodes';
+                    let textBody = n.properties.name || n.properties.id;
+                    const formattedLabel = wrapTextByLength(textBody, 15);
+
+                    allNodesData[n.properties.id] = { 
+                        id: n.properties.id, 
+                        label: typeLabel, 
+                        name: n.properties.name,
+                        fileId: n.properties.url || '' 
+                    };
+
+                    nodesMap.set(n.properties.id, {
+                        id: n.properties.id, 
+                        label: formattedLabel, 
+                        type: typeLabel, 
+                        shape: 'dot',
+                        size: chosenCenterIds.includes(n.properties.id) ? 22 : 12,
+                        color: { background: colorPalette[typeLabel] || '#94a3b8', border: '#ffffff' },
+                        font: { color: '#334155', size: 10, face: 'sans-serif', strokeWidth: 2, strokeColor: '#ffffff' }
+                    });
+                }
+            });
+
+            // 🎯 [고립 노드 방어형 구조] 관계선 및 연동 관계가 전부 완벽할 때만 에지 연결 처리
+            if (relationship && target && neighbor && target.properties && neighbor.properties) {
+                visEdges.push({
+                    from: relationship.startNodeElementId === target.elementId ? target.properties.id : neighbor.properties.id,
+                    to: relationship.endNodeElementId === target.elementId ? target.properties.id : neighbor.properties.id,
+                    label: relationship.type || '',
+                    color: { color: '#cbd5e1', highlight: '#3b82f6' },
+                    font: { size: 8, color: '#64748b', background: '#ffffff', strokeWidth: 1, align: 'top' }
+                });
+            }
+        });
+
+        renderVisGraph(Array.from(nodesMap.values()), visEdges);
     }
 
     async function searchNetworkAND() {
@@ -165,57 +297,19 @@
         try {
             const response = await fetch(`${N8N_PRODUCTION_URL}/search-network?docId=${docId}&assetId=${assetId}&alarmId=${alarmId}&fmId=${fmId}`);
             const jsonResult = await response.json();
-            let rows = jsonResult[0]?.data?.values || jsonResult[0]?.body?.data?.values || jsonResult.data?.values;
-
-            if (!rows || rows.length === 0) { alert('일치하는 인과관계 선로가 없습니다.'); if(networkInstance) networkInstance.destroy(); return; }
-
-            let visNodes = []; let visEdges = []; let nodesMap = new Map();
-            allNodesData = {};
-
-            const colorPalette = { 'Document': '#059669', 'Asset': '#2563eb', 'Alarm': '#dc2626', 'FailureMode': '#d97706', 'CauseStep': '#7c3aed', 'Action': '#db2777', 'Lesson': '#4b5563' };
-
-            rows.forEach(row => {
-                const target = row[0]; const relationship = row[1]; const neighbor = row[2];
-
-                [target, neighbor].forEach(n => {
-                    if (n && n.properties && !nodesMap.has(n.properties.id)) {
-                        const typeLabel = n.labels[0] || 'Nodes';
-                        let textBody = n.properties.name || n.properties.id;
-                        const formattedLabel = wrapTextByLength(textBody, 15);
-
-                        // 🎯 [v1500 정밀 교정] Neo4j 실제 매핑 필드인 n.properties.url 값을 파일 링크 변수에 격리 캐싱
-                        allNodesData[n.properties.id] = { 
-                            id: n.properties.id, 
-                            label: typeLabel, 
-                            name: n.properties.name,
-                            fileId: n.properties.url || '' 
-                        };
-
-                        nodesMap.set(n.properties.id, {
-                            id: n.properties.id, 
-                            label: formattedLabel, 
-                            type: typeLabel, 
-                            shape: 'dot',
-                            size: chosenCenterIds.includes(n.properties.id) ? 22 : 12,
-                            color: { background: colorPalette[typeLabel] || '#94a3b8', border: '#ffffff' },
-                            font: { color: '#334155', size: 10, face: 'sans-serif', strokeWidth: 2, strokeColor: '#ffffff' }
-                        });
-                    }
-                });
-
-                if (relationship && target && neighbor) {
-                    visEdges.push({
-                        from: relationship.startNodeElementId === target.elementId ? target.properties.id : neighbor.properties.id,
-                        to: relationship.endNodeElementId === target.elementId ? target.properties.id : neighbor.properties.id,
-                        label: relationship.type || '',
-                        color: { color: '#cbd5e1', highlight: '#3b82f6' },
-                        font: { size: 8, color: '#64748b', background: '#ffffff', strokeWidth: 1, align: 'top' }
-                    });
-                }
-            });
-
-            renderVisGraph(Array.from(nodesMap.values()), visEdges);
+            processGraphResponse(jsonResult, chosenCenterIds);
         } catch (error) { console.error('조회 실패:', error); }
+    }
+
+    async function searchNetworkByText() {
+        const keyword = document.getElementById('textSearchInput').value.trim();
+        if (!keyword) { alert('검색어를 입력해 주세요.'); return; }
+
+        try {
+            const response = await fetch(`${N8N_PRODUCTION_URL}/search-text?keyword=${encodeURIComponent(keyword)}`);
+            const jsonResult = await response.json();
+            processGraphResponse(jsonResult, []);
+        } catch (error) { console.error('유사 자율 검색 실패:', error); }
     }
 
     function renderVisGraph(nodes, edges) {
@@ -249,7 +343,6 @@
                         </div>
                     `;
                     
-                    // 🎯 [v1500 정밀 교정] 캐싱된 완벽한 구글 드라이브 전체 URL 주소를 새 창 링크에 다이렉트로 반영
                     if (label === 'Document' && nodeData.fileId) {
                         const driveViewerUrl = nodeData.fileId; 
                         detailHTML += `
