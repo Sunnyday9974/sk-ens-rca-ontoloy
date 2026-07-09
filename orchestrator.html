@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>발전소 정비 지능화 Agent 오케스트레이션</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+        }
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        /* Header */
+        header {
+            background: #1e293b;
+            color: #fff;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        /* Agent Orchestration Flow Navigation */
+        .flow-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e2e8f0;
+            gap: 1rem;
+        }
+        .step-card {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .step-card:hover {
+            border-color: #3b82f6;
+            background: #f0f9ff;
+        }
+        .step-card.active {
+            border-color: #2563eb;
+            background: #eff6ff;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.1);
+        }
+        .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .step-card.active .step-number {
+            background: #2563eb;
+        }
+        .step-info h3 {
+            font-size: 0.95rem;
+            color: #1e293b;
+        }
+        .step-info p {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .arrow {
+            color: #94a3b8;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        /* Workspace (Iframe Viewer) */
+        .workspace {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>⚡ 발전소 정비 지능화 Agent 플랫폼</h1>
+        <span style="font-size:0.85rem; color:#94a3b8;">통합 오케스트레이션 대시보드</span>
+    </header>
+
+    <nav class="flow-container">
+        <div class="step-card active" onclick="loadAgent('https://sunnyday9974.github.io/sk-ens-rca-ontoloy/', this)">
+            <div class="step-number">①</div>
+            <div class="step-info">
+                <h3>과거 정비사례 온톨로지화 Agent</h3>
+                <p>정비 데이터 구조화 및 지식베이스 구축</p>
+            </div>
+        </div>
+
+        <div class="arrow">➔</div>
+
+        <div class="step-card" onclick="loadAgent('https://sunnyday9974.github.io/sk-ens-rca-ontoloy/search.html', this)">
+            <div class="step-number">②</div>
+            <div class="step-info">
+                <h3>온톨로지 조회 Agent</h3>
+                <p>구조화된 지식 탐색 및 연관성 검색</p>
+            </div>
+        </div>
+
+        <div class="arrow">➔</div>
+
+        <div class="step-card" onclick="loadAgent('https://sunnyday9974.github.io/sk-ens-rca-ontoloy/dashboard.html', this)">
+            <div class="step-number">③</div>
+            <div class="step-info">
+                <h3>실시간 RCA Agent</h3>
+                <p>실시간 원인 분석 및 대응 가이드 제공</p>
+            </div>
+        </div>
+    </nav>
+
+    <iframe id="agent-frame" class="workspace" src="https://sunnyday9974.github.io/sk-ens-rca-ontoloy/" title="Agent View"></iframe>
+
+    <script>
+        function loadAgent(url, element) {
+            // iframe URL 변경
+            document.getElementById('agent-frame').src = url;
+
+            // Step 카드 활성화 상태(Active) 변경
+            const cards = document.querySelectorAll('.step-card');
+            cards.forEach(card => card.classList.remove('active'));
+            element.classList.add('active');
+        }
+    </script>
+</body>
+</html>
